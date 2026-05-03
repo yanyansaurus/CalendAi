@@ -41,6 +41,42 @@ const COMMAND_CATEGORIES = [
   },
 ]
 
+function DraftEmailCard({ action, onSend }: { action: any, onSend: (to: string, subject: string, body: string) => void }) {
+  const [body, setBody] = useState(action.emailBody || '')
+  return (
+    <div className="glass animate-fade-up" style={{ padding: 16, borderRadius: 12, marginTop: 8, width: '100%', border: '1px solid rgba(99,102,241,0.3)' }}>
+      <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-subtle)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 12 }}>
+        Draft Email
+      </div>
+      <div style={{ marginBottom: 8 }}>
+        <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>To: </span>
+        <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)' }}>{action.emailTo}</span>
+      </div>
+      <div style={{ marginBottom: 12 }}>
+        <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>Subject: </span>
+        <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)' }}>{action.emailSubject}</span>
+      </div>
+      <textarea 
+        value={body}
+        onChange={e => setBody(e.target.value)}
+        style={{ 
+          background: 'var(--bg)', padding: 12, borderRadius: 8, fontSize: 13, 
+          color: 'var(--text)', width: '100%', minHeight: 120, lineHeight: 1.5,
+          border: '1px solid var(--border)', resize: 'vertical', fontFamily: 'inherit',
+          outline: 'none'
+        }}
+      />
+      <button
+        className="btn-brand"
+        style={{ width: '100%', marginTop: 12, padding: '10px', fontSize: 13, display: 'flex', justifyContent: 'center', gap: 6 }}
+        onClick={() => onSend(action.emailTo, action.emailSubject, body)}
+      >
+        🚀 Send Email Now
+      </button>
+    </div>
+  )
+}
+
 const WELCOME_MSG: ChatMessage = {
   id:        'welcome',
   role:      'assistant',
@@ -301,33 +337,10 @@ export default function ChatPanel() {
 
             {/* Draft Email Card */}
             {msg.action?.intent === 'draft_email' && (
-              <div className="glass animate-fade-up" style={{ padding: 16, borderRadius: 12, marginTop: 8, width: '100%', border: '1px solid rgba(99,102,241,0.3)' }}>
-                <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-subtle)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 12 }}>
-                  Draft Email
-                </div>
-                <div style={{ marginBottom: 8 }}>
-                  <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>To: </span>
-                  <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)' }}>{msg.action.emailTo}</span>
-                </div>
-                <div style={{ marginBottom: 12 }}>
-                  <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>Subject: </span>
-                  <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)' }}>{msg.action.emailSubject}</span>
-                </div>
-                <div style={{ 
-                  background: 'var(--bg)', padding: 12, borderRadius: 8, fontSize: 13, 
-                  color: 'var(--text)', whiteSpace: 'pre-wrap', lineHeight: 1.5,
-                  border: '1px solid var(--border)'
-                }}>
-                  {msg.action.emailBody}
-                </div>
-                <button
-                  className="btn-brand"
-                  style={{ width: '100%', marginTop: 12, padding: '10px', fontSize: 13, display: 'flex', justifyContent: 'center', gap: 6 }}
-                  onClick={() => sendMessage(`Send the drafted email to ${msg.action!.emailTo} with subject "${msg.action!.emailSubject}" and body: ${msg.action!.emailBody}`)}
-                >
-                  🚀 Send Email Now
-                </button>
-              </div>
+              <DraftEmailCard 
+                action={msg.action} 
+                onSend={(to, subject, body) => sendMessage(`Send this exact email directly to ${to} with subject "${subject}" and body:\n\n${body}`)} 
+              />
             )}
 
             <span style={{ fontSize: 11, color: 'var(--text-subtle)', marginTop: 2 }}>
