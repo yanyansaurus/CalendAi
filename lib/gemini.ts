@@ -99,7 +99,8 @@ Valid intents:
   add_expense     – log a new expense to the budget tracker
   view_budget     – check the remaining budget or list recent expenses
   read_emails     – fetch and summarize unread important emails
-  send_email      – draft and send an email
+  draft_email     – compose an email draft for the user to review
+  send_email      – automatically draft and send an email immediately
   clarify         – ask the user for missing information
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

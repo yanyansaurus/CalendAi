@@ -20,6 +20,7 @@ export type AgentIntent =
   | 'add_expense'
   | 'view_budget'
   | 'read_emails'
+  | 'draft_email'
   | 'send_email'
   | 'clarify'
 

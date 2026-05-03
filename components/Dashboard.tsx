@@ -1,5 +1,5 @@
 'use client'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import ChatPanel from '@/components/ChatPanel'
 import AnalysisDashboard from '@/components/AnalysisDashboard'
 import WeekSchedule from '@/components/WeekSchedule'
@@ -19,6 +19,15 @@ type TabId = 'chat' | 'briefing' | 'planner' | 'emails' | 'finances' | 'analysis
 export default function Dashboard({ session }: DashboardProps) {
   const [activeTab, setActiveTab] = useState<TabId>('chat')
   const [plannerView, setPlannerView] = useState<'tasks' | 'calendar'>('tasks')
+  
+  // Listen for tab switch events from child components
+  useEffect(() => {
+    const handleSwitch = (e: any) => {
+      if (e.detail?.tab) setActiveTab(e.detail.tab)
+    }
+    window.addEventListener('switch-tab', handleSwitch)
+    return () => window.removeEventListener('switch-tab', handleSwitch)
+  }, [])
   
   const hasGoogle = !!session?.googleAccessToken
   const hasZoom   = !!session?.zoomAccessToken

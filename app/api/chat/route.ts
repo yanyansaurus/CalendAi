@@ -444,6 +444,17 @@ CHAT: You have 3 unread emails. Here's what needs attention:
       }
     }
 
+    case 'draft_email': {
+      if (!action.emailTo || !action.emailSubject || !action.emailBody) {
+        return NextResponse.json({ type: 'chat', text: "I need an email address, a subject, and a body to draft the email." })
+      }
+      return NextResponse.json({
+        type: 'chat',
+        text: action.naturalResponse ?? `Here is your draft for ${action.emailTo}.`,
+        action
+      })
+    }
+
     case 'send_email': {
       if (!googleToken) {
         return NextResponse.json({ type: 'chat', text: 'Please connect your Google account to send emails.' })

@@ -166,24 +166,21 @@ export default function EmailSummaryPanel() {
                   <button
                     className="btn-brand"
                     style={{ fontSize: 11, padding: '6px 14px', borderRadius: 8, flex: 1 }}
-                    onClick={async () => {
-                      try {
-                        await fetch('/api/chat', {
-                          method: 'POST',
-                          headers: { 'Content-Type': 'application/json' },
-                          body: JSON.stringify({
-                            message: `Draft a professional reply to ${item.from} about "${item.subject}". The suggested action is: ${item.suggestedAction}. Send it directly.`,
-                          }),
-                        })
-                        // Remove from list after accepting
-                        setSummary(prev => prev ? {
-                          ...prev,
-                          actionItems: prev.actionItems.filter((_, idx) => idx !== i),
-                        } : prev)
-                      } catch { /* ignore */ }
+                    onClick={() => {
+                      // Switch to chat tab
+                      window.dispatchEvent(new CustomEvent('switch-tab', { detail: { tab: 'chat' } }))
+                      // Tell chat to draft the email
+                      window.dispatchEvent(new CustomEvent('send-chat', { 
+                        detail: { message: `Draft a professional reply to ${item.from} about "${item.subject}". The suggested action is: ${item.suggestedAction}. DO NOT SEND IT YET, just draft it.` } 
+                      }))
+                      // Remove from list
+                      setSummary(prev => prev ? {
+                        ...prev,
+                        actionItems: prev.actionItems.filter((_, idx) => idx !== i),
+                      } : prev)
                     }}
                   >
-                    ✅ Accept & Reply
+                    ✅ Accept & Draft Reply
                   </button>
                   <button
                     className="btn-ghost"
