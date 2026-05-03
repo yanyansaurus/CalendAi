@@ -14,7 +14,7 @@ interface CalendarEvent {
 }
 
 const DAY_LABELS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
-const HOURS = Array.from({ length: 14 }, (_, i) => i + 7) // 7 AM – 8 PM
+const HOURS = Array.from({ length: 19 }, (_, i) => i + 5) // 5 AM – 11 PM
 
 const EVENT_COLORS: Record<string, string> = {
   '0': '#6366f1', '1': '#a78bfa', '2': '#34d399', '3': '#c084fc',
@@ -99,7 +99,7 @@ export default function WeekSchedule() {
     const end   = new Date(event.end)
     const startHour = start.getHours() + start.getMinutes() / 60
     const endHour   = end.getHours()   + end.getMinutes()   / 60
-    const top    = Math.max(0, (startHour - 7) * 60) // px, 60px per hour
+    const top    = Math.max(0, (startHour - 5) * 60) // px, 60px per hour
     const height = Math.max(20, (endHour - startHour) * 60)
     return { top, height }
   }
@@ -337,8 +337,8 @@ export default function WeekSchedule() {
                 {isToday && (() => {
                   const now = new Date()
                   const nowHour = now.getHours() + now.getMinutes() / 60
-                  if (nowHour < 7 || nowHour > 21) return null
-                  const top = (nowHour - 7) * 60
+                  if (nowHour < 5 || nowHour > 23) return null
+                  const top = (nowHour - 5) * 60
                   return (
                     <div style={{
                       position: 'absolute', top, left: 0, right: 0,

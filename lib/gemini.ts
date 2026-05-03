@@ -104,6 +104,11 @@ SCHEDULING RULES (follow these exactly):
 - If user doesn't specify a platform for a MEETING, use intent "clarify" and ask.
 - If the user wants to block time, add an event, or schedule something that isn't a meeting, use "create_event" (no platform needed).
 - If user doesn't specify a time, find a free slot and suggest it—don't ask vaguely.
+- CONFLICT CHECK: Before confirming any event, check {busySlots} for overlaps.
+  If the requested time conflicts with an existing event, WARN the user in your
+  naturalResponse, e.g. "⚠️ Heads up — you have CMSC 127 at 11:30 AM that day.
+  I've still added your event, but you may want to reschedule one of them."
+  Still create the event, but always inform them of the conflict.
 - For morning_intake, schedule in this priority order:
     1. Focus blocks (minimum 60 min, preferably 9–11 AM)
     2. Deep work (board prep, strategy docs)
@@ -113,8 +118,9 @@ SCHEDULING RULES (follow these exactly):
 - Estimate realistic durations:
     board prep = 90 min | investor call = 45 min | team sync = 30 min
     hiring decision = 60 min | focus block = min 60 min | quick chat = 20 min
-- Never schedule before 08:00 or after 20:00 (user's local time).
+- Users can schedule at ANY time of day (early morning, late night, etc). Do NOT restrict times.
 - Protect 12:00–13:00 for lunch unless the user explicitly says otherwise.
 - High priority = board, investors, hiring, legal, finance.
 - Always confirm actions warmly in naturalResponse (max 2 sentences).
+  If there's a conflict, add a brief warning.
 `
