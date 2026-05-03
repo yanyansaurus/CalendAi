@@ -6,6 +6,7 @@ import WeekSchedule from '@/components/WeekSchedule'
 import FinanceDashboard from '@/components/FinanceDashboard'
 import BriefingPanel from '@/components/BriefingPanel'
 import TaskBoard from '@/components/TaskBoard'
+import EmailSummaryPanel from '@/components/EmailSummaryPanel'
 import SettingsPanel from '@/components/SettingsPanel'
 import { signOut } from 'next-auth/react'
 
@@ -13,21 +14,27 @@ interface DashboardProps {
   session: any
 }
 
+type TabId = 'chat' | 'briefing' | 'planner' | 'emails' | 'finances' | 'analysis' | 'settings'
+
 export default function Dashboard({ session }: DashboardProps) {
-  const [activeTab, setActiveTab] = useState<'chat' | 'briefing' | 'schedule' | 'tasks' | 'finances' | 'analysis' | 'settings'>('chat')
+  const [activeTab, setActiveTab] = useState<TabId>('chat')
+  const [plannerView, setPlannerView] = useState<'tasks' | 'calendar'>('tasks')
   
   const hasGoogle = !!session?.googleAccessToken
   const hasZoom   = !!session?.zoomAccessToken
 
-  const navItems = [
+  const navItems: { id: TabId; icon: string; label: string }[] = [
     { id: 'chat',     icon: '💬', label: 'Chat' },
     { id: 'briefing', icon: '🧠', label: 'AI Briefing' },
-    { id: 'schedule', icon: '📅', label: 'Schedule' },
-    { id: 'tasks',    icon: '✅', label: 'Tasks' },
+    { id: 'planner',  icon: '📋', label: 'Planner' },
+    { id: 'emails',   icon: '📧', label: 'Emails' },
     { id: 'finances', icon: '💰', label: 'Finances' },
     { id: 'analysis', icon: '📊', label: 'Analysis' },
     { id: 'settings', icon: '⚙️', label: 'Settings' },
-  ] as const
+  ]
+
+  // Show 5 most important tabs in mobile bottom nav
+  const mobileNavItems = navItems.filter(i => !['analysis', 'settings'].includes(i.id))
 
   return (
     <div style={{ display: 'flex', height: '100vh', overflow: 'hidden', background: 'var(--bg)' }}>
@@ -90,22 +97,22 @@ export default function Dashboard({ session }: DashboardProps) {
       <nav className="show-mobile" style={{
         display: 'none', position: 'fixed', bottom: 0, left: 0, right: 0,
         height: 64, background: 'var(--surface)', borderTop: '1px solid var(--border)',
-        zIndex: 100, padding: '0 12px',
+        zIndex: 100, padding: '0 8px',
       }}>
         <div style={{ display: 'flex', height: '100%', alignItems: 'center', justifyContent: 'space-around' }}>
-          {navItems.map((item) => (
+          {mobileNavItems.map((item) => (
             <div 
               key={item.id} 
               onClick={() => setActiveTab(item.id)}
               style={{
-                display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4,
-                padding: '8px 4px', cursor: 'pointer', flex: 1,
+                display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3,
+                padding: '6px 4px', cursor: 'pointer', flex: 1,
                 color: activeTab === item.id ? 'var(--brand-light)' : 'var(--text-muted)',
                 transition: 'all 0.15s',
               }}
             >
               <span style={{ fontSize: 18 }}>{item.icon}</span>
-              <span style={{ fontSize: 10, fontWeight: activeTab === item.id ? 600 : 400 }}>{item.id.charAt(0).toUpperCase() + item.id.slice(1, 4)}</span>
+              <span style={{ fontSize: 9, fontWeight: activeTab === item.id ? 600 : 400 }}>{item.label}</span>
             </div>
           ))}
         </div>
@@ -124,8 +131,37 @@ export default function Dashboard({ session }: DashboardProps) {
               {navItems.find(i => i.id === activeTab)?.label}
             </h1>
           </div>
-          <div style={{ display: 'flex', gap: 8 }}>
-             {/* Indicators */}
+          <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+            {/* Planner view toggle */}
+            {activeTab === 'planner' && (
+              <div style={{ display: 'flex', gap: 2, background: 'var(--surface-2)', borderRadius: 8, padding: 2 }}>
+                <button
+                  onClick={() => setPlannerView('tasks')}
+                  style={{
+                    padding: '5px 12px', borderRadius: 6, fontSize: 11, fontWeight: 600,
+                    border: 'none', cursor: 'pointer',
+                    background: plannerView === 'tasks' ? 'var(--brand)' : 'transparent',
+                    color: plannerView === 'tasks' ? '#fff' : 'var(--text-muted)',
+                    transition: 'all 0.15s',
+                  }}
+                >
+                  ✅ Tasks
+                </button>
+                <button
+                  onClick={() => setPlannerView('calendar')}
+                  style={{
+                    padding: '5px 12px', borderRadius: 6, fontSize: 11, fontWeight: 600,
+                    border: 'none', cursor: 'pointer',
+                    background: plannerView === 'calendar' ? 'var(--brand)' : 'transparent',
+                    color: plannerView === 'calendar' ? '#fff' : 'var(--text-muted)',
+                    transition: 'all 0.15s',
+                  }}
+                >
+                  📅 Calendar
+                </button>
+              </div>
+            )}
+             {/* Connection Indicators */}
              {[
                { label: 'G', active: hasGoogle },
                { label: 'Z', active: hasZoom }
@@ -141,8 +177,9 @@ export default function Dashboard({ session }: DashboardProps) {
         <div style={{ flex: 1, overflow: 'hidden', marginBottom: 64 /* space for mobile nav */ }} className="content-area">
           {activeTab === 'chat' && <ChatPanel />}
           {activeTab === 'briefing' && <BriefingPanel />}
-          {activeTab === 'schedule' && <WeekSchedule />}
-          {activeTab === 'tasks' && <TaskBoard />}
+          {activeTab === 'planner' && plannerView === 'tasks' && <TaskBoard />}
+          {activeTab === 'planner' && plannerView === 'calendar' && <WeekSchedule />}
+          {activeTab === 'emails' && <EmailSummaryPanel />}
           {activeTab === 'finances' && <FinanceDashboard />}
           {activeTab === 'analysis' && <AnalysisDashboard />}
           {activeTab === 'settings' && <SettingsPanel />}
