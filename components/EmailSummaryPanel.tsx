@@ -157,8 +157,47 @@ export default function EmailSummaryPanel() {
                   display: 'inline-flex', alignItems: 'center', gap: 4,
                   fontSize: 11, color: 'var(--brand-light)', fontWeight: 600,
                   background: 'rgba(99,102,241,0.1)', padding: '4px 10px', borderRadius: 8,
+                  marginBottom: 10,
                 }}>
                   💡 {item.suggestedAction}
+                </div>
+                {/* Action Buttons */}
+                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                  <button
+                    className="btn-brand"
+                    style={{ fontSize: 11, padding: '6px 14px', borderRadius: 8, flex: 1 }}
+                    onClick={async () => {
+                      try {
+                        await fetch('/api/chat', {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({
+                            message: `Draft a professional reply to ${item.from} about "${item.subject}". The suggested action is: ${item.suggestedAction}. Send it directly.`,
+                          }),
+                        })
+                        // Remove from list after accepting
+                        setSummary(prev => prev ? {
+                          ...prev,
+                          actionItems: prev.actionItems.filter((_, idx) => idx !== i),
+                        } : prev)
+                      } catch { /* ignore */ }
+                    }}
+                  >
+                    ✅ Accept & Reply
+                  </button>
+                  <button
+                    className="btn-ghost"
+                    style={{ fontSize: 11, padding: '6px 14px', borderRadius: 8 }}
+                    onClick={() => {
+                      setSummary(prev => prev ? {
+                        ...prev,
+                        actionItems: prev.actionItems.filter((_, idx) => idx !== i),
+                        lowPriority: [...(prev.lowPriority ?? []), { from: item.from, subject: item.subject, reason: 'Dismissed' }],
+                      } : prev)
+                    }}
+                  >
+                    ✕ Dismiss
+                  </button>
                 </div>
               </div>
             ))}

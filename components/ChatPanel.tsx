@@ -10,7 +10,8 @@ const QUICK_PROMPTS = [
   { label: '📋 Plan my day', text: 'I need to plan my day. I have ' },
   { label: '🔍 Free time', text: 'Find me time for a 1-hour session this week' },
   { label: '💰 Budget', text: 'How much have I spent this month?' },
-  { label: '📧 Emails', text: 'Check my unread emails' },
+  { label: '📧 Check inbox', text: 'Check my unread emails' },
+  { label: '✉️ Send email', text: 'Send an email to ' },
   { label: '📊 Analyse week', text: 'Analyse how I spent my time this week' },
 ]
 
@@ -222,16 +223,23 @@ export default function ChatPanel() {
                     </div>
                     <div style={{ marginTop: 12, display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                       <button
-                        className="btn-ghost"
-                        style={{ fontSize: 11, padding: '4px 10px', borderRadius: 6, flex: 1 }}
-                        onClick={() => setInput(`Reply to ${email.from.split('<')[0].trim()}: `)}
+                        className="btn-brand"
+                        style={{ fontSize: 11, padding: '6px 12px', borderRadius: 6, flex: 1 }}
+                        onClick={() => sendMessage(`Draft a professional reply to the email from ${email.from.split('<')[0].trim()} about "${email.subject}". Keep it brief and polite.`)}
                       >
-                        ↩️ Reply
+                        ✍️ Draft Reply
                       </button>
                       <button
                         className="btn-ghost"
-                        style={{ fontSize: 11, padding: '4px 10px', borderRadius: 6, flex: 1 }}
-                        onClick={() => sendMessage(`Summarize the email from ${email.from.split('<')[0].trim()}`)}
+                        style={{ fontSize: 11, padding: '6px 12px', borderRadius: 6, flex: 1 }}
+                        onClick={() => sendMessage(`Schedule a follow-up meeting about "${email.subject}" with ${email.from.split('<')[0].trim()}`)}
+                      >
+                        📅 Follow-up
+                      </button>
+                      <button
+                        className="btn-ghost"
+                        style={{ fontSize: 11, padding: '6px 12px', borderRadius: 6, flex: 1 }}
+                        onClick={() => sendMessage(`Summarize the email from ${email.from.split('<')[0].trim()} about "${email.subject}" and tell me if I need to take any action`)}
                       >
                         📝 Summarize
                       </button>
