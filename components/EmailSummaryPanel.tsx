@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react'
 
 interface ActionItem {
   from: string
+  emailAddress?: string
   subject: string
   summary: string
   suggestedAction: string
