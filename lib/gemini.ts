@@ -5,8 +5,8 @@ const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!)
 
 // Models in priority order — falls back if the primary is unavailable
 const MODEL_PRIORITY = [
+  'gemini-3.1-flash-lite-preview',
   'gemini-2.0-flash',
-  'gemini-1.5-flash',
 ]
 
 export function getGeminiModel(systemInstruction?: string) {
