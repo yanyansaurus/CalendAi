@@ -1,0 +1,196 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ─── Design tokens ─────────────────────────────────────────────────────────── */
+:root {
+  --bg:           #0f0f13;
+  --surface:      #17171e;
+  --surface-2:    #1e1e28;
+  --surface-3:    #26263a;
+  --border:       rgba(255,255,255,0.07);
+  --brand:        #6366f1;
+  --brand-light:  #818cf8;
+  --brand-glow:   rgba(99,102,241,0.25);
+  --text:         #f1f1f5;
+  --text-muted:   #8b8ba8;
+  --text-subtle:  #4a4a6a;
+  --focus-color:  #a78bfa;
+  --deep-color:   #60a5fa;
+  --meeting-color:#34d399;
+  --admin-color:  #fbbf24;
+  --danger:       #f87171;
+}
+
+/* ─── Base reset ────────────────────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  height: 100%;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-inter), 'Inter', system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ─── Scrollbar ─────────────────────────────────────────────────────────────── */
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--surface-3); border-radius: 4px; }
+
+/* ─── Glassmorphism card ────────────────────────────────────────────────────── */
+.glass {
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+}
+
+/* ─── Gradient text ─────────────────────────────────────────────────────────── */
+.gradient-text {
+  background: linear-gradient(135deg, #a78bfa 0%, #6366f1 50%, #60a5fa 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ─── Glow effect ───────────────────────────────────────────────────────────── */
+.glow {
+  box-shadow: 0 0 20px var(--brand-glow), 0 0 60px rgba(99,102,241,0.1);
+}
+
+/* ─── Brand button ──────────────────────────────────────────────────────────── */
+.btn-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 24px;
+  background: linear-gradient(135deg, var(--brand) 0%, #4f46e5 100%);
+  color: #fff;
+  font-weight: 600;
+  font-size: 14px;
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  letter-spacing: 0.01em;
+}
+.btn-brand:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 24px var(--brand-glow);
+}
+.btn-brand:active { transform: translateY(0); }
+
+/* ─── Ghost button ──────────────────────────────────────────────────────────── */
+.btn-ghost {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  background: transparent;
+  color: var(--text-muted);
+  font-weight: 500;
+  font-size: 14px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.btn-ghost:hover {
+  border-color: var(--brand-light);
+  color: var(--text);
+  background: rgba(99,102,241,0.08);
+}
+
+/* ─── Input ─────────────────────────────────────────────────────────────────── */
+.input-dark {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  color: var(--text);
+  font-size: 14px;
+  padding: 12px 16px;
+  width: 100%;
+  outline: none;
+  transition: border-color 0.2s;
+  font-family: inherit;
+}
+.input-dark::placeholder { color: var(--text-subtle); }
+.input-dark:focus { border-color: var(--brand); box-shadow: 0 0 0 3px var(--brand-glow); }
+
+/* ─── Message bubbles ───────────────────────────────────────────────────────── */
+.bubble-user {
+  background: linear-gradient(135deg, var(--brand) 0%, #4f46e5 100%);
+  color: #fff;
+  border-radius: 18px 18px 4px 18px;
+  padding: 12px 16px;
+  max-width: 72%;
+  font-size: 14px;
+  line-height: 1.6;
+  align-self: flex-end;
+}
+
+.bubble-ai {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  color: var(--text);
+  border-radius: 18px 18px 18px 4px;
+  padding: 12px 16px;
+  max-width: 80%;
+  font-size: 14px;
+  line-height: 1.6;
+  align-self: flex-start;
+}
+
+/* ─── Task type colour bars ─────────────────────────────────────────────────── */
+.task-focus    { border-left: 3px solid var(--focus-color);   background: rgba(167,139,250,0.08); }
+.task-deep     { border-left: 3px solid var(--deep-color);    background: rgba(96,165,250,0.08); }
+.task-meeting  { border-left: 3px solid var(--meeting-color); background: rgba(52,211,153,0.08); }
+.task-admin    { border-left: 3px solid var(--admin-color);   background: rgba(251,191,36,0.08); }
+
+/* ─── Reminder bubble ───────────────────────────────────────────────────────── */
+.reminder-bubble {
+  position: fixed;
+  top: 24px;
+  right: 24px;
+  z-index: 1000;
+  background: linear-gradient(135deg, rgba(251,191,36,0.15), rgba(251,191,36,0.05));
+  border: 1px solid rgba(251,191,36,0.4);
+  border-radius: 14px;
+  padding: 16px 20px;
+  max-width: 320px;
+  animation: slideInRight 0.35s ease-out;
+  backdrop-filter: blur(12px);
+}
+
+/* ─── Typing indicator ──────────────────────────────────────────────────────── */
+.typing-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--brand-light);
+  animation: pulseDot 1.2s ease-in-out infinite;
+}
+.typing-dot:nth-child(2) { animation-delay: 0.2s; }
+.typing-dot:nth-child(3) { animation-delay: 0.4s; }
+
+@keyframes pulseDot {
+  0%, 80%, 100% { transform: scale(0.6); opacity: 0.4; }
+  40%           { transform: scale(1);   opacity: 1; }
+}
+
+@keyframes slideInRight {
+  from { transform: translateX(110%); opacity: 0; }
+  to   { transform: translateX(0);    opacity: 1; }
+}
+
+@keyframes fadeUp {
+  from { transform: translateY(12px); opacity: 0; }
+  to   { transform: translateY(0);    opacity: 1; }
+}
+
+.animate-fade-up { animation: fadeUp 0.4s ease-out; }

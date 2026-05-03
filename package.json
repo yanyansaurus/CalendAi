@@ -1,0 +1,31 @@
+{
+  "name": "meetmate",
+  "version": "1.0.0",
+  "description": "AI Executive Assistant – chat to manage Google Meet + Zoom calendar. Codekada Hackathon.",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "@auth/core": "^0.37.4",
+    "@google/generative-ai": "^0.21.0",
+    "@vercel/kv": "^3.0.0",
+    "googleapis": "^144.0.0",
+    "next": "14.2.29",
+    "next-auth": "^5.0.0-beta.25",
+    "react": "^18",
+    "react-dom": "^18"
+  },
+  "devDependencies": {
+    "@types/node": "^20",
+    "@types/react": "^18",
+    "@types/react-dom": "^18",
+    "autoprefixer": "^10.4.20",
+    "postcss": "^8.4.49",
+    "tailwindcss": "^3.4.17",
+    "typescript": "^5"
+  }
+}

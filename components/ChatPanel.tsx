@@ -1,0 +1,263 @@
+'use client'
+import { useEffect, useRef, useState, useCallback } from 'react'
+import type { ChatMessage, FreeSlot, MeetingResult, Reminder } from '@/types'
+import MeetingLinkCard from '@/components/MeetingLinkCard'
+import DayPlanCard from '@/components/DayPlanCard'
+import ReminderBubble from '@/components/ReminderBubble'
+
+const QUICK_PROMPTS = [
+  { label: '☀️ Good morning', text: 'Good morning MeetMate! What\'s on my plate today?' },
+  { label: '📋 Plan my day', text: 'I need to plan my day. I have ' },
+  { label: '🔍 Find free time', text: 'Find me time for a 1-hour strategy session this week' },
+  { label: '📊 Analyse my week', text: 'Analyse how I spent my time this week' },
+]
+
+export default function ChatPanel() {
+  const [messages, setMessages]   = useState<ChatMessage[]>([
+    {
+      id:        'welcome',
+      role:      'assistant',
+      content:   'Good day! I\'m MeetMate, your AI Chief of Staff. I can schedule Google Meet and Zoom calls, plan your day, find free slots, and brief you on your calendar — all through natural conversation. What would you like to do?',
+      timestamp: new Date().toISOString(),
+    },
+  ])
+  const [input, setInput]         = useState('')
+  const [isTyping, setIsTyping]   = useState(false)
+  const [reminders, setReminders] = useState<Reminder[]>([])
+  const bottomRef                 = useRef<HTMLDivElement>(null)
+
+  // Scroll to bottom on new messages
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
+  }, [messages, isTyping])
+
+  // Poll for reminders every 60 seconds
+  useEffect(() => {
+    const poll = async () => {
+      try {
+        const res  = await fetch('/api/schedule/reminder')
+        const data = await res.json()
+        if (data.reminders?.length) {
+          setReminders((prev) => [...prev, ...data.reminders])
+        }
+      } catch { /* ignore */ }
+    }
+    poll()
+    const interval = setInterval(poll, 60000)
+    return () => clearInterval(interval)
+  }, [])
+
+  const dismissReminder = useCallback((id: string) => {
+    setReminders((prev) => prev.filter((r) => r.id !== id))
+  }, [])
+
+  const sendMessage = useCallback(async (text: string) => {
+    if (!text.trim()) return
+
+    const userMsg: ChatMessage = {
+      id:        crypto.randomUUID(),
+      role:      'user',
+      content:   text,
+      timestamp: new Date().toISOString(),
+    }
+
+    setMessages((prev) => [...prev, userMsg])
+    setInput('')
+    setIsTyping(true)
+
+    try {
+      const history = messages.map((m) => ({ role: m.role, content: m.content }))
+      const res  = await fetch('/api/chat', {
+        method:  'POST',
+        headers: {
+          'Content-Type':  'application/json',
+          'x-timezone':    Intl.DateTimeFormat().resolvedOptions().timeZone,
+        },
+        body: JSON.stringify({ message: text, history }),
+      })
+
+      const data = await res.json()
+
+      const aiMsg: ChatMessage = {
+        id:            crypto.randomUUID(),
+        role:          'assistant',
+        content:       data.text ?? '',
+        timestamp:     new Date().toISOString(),
+        action:        data.action,
+        meetingResult: data.meetingResult,
+        schedule:      data.schedule,
+        freeSlots:     data.freeSlots,
+      }
+
+      setMessages((prev) => [...prev, aiMsg])
+    } catch (err) {
+      setMessages((prev) => [...prev, {
+        id:        crypto.randomUUID(),
+        role:      'assistant',
+        content:   '⚠️ Something went wrong. Please try again.',
+        timestamp: new Date().toISOString(),
+      }])
+    } finally {
+      setIsTyping(false)
+    }
+  }, [messages])
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault()
+      sendMessage(input)
+    }
+  }
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', position: 'relative' }}>
+
+      {/* Reminder bubbles */}
+      <div style={{ position: 'fixed', top: 24, right: 24, zIndex: 100, display: 'flex', flexDirection: 'column', gap: 12 }}>
+        {reminders.map((r) => (
+          <ReminderBubble key={r.id} reminder={r} onDismiss={dismissReminder} />
+        ))}
+      </div>
+
+      {/* Messages */}
+      <div style={{ flex: 1, overflowY: 'auto', padding: '24px 20px', display: 'flex', flexDirection: 'column', gap: 16 }}>
+        {messages.map((msg) => (
+          <div key={msg.id} className="animate-fade-up"
+               style={{ display: 'flex', flexDirection: 'column', gap: 8,
+                        alignItems: msg.role === 'user' ? 'flex-end' : 'flex-start' }}>
+
+            {/* Bubble */}
+            <div className={msg.role === 'user' ? 'bubble-user' : 'bubble-ai'}>
+              {msg.content}
+            </div>
+
+            {/* Meeting link card */}
+            {msg.meetingResult && <MeetingLinkCard meeting={msg.meetingResult} />}
+
+            {/* Day plan cards */}
+            {msg.schedule && msg.schedule.length > 0 && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8, width: '100%', maxWidth: 480 }}>
+                {msg.schedule.map((task, i) => (
+                  <DayPlanCard key={i} task={task} />
+                ))}
+              </div>
+            )}
+
+            {/* Free slot suggestions */}
+            {msg.freeSlots && msg.freeSlots.length > 0 && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8, maxWidth: 420 }}>
+                {msg.freeSlots.map((slot, i) => (
+                  <button
+                    key={i}
+                    id={`slot-${i}`}
+                    className="glass btn-ghost"
+                    onClick={() => sendMessage(`Book ${slot.label} — ${slot.durationMinutes} mins free`)}
+                    style={{ textAlign: 'left', padding: '10px 14px', borderRadius: 10 }}
+                  >
+                    <span style={{ color: 'var(--meeting-color)', fontWeight: 600 }}>
+                      {i + 1}.
+                    </span>{' '}
+                    {slot.label}{' '}
+                    <span style={{ color: 'var(--text-muted)', fontSize: 12 }}>
+                      ({slot.durationMinutes} min free)
+                    </span>
+                  </button>
+                ))}
+              </div>
+            )}
+
+            <span style={{ fontSize: 11, color: 'var(--text-subtle)', marginTop: 2 }}>
+              {new Date(msg.timestamp).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
+            </span>
+          </div>
+        ))}
+
+        {/* Typing indicator */}
+        {isTyping && (
+          <div className="bubble-ai animate-fade-up" style={{ alignSelf: 'flex-start', display: 'flex', gap: 5, alignItems: 'center', padding: '14px 18px' }}>
+            <div className="typing-dot" />
+            <div className="typing-dot" />
+            <div className="typing-dot" />
+          </div>
+        )}
+
+        <div ref={bottomRef} />
+      </div>
+
+      {/* Quick prompt chips */}
+      <div style={{ padding: '0 20px 12px', display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+        {QUICK_PROMPTS.map((p) => (
+          <button
+            key={p.label}
+            id={`quick-${p.label.replace(/\s+/g, '-')}`}
+            onClick={() => {
+              if (p.text.endsWith(' ')) { setInput(p.text); }
+              else { sendMessage(p.text); }
+            }}
+            style={{
+              background: 'var(--surface-2)', border: '1px solid var(--border)',
+              borderRadius: 20, padding: '6px 12px', fontSize: 12,
+              color: 'var(--text-muted)', cursor: 'pointer',
+              transition: 'all 0.15s',
+            }}
+            onMouseEnter={(e) => {
+              (e.target as HTMLElement).style.borderColor = 'var(--brand-light)'
+              ;(e.target as HTMLElement).style.color = 'var(--text)'
+            }}
+            onMouseLeave={(e) => {
+              (e.target as HTMLElement).style.borderColor = 'var(--border)'
+              ;(e.target as HTMLElement).style.color = 'var(--text-muted)'
+            }}
+          >
+            {p.label}
+          </button>
+        ))}
+      </div>
+
+      {/* Input bar */}
+      <div style={{ padding: '0 20px 20px' }}>
+        <div style={{ display: 'flex', gap: 10, alignItems: 'flex-end',
+                      background: 'var(--surface-2)', border: '1px solid var(--border)',
+                      borderRadius: 16, padding: '8px 8px 8px 16px',
+                      transition: 'border-color 0.2s' }}
+             onFocus={() => {}} >
+          <textarea
+            id="chat-input"
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            onKeyDown={handleKeyDown}
+            placeholder="Ask MeetMate anything… e.g. 'Set up a Zoom call tomorrow at 3pm'"
+            rows={1}
+            style={{
+              flex: 1, background: 'transparent', border: 'none', outline: 'none',
+              color: 'var(--text)', fontSize: 14, resize: 'none',
+              fontFamily: 'inherit', lineHeight: 1.6, paddingTop: 6,
+              maxHeight: 120, overflowY: 'auto',
+            }}
+          />
+          <button
+            id="btn-send"
+            onClick={() => sendMessage(input)}
+            disabled={!input.trim() || isTyping}
+            style={{
+              width: 40, height: 40, borderRadius: 12, border: 'none', cursor: 'pointer',
+              background: input.trim() && !isTyping
+                ? 'linear-gradient(135deg, var(--brand), #4f46e5)'
+                : 'var(--surface-3)',
+              color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center',
+              transition: 'all 0.2s', flexShrink: 0,
+            }}
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="22" y1="2" x2="11" y2="13" />
+              <polygon points="22 2 15 22 11 13 2 9 22 2" />
+            </svg>
+          </button>
+        </div>
+        <p style={{ fontSize: 11, color: 'var(--text-subtle)', marginTop: 8, textAlign: 'center' }}>
+          Press <kbd style={{ background: 'var(--surface-3)', padding: '1px 5px', borderRadius: 4, fontSize: 10 }}>Enter</kbd> to send · <kbd style={{ background: 'var(--surface-3)', padding: '1px 5px', borderRadius: 4, fontSize: 10 }}>Shift+Enter</kbd> for new line
+        </p>
+      </div>
+    </div>
+  )
+}
