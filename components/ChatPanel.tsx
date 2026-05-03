@@ -490,10 +490,18 @@ export default function ChatPanel() {
               }
               const recognition = new SpeechRecognition()
               recognition.lang = 'en-US'
+              // Important: use interimResults = false to avoid duplication loops
+              recognition.interimResults = false 
+              recognition.continuous = false
+              
               recognition.onstart = () => setIsListening(true)
               recognition.onresult = (e: any) => {
+                // Since we only want the final result of this short utterance, just take the first final transcript
                 const text = e.results[0][0].transcript
-                setInput(prev => prev + (prev ? ' ' : '') + text)
+                setInput(prev => {
+                  const prefix = prev.trim()
+                  return prefix ? `${prefix} ${text}` : text
+                })
               }
               recognition.onerror = () => setIsListening(false)
               recognition.onend = () => setIsListening(false)

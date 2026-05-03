@@ -119,7 +119,8 @@ export async function POST(req: Request) {
   const action = parsed.action!
 
   // ── Execute the intent ────────────────────────────────────────────────────
-  switch (action.intent) {
+  try {
+    switch (action.intent) {
 
     // ── Create a meeting ──────────────────────────────────────────────────
     case 'create_meeting': {
@@ -491,15 +492,30 @@ CHAT: You have 3 unread emails. Here's what needs attention:
       })
     }
 
-    // ── Clarification needed ──────────────────────────────────────────────
-    case 'clarify':
-      return NextResponse.json({
-        type: 'chat',
-        text: action.clarifyQuestion ?? action.naturalResponse,
-      })
+      // ── Clarification needed ──────────────────────────────────────────────
+      case 'clarify':
+        return NextResponse.json({
+          type: 'chat',
+          text: action.clarifyQuestion ?? action.naturalResponse,
+        })
 
-    // ── All other intents — return natural response ───────────────────────
-    default:
-      return NextResponse.json({ type: 'chat', text: action.naturalResponse, action })
+      // ── All other intents — return natural response ───────────────────────
+      default:
+        return NextResponse.json({ type: 'chat', text: action.naturalResponse, action })
+    }
+  } catch (err: any) {
+    console.error('[ExecutiveVAi] Intent Execution Error:', err)
+    
+    // Feature: Better Error Transparency
+    let errMsg = err.message || 'Unknown error occurred.'
+    // Format Google API errors neatly if present
+    if (err.errors && err.errors.length > 0) {
+      errMsg = err.errors[0].message
+    }
+    
+    return NextResponse.json({ 
+      type: 'chat', 
+      text: `⚠️ I ran into an issue trying to do that: *${errMsg}*. Please check your inputs or try again.` 
+    })
   }
 }
