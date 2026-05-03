@@ -162,7 +162,7 @@ export default function ChatPanel() {
                         alignItems: msg.role === 'user' ? 'flex-end' : 'flex-start' }}>
 
             {/* Bubble */}
-            <div className={msg.role === 'user' ? 'bubble-user' : 'bubble-ai'}>
+            <div className={msg.role === 'user' ? 'bubble-user' : 'bubble-ai'} style={{ maxWidth: '90%' }}>
               {msg.content}
             </div>
 
@@ -171,7 +171,7 @@ export default function ChatPanel() {
 
             {/* Day plan cards */}
             {msg.schedule && msg.schedule.length > 0 && (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 8, width: '100%', maxWidth: 480 }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8, width: '100%', maxWidth: '100%' }}>
                 {msg.schedule.map((task, i) => (
                   <DayPlanCard key={i} task={task} />
                 ))}
@@ -180,14 +180,14 @@ export default function ChatPanel() {
 
             {/* Free slot suggestions */}
             {msg.freeSlots && msg.freeSlots.length > 0 && (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 8, maxWidth: 420 }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8, width: '100%', maxWidth: '100%' }}>
                 {msg.freeSlots.map((slot, i) => (
                   <button
                     key={i}
                     id={`slot-${i}`}
                     className="glass btn-ghost"
                     onClick={() => sendMessage(`Book ${slot.label} — ${slot.durationMinutes} mins free`)}
-                    style={{ textAlign: 'left', padding: '10px 14px', borderRadius: 10 }}
+                    style={{ textAlign: 'left', padding: '10px 14px', borderRadius: 10, width: '100%' }}
                   >
                     <span style={{ color: 'var(--meeting-color)', fontWeight: 600 }}>
                       {i + 1}.
@@ -203,10 +203,10 @@ export default function ChatPanel() {
 
             {/* Email list */}
             {msg.emails && msg.emails.length > 0 && (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 12, maxWidth: 500, marginTop: 8 }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 12, width: '100%', maxWidth: '100%', marginTop: 8 }}>
                 {msg.emails.map((email: any, i: number) => (
                   <div key={i} className="glass" style={{ padding: 16, borderRadius: 12 }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4, flexWrap: 'wrap', gap: 4 }}>
                       <span style={{ fontWeight: 600, fontSize: 13, color: 'var(--text)' }}>{email.from.split('<')[0].trim()}</span>
                       <span style={{ fontSize: 11, color: 'var(--text-subtle)' }}>
                         {new Date(email.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
@@ -218,17 +218,17 @@ export default function ChatPanel() {
                     <div style={{ fontSize: 13, color: 'var(--text-muted)', lineHeight: 1.5 }}>
                       {email.body.substring(0, 150)}...
                     </div>
-                    <div style={{ marginTop: 12, display: 'flex', gap: 8 }}>
+                    <div style={{ marginTop: 12, display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                       <button
                         className="btn-ghost"
-                        style={{ fontSize: 11, padding: '4px 10px', borderRadius: 6 }}
+                        style={{ fontSize: 11, padding: '4px 10px', borderRadius: 6, flex: 1 }}
                         onClick={() => setInput(`Reply to ${email.from.split('<')[0].trim()}: `)}
                       >
                         ↩️ Reply
                       </button>
                       <button
                         className="btn-ghost"
-                        style={{ fontSize: 11, padding: '4px 10px', borderRadius: 6 }}
+                        style={{ fontSize: 11, padding: '4px 10px', borderRadius: 6, flex: 1 }}
                         onClick={() => sendMessage(`Summarize the email from ${email.from.split('<')[0].trim()}`)}
                       >
                         📝 Summarize

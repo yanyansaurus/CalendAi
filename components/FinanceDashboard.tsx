@@ -455,20 +455,25 @@ export default function FinanceDashboard() {
       )}
 
       {/* ── Summary Cards ──────────────────────────────────────────── */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 16, marginBottom: 28 }}>
+      <div style={{ 
+        display: 'grid', 
+        gridTemplateColumns: 'repeat(auto-fill, minmax(calc(50% - 8px), 1fr))', 
+        gap: 16, 
+        marginBottom: 28 
+      }}>
         {[
-          { label: 'Monthly Budget', value: fmt(data?.monthlyLimit ?? 0), color: '#818cf8', icon: '🎯' },
-          { label: 'Total Expenses', value: fmt(totalExpenses), color: '#f87171', icon: '💸' },
-          { label: 'Total Income', value: fmt(totalIncome), color: '#34d399', icon: '💵' },
+          { label: 'Budget', value: fmt(data?.monthlyLimit ?? 0), color: '#818cf8', icon: '🎯' },
+          { label: 'Expenses', value: fmt(totalExpenses), color: '#f87171', icon: '💸' },
+          { label: 'Income', value: fmt(totalIncome), color: '#34d399', icon: '💵' },
           { label: 'Savings', value: fmt(totalSavings), color: '#22d3ee', icon: '💰' },
-          { label: 'Remaining', value: fmt(remaining), color: remaining >= 0 ? '#34d399' : '#f87171', icon: remaining >= 0 ? '✅' : '⚠️' },
+          { label: 'Left', value: fmt(remaining), color: remaining >= 0 ? '#34d399' : '#f87171', icon: remaining >= 0 ? '✅' : '⚠️' },
         ].map((card, i) => (
-          <div key={i} className="glass" style={{ padding: 20, borderRadius: 14 }}>
+          <div key={i} className="glass" style={{ padding: 16, borderRadius: 14 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-              <span style={{ fontSize: 12, color: 'var(--text-subtle)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>{card.label}</span>
-              <span style={{ fontSize: 18 }}>{card.icon}</span>
+              <span style={{ fontSize: 10, color: 'var(--text-subtle)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>{card.label}</span>
+              <span style={{ fontSize: 14 }}>{card.icon}</span>
             </div>
-            <p style={{ fontSize: 24, fontWeight: 700, color: card.color }}>{card.value}</p>
+            <p style={{ fontSize: 18, fontWeight: 700, color: card.color }}>{card.value}</p>
           </div>
         ))}
       </div>

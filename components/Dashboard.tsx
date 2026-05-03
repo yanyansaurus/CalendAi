@@ -27,8 +27,8 @@ export default function Dashboard({ session }: DashboardProps) {
 
   return (
     <div style={{ display: 'flex', height: '100vh', overflow: 'hidden', background: 'var(--bg)' }}>
-      {/* Sidebar */}
-      <aside style={{
+      {/* Sidebar - Hidden on mobile */}
+      <aside className="hidden-mobile" style={{
         width: 240, flexShrink: 0, borderRight: '1px solid var(--border)',
         background: 'var(--surface)', display: 'flex', flexDirection: 'column',
         padding: '20px 16px',
@@ -82,33 +82,59 @@ export default function Dashboard({ session }: DashboardProps) {
         </button>
       </aside>
 
+      {/* Mobile Bottom Nav */}
+      <nav className="show-mobile" style={{
+        display: 'none', position: 'fixed', bottom: 0, left: 0, right: 0,
+        height: 64, background: 'var(--surface)', borderTop: '1px solid var(--border)',
+        zIndex: 100, padding: '0 12px',
+      }}>
+        <div style={{ display: 'flex', height: '100%', alignItems: 'center', justifyContent: 'space-around' }}>
+          {navItems.map((item) => (
+            <div 
+              key={item.id} 
+              onClick={() => setActiveTab(item.id)}
+              style={{
+                display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4,
+                padding: '8px 4px', cursor: 'pointer', flex: 1,
+                color: activeTab === item.id ? 'var(--brand-light)' : 'var(--text-muted)',
+                transition: 'all 0.15s',
+              }}
+            >
+              <span style={{ fontSize: 18 }}>{item.icon}</span>
+              <span style={{ fontSize: 10, fontWeight: activeTab === item.id ? 600 : 400 }}>{item.id.charAt(0).toUpperCase() + item.id.slice(1, 4)}</span>
+            </div>
+          ))}
+        </div>
+      </nav>
+
       {/* Main content */}
-      <main style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+      <main style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', paddingBottom: 'env(safe-area-inset-bottom)' }}>
         <header style={{
           height: 60, borderBottom: '1px solid var(--border)',
           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-          padding: '0 24px', flexShrink: 0,
+          padding: '0 16px', flexShrink: 0,
         }}>
-          <div>
-            <h1 style={{ fontSize: 16, fontWeight: 600, lineHeight: 1 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <div className="show-mobile" style={{ display: 'none', fontSize: 18 }}>🤖</div>
+            <h1 style={{ fontSize: 15, fontWeight: 700, lineHeight: 1 }}>
               {navItems.find(i => i.id === activeTab)?.label}
             </h1>
           </div>
-          <div style={{ display: 'flex', gap: 12 }}>
+          <div style={{ display: 'flex', gap: 8 }}>
              {/* Indicators */}
              {[
-               { label: 'Google', active: hasGoogle },
-               { label: 'Zoom', active: hasZoom }
+               { label: 'G', active: hasGoogle },
+               { label: 'Z', active: hasZoom }
              ].map(ind => (
-               <div key={ind.label} style={{ display: 'flex', alignItems: 'center', gap: 6, opacity: ind.active ? 1 : 0.4 }}>
-                 <span style={{ width: 6, height: 6, borderRadius: '50%', background: ind.active ? 'var(--meeting-color)' : '#94a3b8' }} />
-                 <span style={{ fontSize: 11, color: ind.active ? 'var(--text)' : 'var(--text-muted)' }}>{ind.label}</span>
+               <div key={ind.label} style={{ display: 'flex', alignItems: 'center', gap: 4, opacity: ind.active ? 1 : 0.4 }}>
+                 <span style={{ width: 5, height: 5, borderRadius: '50%', background: ind.active ? 'var(--meeting-color)' : '#94a3b8' }} />
+                 <span style={{ fontSize: 10, fontWeight: 600, color: ind.active ? 'var(--text)' : 'var(--text-muted)' }}>{ind.label}</span>
                </div>
              ))}
           </div>
         </header>
 
-        <div style={{ flex: 1, overflow: 'hidden' }}>
+        <div style={{ flex: 1, overflow: 'hidden', marginBottom: 64 /* space for mobile nav */ }} className="content-area">
           {activeTab === 'chat' && <ChatPanel />}
           {activeTab === 'schedule' && <WeekSchedule />}
           {activeTab === 'finances' && <FinanceDashboard />}

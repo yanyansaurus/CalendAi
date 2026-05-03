@@ -194,3 +194,32 @@ html, body {
 }
 
 .animate-fade-up { animation: fadeUp 0.4s ease-out; }
+
+/* ─── Responsive Utilities ─────────────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .hidden-mobile { display: none !important; }
+  .show-mobile { display: block !important; }
+  .flex-mobile-col { flexDirection: column !important; }
+  
+  .container-padding { padding: 16px !important; }
+  
+  h1 { font-size: 28px !important; }
+  h2 { font-size: 22px !important; }
+}
+
+@media (min-width: 769px) {
+  .hidden-desktop { display: none !important; }
+  .show-desktop { display: block !important; }
+}
+
+.responsive-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 20px;
+}
+
+@media (max-width: 480px) {
+  .responsive-grid {
+    grid-template-columns: 1fr;
+  }
+}

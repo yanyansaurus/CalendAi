@@ -2,8 +2,9 @@
 
 export default function SettingsPanel() {
   return (
-    <div style={{ padding: '32px 40px', maxWidth: 800 }}>
-      <header style={{ marginBottom: 40 }}>
+  return (
+    <div style={{ maxWidth: 800, margin: '0 auto' }} className="container-padding">
+      <header style={{ marginBottom: 32 }}>
         <h2 style={{ fontSize: 24, fontWeight: 700, marginBottom: 8 }}>Settings</h2>
         <p style={{ color: 'var(--text-muted)' }}>Manage your personal AI assistant and integrations.</p>
       </header>

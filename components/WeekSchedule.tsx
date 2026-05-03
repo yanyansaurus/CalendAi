@@ -162,72 +162,97 @@ export default function WeekSchedule() {
         <span>🔗 {events.filter(e => e.meetLink).length} with meeting links</span>
       </div>
 
-      {/* ── All-day events bar ─────────────────────────────────────── */}
-      {events.some(e => e.isAllDay) && (
+      {/* ── Grid: Time slots ───────────────────────────────────────── */}
+      <div style={{ flex: 1, overflow: 'auto' }} className="calendar-scroll-container">
+        
+        {/* Day Headers (Sticky at top) */}
         <div style={{
-          display: 'grid', gridTemplateColumns: '60px repeat(7, 1fr)',
-          borderBottom: '1px solid var(--border)', flexShrink: 0,
+          display: 'grid', 
+          gridTemplateColumns: '60px repeat(7, minmax(120px, 1fr))',
+          position: 'sticky',
+          top: 0,
+          zIndex: 30,
+          background: 'var(--surface)',
+          borderBottom: '1px solid var(--border)',
+          minWidth: 'fit-content'
         }}>
-          <div style={{ padding: '6px 8px', fontSize: 10, color: 'var(--text-subtle)' }}>All Day</div>
+          <div style={{ position: 'sticky', left: 0, background: 'var(--surface)', zIndex: 31, borderRight: '1px solid var(--border)' }} />
           {days.map((d, i) => {
-            const adEvents = getAllDayEvents(d)
+            const isToday = d.getTime() === today.getTime()
             return (
-              <div key={i} style={{ padding: '4px 4px', minHeight: 28, borderLeft: '1px solid var(--border)' }}>
-                {adEvents.map(ev => (
-                  <div key={ev.id} style={{
-                    background: 'rgba(99,102,241,0.2)', color: 'var(--brand-light)',
-                    padding: '2px 6px', borderRadius: 4, fontSize: 10, marginBottom: 2,
-                    whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
-                  }}>
-                    {ev.title}
-                  </div>
-                ))}
+              <div key={i} style={{
+                textAlign: 'center', padding: '10px 4px',
+                borderLeft: '1px solid var(--border)',
+                background: isToday ? 'rgba(99,102,241,0.08)' : 'transparent',
+                minWidth: 120
+              }}>
+                <div style={{ fontSize: 10, fontWeight: 600, color: isToday ? 'var(--brand-light)' : 'var(--text-muted)' }}>
+                  {DAY_LABELS[i]}
+                </div>
+                <div style={{
+                  fontSize: 18, fontWeight: 700, marginTop: 2,
+                  color: isToday ? 'var(--brand-light)' : 'var(--text)',
+                  ...(isToday ? {
+                    background: 'var(--brand)', color: '#fff', borderRadius: '50%',
+                    width: 28, height: 28, lineHeight: '28px', margin: '2px auto 0',
+                  } : {}),
+                }}>
+                  {d.getDate()}
+                </div>
               </div>
             )
           })}
         </div>
-      )}
 
-      {/* ── Grid: Day headers ──────────────────────────────────────── */}
-      <div style={{
-        display: 'grid', gridTemplateColumns: '60px repeat(7, 1fr)',
-        borderBottom: '1px solid var(--border)', flexShrink: 0,
-      }}>
-        <div /> {/* spacer for time gutter */}
-        {days.map((d, i) => {
-          const isToday = d.getTime() === today.getTime()
-          return (
-            <div key={i} style={{
-              textAlign: 'center', padding: '10px 4px',
-              borderLeft: '1px solid var(--border)',
-              background: isToday ? 'rgba(99,102,241,0.08)' : 'transparent',
-            }}>
-              <div style={{ fontSize: 11, fontWeight: 600, color: isToday ? 'var(--brand-light)' : 'var(--text-muted)' }}>
-                {DAY_LABELS[i]}
-              </div>
-              <div style={{
-                fontSize: 20, fontWeight: 700, marginTop: 2,
-                color: isToday ? 'var(--brand-light)' : 'var(--text)',
-                ...(isToday ? {
-                  background: 'var(--brand)', color: '#fff', borderRadius: '50%',
-                  width: 32, height: 32, lineHeight: '32px', margin: '2px auto 0',
-                } : {}),
-              }}>
-                {d.getDate()}
-              </div>
-            </div>
-          )
-        })}
-      </div>
+        {/* All-day events (Sticky below headers) */}
+        {events.some(e => e.isAllDay) && (
+          <div style={{
+            display: 'grid', 
+            gridTemplateColumns: '60px repeat(7, minmax(120px, 1fr))',
+            position: 'sticky',
+            top: 50, // Height of headers
+            zIndex: 25,
+            background: 'var(--surface)',
+            borderBottom: '1px solid var(--border)',
+            minWidth: 'fit-content'
+          }}>
+            <div style={{ 
+              position: 'sticky', left: 0, background: 'var(--surface)', zIndex: 26, 
+              padding: '6px 8px', fontSize: 9, color: 'var(--text-subtle)', borderRight: '1px solid var(--border)' 
+            }}>All Day</div>
+            {days.map((d, i) => {
+              const adEvents = getAllDayEvents(d)
+              return (
+                <div key={i} style={{ padding: '4px 4px', minHeight: 28, borderLeft: '1px solid var(--border)', minWidth: 120 }}>
+                  {adEvents.map(ev => (
+                    <div key={ev.id} style={{
+                      background: 'rgba(99,102,241,0.2)', color: 'var(--brand-light)',
+                      padding: '2px 6px', borderRadius: 4, fontSize: 10, marginBottom: 2,
+                      whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+                    }}>
+                      {ev.title}
+                    </div>
+                  ))}
+                </div>
+              )
+            })}
+          </div>
+        )}
 
-      {/* ── Grid: Time slots ───────────────────────────────────────── */}
-      <div style={{ flex: 1, overflow: 'auto' }}>
         <div style={{
-          display: 'grid', gridTemplateColumns: '60px repeat(7, 1fr)',
+          display: 'grid', 
+          gridTemplateColumns: '60px repeat(7, minmax(120px, 1fr))',
           position: 'relative',
+          minWidth: 'fit-content'
         }}>
-          {/* Time gutter */}
-          <div>
+          {/* Time gutter - Sticky on mobile? */}
+          <div style={{ 
+            position: 'sticky', 
+            left: 0, 
+            zIndex: 20, 
+            background: 'var(--bg)',
+            borderRight: '1px solid var(--border)'
+          }}>
             {HOURS.map(h => (
               <div key={h} style={{
                 height: 60, padding: '0 8px', display: 'flex', alignItems: 'flex-start',
@@ -248,6 +273,7 @@ export default function WeekSchedule() {
                 position: 'relative',
                 borderLeft: '1px solid var(--border)',
                 background: isToday ? 'rgba(99,102,241,0.03)' : 'transparent',
+                minWidth: 120
               }}>
                 {/* Hour grid lines */}
                 {HOURS.map(h => (
@@ -302,17 +328,6 @@ export default function WeekSchedule() {
                         <div style={{ fontSize: 10, color: 'var(--text-muted)', marginTop: 1 }}>
                           {startTime}
                         </div>
-                      )}
-                      {height >= 52 && ev.meetLink && (
-                        <a
-                          href={ev.meetLink}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          style={{ fontSize: 9, color: 'var(--brand-light)', textDecoration: 'none' }}
-                          onClick={e => e.stopPropagation()}
-                        >
-                          🔗 Join
-                        </a>
                       )}
                     </div>
                   )

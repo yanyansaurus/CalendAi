@@ -45,29 +45,28 @@ export default function LandingPage() {
         background: 'rgba(10,10,20,0.7)', borderBottom: '1px solid var(--border)',
       }}>
         <div style={{
-          maxWidth: 1200, margin: '0 auto', padding: '0 24px',
+          maxWidth: 1200, margin: '0 auto', padding: '0 16px',
           height: 64, display: 'flex', alignItems: 'center', justifyContent: 'space-between',
         }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <div style={{
-              width: 36, height: 36, borderRadius: 10,
+              width: 32, height: 32, borderRadius: 8,
               background: 'linear-gradient(135deg, #6366f1, #4f46e5)',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontSize: 18, boxShadow: '0 4px 12px rgba(99,102,241,0.35)',
+              fontSize: 16, boxShadow: '0 4px 12px rgba(99,102,241,0.35)',
             }}>🤖</div>
-            <span style={{ fontWeight: 800, fontSize: 18, letterSpacing: '-0.02em' }}>
+            <span style={{ fontWeight: 800, fontSize: 16, letterSpacing: '-0.02em' }}>
               Executive<span style={{ color: '#818cf8' }}>VAi</span>
             </span>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 24 }}>
-            <a href="#features" style={{ color: 'var(--text-muted)', fontSize: 14, textDecoration: 'none', transition: 'color 0.2s' }}>Features</a>
-            <a href="#how" style={{ color: 'var(--text-muted)', fontSize: 14, textDecoration: 'none' }}>How It Works</a>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+            <a href="#features" className="hidden-mobile" style={{ color: 'var(--text-muted)', fontSize: 13, textDecoration: 'none' }}>Features</a>
             <button
               onClick={() => router.push('/login')}
               className="btn-brand"
-              style={{ fontSize: 13, padding: '8px 20px' }}
+              style={{ fontSize: 12, padding: '7px 16px' }}
             >
-              Get Started Free
+              Get Started
             </button>
           </div>
         </div>
@@ -75,85 +74,56 @@ export default function LandingPage() {
 
       {/* ═══ Hero Section ═══ */}
       <section style={{
-        paddingTop: 140, paddingBottom: 100,
+        paddingTop: 120, paddingBottom: 60,
         position: 'relative', overflow: 'hidden',
       }}>
-        {/* Glow orbs */}
-        <div style={{ position: 'absolute', top: '-15%', left: '-5%', width: 700, height: 700, borderRadius: '50%', background: 'radial-gradient(circle, rgba(99,102,241,0.12) 0%, transparent 65%)', filter: 'blur(60px)', pointerEvents: 'none' }} />
-        <div style={{ position: 'absolute', bottom: '-20%', right: '-10%', width: 600, height: 600, borderRadius: '50%', background: 'radial-gradient(circle, rgba(96,165,250,0.08) 0%, transparent 65%)', filter: 'blur(60px)', pointerEvents: 'none' }} />
-
-        <div style={{ maxWidth: 1200, margin: '0 auto', padding: '0 24px', display: 'flex', alignItems: 'center', gap: 60, flexWrap: 'wrap' }}>
+        <div style={{ maxWidth: 1200, margin: '0 auto', padding: '0 24px', display: 'flex', alignItems: 'center', gap: 40, flexWrap: 'wrap' }}>
           {/* Left — Copy */}
-          <div style={{ flex: '1 1 480px', minWidth: 320 }}>
-            <div style={{ display: 'inline-block', background: 'rgba(99,102,241,0.12)', border: '1px solid rgba(99,102,241,0.25)', borderRadius: 20, padding: '4px 14px', fontSize: 12, color: '#a5b4fc', marginBottom: 20, fontWeight: 600 }}>
+          <div style={{ flex: '1 1 400px', textAlign: 'center', margin: '0 auto' }} className="hero-copy">
+            <div style={{ display: 'inline-block', background: 'rgba(99,102,241,0.12)', border: '1px solid rgba(99,102,241,0.25)', borderRadius: 20, padding: '4px 12px', fontSize: 11, color: '#a5b4fc', marginBottom: 16, fontWeight: 600 }}>
               ✨ Your AI Executive Assistant
             </div>
-            <h1 style={{ fontSize: 52, fontWeight: 800, lineHeight: 1.1, letterSpacing: '-0.03em', marginBottom: 20 }}>
+            <h1 style={{ fontSize: 'clamp(32px, 8vw, 52px)', fontWeight: 800, lineHeight: 1.1, letterSpacing: '-0.03em', marginBottom: 20 }}>
               Smart scheduling<br />
               <span className="gradient-text">reimagined with AI</span>
             </h1>
-            <p style={{ fontSize: 18, color: 'var(--text-muted)', lineHeight: 1.7, marginBottom: 36, maxWidth: 500 }}>
-              Speak naturally to create events, manage emails, track budgets, and control your entire day — or let your AI Chief of Staff handle it for you.
+            <p style={{ fontSize: 16, color: 'var(--text-muted)', lineHeight: 1.6, marginBottom: 32, maxWidth: 500, margin: '0 auto 32px' }}>
+              Speak naturally to create events, manage emails, track budgets, and control your entire day.
             </p>
-            <div style={{ display: 'flex', gap: 12, alignItems: 'center', flexWrap: 'wrap' }}>
+            <div style={{ display: 'flex', gap: 12, justifyContent: 'center', alignItems: 'center', flexWrap: 'wrap' }}>
               <button
                 onClick={() => router.push('/login')}
                 className="btn-brand"
-                style={{ fontSize: 16, padding: '14px 32px', boxShadow: '0 8px 32px rgba(99,102,241,0.4)' }}
+                style={{ fontSize: 15, padding: '12px 28px' }}
               >
                 Get Started — It&apos;s Free
               </button>
-              <span style={{ fontSize: 13, color: 'var(--text-subtle)' }}>No credit card required</span>
             </div>
           </div>
 
-          {/* Right — Chat Demo */}
-          <div style={{ flex: '1 1 420px', minWidth: 320 }}>
+          {/* Right — Chat Demo (smaller on mobile) */}
+          <div style={{ flex: '1 1 300px', width: '100%' }}>
             <div className="glass" style={{
-              padding: 24, borderRadius: 20, maxWidth: 460,
-              boxShadow: '0 24px 80px rgba(0,0,0,0.4), 0 0 0 1px rgba(99,102,241,0.1)',
+              padding: 20, borderRadius: 20, maxWidth: 420, margin: '0 auto',
+              boxShadow: '0 20px 60px rgba(0,0,0,0.3)',
             }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 20, paddingBottom: 16, borderBottom: '1px solid var(--border)' }}>
-                <div style={{ width: 32, height: 32, borderRadius: 8, background: 'linear-gradient(135deg, #6366f1, #4f46e5)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14 }}>🤖</div>
-                <div>
-                  <div style={{ fontWeight: 700, fontSize: 14 }}>ExecutiveVAi</div>
-                  <div style={{ fontSize: 11, color: 'var(--text-subtle)' }}>Your AI Assistant</div>
-                </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16, paddingBottom: 12, borderBottom: '1px solid var(--border)' }}>
+                <div style={{ width: 28, height: 28, borderRadius: 7, background: 'linear-gradient(135deg, #6366f1, #4f46e5)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12 }}>🤖</div>
+                <div style={{ fontWeight: 700, fontSize: 13 }}>ExecutiveVAi</div>
               </div>
 
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 12, minHeight: 200 }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10, minHeight: 180 }}>
                 {CHAT_DEMO.slice(0, visibleMessages).map((msg, i) => (
-                  <div
-                    key={i}
-                    className="animate-fade-up"
-                    style={{
-                      alignSelf: msg.role === 'user' ? 'flex-end' : 'flex-start',
-                      maxWidth: '85%',
-                      padding: '10px 14px',
-                      borderRadius: msg.role === 'user' ? '14px 14px 4px 14px' : '14px 14px 14px 4px',
-                      background: msg.role === 'user' ? 'linear-gradient(135deg, #6366f1, #4f46e5)' : 'var(--surface-2)',
-                      fontSize: 13, lineHeight: 1.5,
-                      color: msg.role === 'user' ? '#fff' : 'var(--text)',
-                    }}
-                  >
+                  <div key={i} className="animate-fade-up" style={{
+                    alignSelf: msg.role === 'user' ? 'flex-end' : 'flex-start',
+                    maxWidth: '90%', padding: '8px 12px',
+                    borderRadius: msg.role === 'user' ? '12px 12px 4px 12px' : '12px 12px 12px 4px',
+                    background: msg.role === 'user' ? 'linear-gradient(135deg, #6366f1, #4f46e5)' : 'var(--surface-2)',
+                    fontSize: 12, color: msg.role === 'user' ? '#fff' : 'var(--text)',
+                  }}>
                     {msg.text}
                   </div>
                 ))}
-                {visibleMessages < CHAT_DEMO.length && (
-                  <div style={{ alignSelf: 'flex-start', display: 'flex', gap: 4, padding: '10px 14px' }}>
-                    <div className="typing-dot" style={{ width: 6, height: 6 }} />
-                    <div className="typing-dot" style={{ width: 6, height: 6 }} />
-                    <div className="typing-dot" style={{ width: 6, height: 6 }} />
-                  </div>
-                )}
-              </div>
-
-              <div style={{
-                marginTop: 16, padding: '10px 14px', borderRadius: 12,
-                background: 'var(--surface)', border: '1px solid var(--border)',
-                fontSize: 13, color: 'var(--text-subtle)',
-              }}>
-                Ask your calendar anything...
               </div>
             </div>
           </div>
@@ -161,101 +131,52 @@ export default function LandingPage() {
       </section>
 
       {/* ═══ Features Grid ═══ */}
-      <section id="features" style={{ padding: '80px 24px', maxWidth: 1200, margin: '0 auto' }}>
-        <div style={{ textAlign: 'center', marginBottom: 60 }}>
-          <h2 style={{ fontSize: 36, fontWeight: 800, letterSpacing: '-0.02em', marginBottom: 12 }}>
-            Everything you need, <span className="gradient-text">one conversation away</span>
+      <section id="features" style={{ padding: '60px 16px', maxWidth: 1200, margin: '0 auto' }}>
+        <div style={{ textAlign: 'center', marginBottom: 40 }}>
+          <h2 style={{ fontSize: 'clamp(24px, 5vw, 36px)', fontWeight: 800, marginBottom: 12 }}>
+            One conversation <span className="gradient-text">away</span>
           </h2>
-          <p style={{ color: 'var(--text-muted)', fontSize: 16, maxWidth: 520, margin: '0 auto' }}>
-            ExecutiveVAi combines calendar automation, email intelligence, and budget tracking into a single AI-powered assistant.
-          </p>
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 20 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 16 }}>
           {FEATURES.map((f, i) => (
-            <div key={i} className="glass" style={{
-              padding: 28, borderRadius: 16, transition: 'transform 0.2s, box-shadow 0.2s',
-              cursor: 'default',
-            }}
-              onMouseEnter={e => { (e.currentTarget).style.transform = 'translateY(-4px)'; (e.currentTarget).style.boxShadow = '0 16px 48px rgba(99,102,241,0.12)' }}
-              onMouseLeave={e => { (e.currentTarget).style.transform = 'translateY(0)'; (e.currentTarget).style.boxShadow = 'none' }}
-            >
-              <div style={{ fontSize: 28, marginBottom: 14 }}>{f.icon}</div>
-              <h3 style={{ fontSize: 16, fontWeight: 700, marginBottom: 8 }}>{f.title}</h3>
-              <p style={{ fontSize: 14, color: 'var(--text-muted)', lineHeight: 1.6 }}>{f.desc}</p>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* ═══ How It Works ═══ */}
-      <section id="how" style={{ padding: '80px 24px', maxWidth: 1200, margin: '0 auto' }}>
-        <div style={{ textAlign: 'center', marginBottom: 60 }}>
-          <h2 style={{ fontSize: 36, fontWeight: 800, letterSpacing: '-0.02em', marginBottom: 12 }}>
-            Three steps to <span className="gradient-text">automated productivity</span>
-          </h2>
-        </div>
-
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 32 }}>
-          {STEPS.map((s, i) => (
-            <div key={i} style={{ textAlign: 'center', padding: '0 16px' }}>
-              <div style={{
-                width: 56, height: 56, borderRadius: 16, margin: '0 auto 20px',
-                background: 'linear-gradient(135deg, rgba(99,102,241,0.2), rgba(99,102,241,0.05))',
-                border: '1px solid rgba(99,102,241,0.2)',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                fontSize: 20, fontWeight: 800, color: '#818cf8',
-              }}>
-                {s.num}
-              </div>
-              <h3 style={{ fontSize: 18, fontWeight: 700, marginBottom: 8 }}>{s.title}</h3>
-              <p style={{ fontSize: 14, color: 'var(--text-muted)', lineHeight: 1.6 }}>{s.desc}</p>
+            <div key={i} className="glass" style={{ padding: 24, borderRadius: 16 }}>
+              <div style={{ fontSize: 24, marginBottom: 12 }}>{f.icon}</div>
+              <h3 style={{ fontSize: 15, fontWeight: 700, marginBottom: 6 }}>{f.title}</h3>
+              <p style={{ fontSize: 13, color: 'var(--text-muted)', lineHeight: 1.5 }}>{f.desc}</p>
             </div>
           ))}
         </div>
       </section>
 
       {/* ═══ CTA Section ═══ */}
-      <section style={{ padding: '80px 24px', textAlign: 'center' }}>
+      <section style={{ padding: '40px 16px', textAlign: 'center' }}>
         <div style={{
-          maxWidth: 700, margin: '0 auto', padding: '60px 40px', borderRadius: 24,
+          maxWidth: 700, margin: '0 auto', padding: '40px 24px', borderRadius: 24,
           background: 'linear-gradient(135deg, rgba(99,102,241,0.12), rgba(79,70,229,0.05))',
           border: '1px solid rgba(99,102,241,0.15)',
         }}>
-          <h2 style={{ fontSize: 32, fontWeight: 800, letterSpacing: '-0.02em', marginBottom: 12 }}>
-            Ready to reclaim your time?
-          </h2>
-          <p style={{ color: 'var(--text-muted)', fontSize: 16, marginBottom: 32, maxWidth: 450, margin: '0 auto 32px' }}>
-            Start using the most intelligent calendar assistant ever built. No waitlist, no delays.
-          </p>
+          <h2 style={{ fontSize: 24, fontWeight: 800, marginBottom: 12 }}>Reclaim your time</h2>
           <button
             onClick={() => router.push('/login')}
             className="btn-brand"
-            style={{ fontSize: 16, padding: '14px 36px', boxShadow: '0 8px 32px rgba(99,102,241,0.4)' }}
+            style={{ fontSize: 15, padding: '12px 32px' }}
           >
-            Get Started — Free Forever
+            Get Started Free
           </button>
-          <p style={{ fontSize: 12, color: 'var(--text-subtle)', marginTop: 16 }}>
-            Free forever plan available • No credit card required
-          </p>
         </div>
       </section>
 
       {/* ═══ Footer ═══ */}
       <footer style={{
-        borderTop: '1px solid var(--border)', padding: '40px 24px',
-        maxWidth: 1200, margin: '0 auto',
-        display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-        flexWrap: 'wrap', gap: 16,
+        borderTop: '1px solid var(--border)', padding: '32px 16px',
+        maxWidth: 1200, margin: '0 auto', textAlign: 'center',
       }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <span style={{ fontWeight: 700 }}>Executive<span style={{ color: '#818cf8' }}>VAi</span></span>
-          <span style={{ color: 'var(--text-subtle)', fontSize: 12 }}>— Your AI Executive Assistant</span>
-        </div>
-        <p style={{ color: 'var(--text-subtle)', fontSize: 12 }}>
+        <p style={{ color: 'var(--text-subtle)', fontSize: 11 }}>
           © {new Date().getFullYear()} ExecutiveVAi. All rights reserved.
         </p>
       </footer>
+    </div>
     </div>
   )
 }
