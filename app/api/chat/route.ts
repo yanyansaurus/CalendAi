@@ -124,7 +124,11 @@ export async function POST(req: Request) {
 
     // ── Create a meeting ──────────────────────────────────────────────────
     case 'create_meeting': {
-      const startTime = action.startTime ?? new Date(Date.now() + 5 * 60000).toISOString()
+      let startTime = new Date(Date.now() + 5 * 60000).toISOString()
+      if (action.startTime) {
+        // Ensure AI's floating timestamp is converted to a proper UTC ISO string based on server timezone
+        startTime = new Date(action.startTime).toISOString()
+      }
       const duration  = action.duration  ?? 30
       const title     = action.title     ?? 'Meeting'
       let meetingResult: MeetingResult | null = null
@@ -180,7 +184,10 @@ export async function POST(req: Request) {
         return NextResponse.json({ type: 'chat', text: '⚠️ Google Calendar is not connected. Please sign out and sign back in to reconnect.' })
       }
 
-      const startTime = action.startTime ?? new Date(Date.now() + 5 * 60000).toISOString()
+      let startTime = new Date(Date.now() + 5 * 60000).toISOString()
+      if (action.startTime) {
+        startTime = new Date(action.startTime).toISOString()
+      }
       const duration  = action.duration  ?? 60
       const title     = action.title     ?? 'Event'
       const endTime   = new Date(new Date(startTime).getTime() + duration * 60000).toISOString()
