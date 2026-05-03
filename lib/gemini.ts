@@ -3,9 +3,24 @@ import { GoogleGenerativeAI } from '@google/generative-ai'
 // ─── Gemini client ────────────────────────────────────────────────────────────
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!)
 
+// Models in priority order — falls back if the primary is unavailable
+const MODEL_PRIORITY = [
+  'gemini-2.0-flash',
+  'gemini-1.5-flash',
+]
+
 export function getGeminiModel(systemInstruction?: string) {
-  const modelName = 'gemini-3.1-flash-lite-preview'
+  const modelName = MODEL_PRIORITY[0]
   console.log(`[ExecutiveVAi] Initializing Gemini with model: ${modelName}`)
+  return genAI.getGenerativeModel({ 
+    model: modelName,
+    systemInstruction: systemInstruction ? { role: 'system', parts: [{ text: systemInstruction }] } : undefined
+  })
+}
+
+export function getFallbackGeminiModel(systemInstruction?: string) {
+  const modelName = MODEL_PRIORITY[1]
+  console.log(`[ExecutiveVAi] Falling back to model: ${modelName}`)
   return genAI.getGenerativeModel({ 
     model: modelName,
     systemInstruction: systemInstruction ? { role: 'system', parts: [{ text: systemInstruction }] } : undefined

@@ -1,5 +1,5 @@
 import { auth } from '@/lib/auth'
-import { getGeminiModel, SYSTEM_PROMPT } from '@/lib/gemini'
+import { getGeminiModel, getFallbackGeminiModel, SYSTEM_PROMPT } from '@/lib/gemini'
 import { parseIntent } from '@/lib/intentParser'
 import { getFreeBusy, createGoogleMeet, createCalendarEvent, updateCalendarEvent, deleteCalendarEvent } from '@/lib/googleCalendar'
 import { getUnreadEmails, sendEmail } from '@/lib/gmail'
@@ -69,19 +69,29 @@ export async function POST(req: Request) {
     const result = await chat.sendMessage(message)
     rawResponse  = result.response.text()
   } catch (err: any) {
-    if (err.status === 429) {
-      const retryMatch = err.message?.match(/retry in ([\d.]+)s/i)
-      const retrySec   = retryMatch ? Math.ceil(parseFloat(retryMatch[1])) : 30
+    console.error('Primary model error:', err.status, err.message)
+    // ── Auto-fallback to secondary model ──
+    try {
+      console.log('[ExecutiveVAi] Retrying with fallback model...')
+      const fallbackModel = getFallbackGeminiModel(systemPrompt)
+      const fallbackChat = fallbackModel.startChat({ history: cleanedHistory })
+      const fallbackResult = await fallbackChat.sendMessage(message)
+      rawResponse = fallbackResult.response.text()
+    } catch (fallbackErr: any) {
+      if (fallbackErr.status === 429) {
+        const retryMatch = fallbackErr.message?.match(/retry in ([\d.]+)s/i)
+        const retrySec   = retryMatch ? Math.ceil(parseFloat(retryMatch[1])) : 30
+        return NextResponse.json({
+          type: 'chat',
+          text: `⏳ I'm being rate-limited by the AI service. Please wait ~${retrySec} seconds and try again.`,
+        })
+      }
+      console.error('Fallback model error:', fallbackErr)
       return NextResponse.json({
         type: 'chat',
-        text: `⏳ I'm being rate-limited by the AI service. Please wait ~${retrySec} seconds and try again.`,
+        text: '⚠️ Something went wrong with the AI service. Please try again in a moment.',
       })
     }
-    console.error('Gemini API error:', err)
-    return NextResponse.json({
-      type: 'chat',
-      text: '⚠️ Something went wrong with the AI service. Please try again in a moment.',
-    })
   }
 
   const parsed = parseIntent(rawResponse)
