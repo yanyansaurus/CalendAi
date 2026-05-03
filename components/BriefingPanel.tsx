@@ -42,6 +42,26 @@ export default function BriefingPanel() {
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [emailing, setEmailing] = useState(false)
+  const [emailSent, setEmailSent] = useState(false)
+
+  const sendEmailBriefing = async () => {
+    if (!briefing) return
+    setEmailing(true)
+    try {
+      const res = await fetch('/api/briefing/send', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ briefing })
+      })
+      if (res.ok) {
+        setEmailSent(true)
+        setTimeout(() => setEmailSent(false), 5000)
+      }
+    } finally {
+      setEmailing(false)
+    }
+  }
 
   const loadBriefing = async (isRefresh = false) => {
     if (isRefresh) setRefreshing(true)
@@ -99,15 +119,26 @@ export default function BriefingPanel() {
             {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}
           </p>
         </div>
-        <button
-          onClick={() => loadBriefing(true)}
-          disabled={refreshing}
-          className="btn-ghost"
-          style={{ fontSize: 16, padding: '6px 10px', borderRadius: 8, opacity: refreshing ? 0.5 : 1, transition: 'all 0.2s' }}
-          title="Refresh briefing"
-        >
-          {refreshing ? '⏳' : '🔄'}
-        </button>
+        <div style={{ display: 'flex', gap: 8 }}>
+          {/* Feature: Send Daily Briefing to my Email 📰 */}
+          <button
+            onClick={sendEmailBriefing}
+            disabled={emailing || emailSent}
+            className="btn-brand"
+            style={{ fontSize: 13, padding: '6px 14px', borderRadius: 8, transition: 'all 0.2s', display: 'flex', alignItems: 'center', gap: 6 }}
+          >
+            {emailSent ? '✅ Sent!' : emailing ? 'Sending...' : '📧 Email Me'}
+          </button>
+          <button
+            onClick={() => loadBriefing(true)}
+            disabled={refreshing}
+            className="btn-ghost"
+            style={{ fontSize: 16, padding: '6px 10px', borderRadius: 8, opacity: refreshing ? 0.5 : 1, transition: 'all 0.2s' }}
+            title="Refresh briefing"
+          >
+            {refreshing ? '⏳' : '🔄'}
+          </button>
+        </div>
       </div>
 
       {/* Today's Reminders */}

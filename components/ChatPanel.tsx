@@ -93,6 +93,7 @@ export default function ChatPanel() {
   const [messages, setMessages]       = useState<ChatMessage[]>([WELCOME_MSG])
   const [input, setInput]             = useState('')
   const [isTyping, setIsTyping]       = useState(false)
+  const [isListening, setIsListening] = useState(false)
   const [reminders, setReminders]     = useState<Reminder[]>([])
   const [historyLoaded, setHistoryLoaded] = useState(false)
   const [showCommands, setShowCommands] = useState(false)
@@ -109,6 +110,13 @@ export default function ChatPanel() {
     window.addEventListener('send-chat', handleSendChat)
     return () => window.removeEventListener('send-chat', handleSendChat)
   }, [messages]) // Need messages dependency for sendMessage state
+
+  // Request notification permission on mount
+  useEffect(() => {
+    if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'default') {
+      Notification.requestPermission()
+    }
+  }, [])
 
   // Close command menu on click outside
   useEffect(() => {
@@ -161,6 +169,15 @@ export default function ChatPanel() {
         const data = await res.json()
         if (data.reminders?.length) {
           setReminders((prev) => [...prev, ...data.reminders])
+          // Feature: Browser Push Notifications 🔔
+          if ('Notification' in window && Notification.permission === 'granted') {
+            data.reminders.forEach((r: any) => {
+              new Notification('ExecutiveVAi Reminder', { 
+                body: r.title,
+                icon: 'https://cdn-icons-png.flaticon.com/512/825/825590.png'
+              })
+            })
+          }
         }
       } catch { /* ignore */ }
     }
@@ -463,6 +480,36 @@ export default function ChatPanel() {
               maxHeight: 120, overflowY: 'auto',
             }}
           />
+          {/* Feature: Voice Commands 🎙️ */}
+          <button
+            onClick={() => {
+              const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition
+              if (!SpeechRecognition) {
+                alert("Voice commands are not supported in your browser.")
+                return
+              }
+              const recognition = new SpeechRecognition()
+              recognition.lang = 'en-US'
+              recognition.onstart = () => setIsListening(true)
+              recognition.onresult = (e: any) => {
+                const text = e.results[0][0].transcript
+                setInput(prev => prev + (prev ? ' ' : '') + text)
+              }
+              recognition.onerror = () => setIsListening(false)
+              recognition.onend = () => setIsListening(false)
+              recognition.start()
+            }}
+            style={{
+              width: 40, height: 40, borderRadius: 12, border: 'none', cursor: 'pointer',
+              background: isListening ? 'rgba(248,113,113,0.2)' : 'var(--surface-3)',
+              color: isListening ? '#f87171' : 'var(--text-muted)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              transition: 'all 0.2s', flexShrink: 0,
+            }}
+            title="Voice input"
+          >
+            {isListening ? '🛑' : '🎙️'}
+          </button>
           <button
             id="btn-send"
             onClick={() => sendMessage(input)}

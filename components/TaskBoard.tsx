@@ -1,5 +1,6 @@
 'use client'
 import { useEffect, useState, useCallback } from 'react'
+import confetti from 'canvas-confetti'
 
 interface Task {
   id: string
@@ -63,10 +64,23 @@ export default function TaskBoard() {
 
   const cycleStatus = async (task: Task) => {
     const next: Record<string, string> = { todo: 'in_progress', in_progress: 'done', done: 'todo' }
+    const nextStatus = next[task.status]
+    
+    // Feature: Interactive Task Completion Fireworks 🎉
+    if (nextStatus === 'done') {
+      confetti({
+        particleCount: 100,
+        spread: 70,
+        origin: { y: 0.6 },
+        colors: [PRIORITY_CONFIG[task.priority].color, '#ffffff', '#818cf8'],
+        zIndex: 9999
+      })
+    }
+
     const res = await fetch('/api/tasks', {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ taskId: task.id, status: next[task.status] }),
+      body: JSON.stringify({ taskId: task.id, status: nextStatus }),
     })
     if (res.ok) {
       const data = await res.json()
