@@ -391,17 +391,57 @@ export async function POST(req: Request) {
       }
       const emails = await getUnreadEmails(googleToken, 5)
       
-      let summaryText = action.naturalResponse
       if (emails.length === 0) {
-        summaryText = "You have no new unread emails in your Primary inbox."
+        return NextResponse.json({
+          type: 'chat',
+          text: "📭 You have no new unread emails in your Primary inbox.",
+          emails: []
+        })
       }
 
-      return NextResponse.json({
-        type: 'chat',
-        text: summaryText,
-        action,
-        emails
-      })
+      // Feed emails back to the AI for intelligent analysis
+      const emailAnalysisPrompt = `You just fetched ${emails.length} unread emails for the user. Analyze them and give a smart summary.
+
+Here are the emails:
+${emails.map((e, i) => `${i + 1}. FROM: ${e.from} | SUBJECT: ${e.subject} | BODY: ${e.body?.substring(0, 300)}`).join('\n')}
+
+IMPORTANT RULES:
+- If any email is about scheduling a meeting, call, or appointment → mention it clearly and say "Would you like me to schedule this?"
+- If any email has a deadline or due date → highlight it
+- If any email needs a reply → say so
+- Be concise, use bullet points
+- Start your response with a brief overview like "You have X unread emails. Here's what needs your attention:"
+
+Respond with ONLY a CHAT: message. Example:
+CHAT: You have 3 unread emails. Here's what needs attention:
+
+📌 **Meeting request** from John — wants to schedule a call for Friday. Want me to set it up?
+📧 **Project update** from Sarah — FYI, no action needed.
+⏰ **Deadline reminder** from Prof. Garcia — Assignment due May 5th.`
+
+      try {
+        const analysisResult = await chat.sendMessage(emailAnalysisPrompt)
+        let analysisText = analysisResult.response.text().trim()
+        // Strip CHAT: prefix if present
+        if (analysisText.startsWith('CHAT:')) {
+          analysisText = analysisText.substring(5).trim()
+        }
+
+        return NextResponse.json({
+          type: 'chat',
+          text: analysisText,
+          action,
+          emails
+        })
+      } catch {
+        // Fallback to basic summary if AI analysis fails
+        return NextResponse.json({
+          type: 'chat',
+          text: `📧 You have ${emails.length} unread emails. Check them below:`,
+          action,
+          emails
+        })
+      }
     }
 
     case 'send_email': {
