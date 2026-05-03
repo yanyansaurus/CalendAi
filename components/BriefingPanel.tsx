@@ -39,11 +39,13 @@ const URGENCY_COLORS: Record<string, string> = {
 
 export default function BriefingPanel() {
   const [briefing, setBriefing] = useState<Briefing | null>(null)
-  const [loading, setLoading] = useState(false)
+  const [loading, setLoading] = useState(true)
+  const [refreshing, setRefreshing] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  const loadBriefing = async () => {
-    setLoading(true)
+  const loadBriefing = async (isRefresh = false) => {
+    if (isRefresh) setRefreshing(true)
+    else setLoading(true)
     setError(null)
     try {
       const res = await fetch('/api/briefing', {
@@ -56,26 +58,14 @@ export default function BriefingPanel() {
       setError(err.message)
     } finally {
       setLoading(false)
+      setRefreshing(false)
     }
   }
 
-  if (!briefing && !loading && !error) {
-    return (
-      <div style={{ padding: 40, textAlign: 'center', maxWidth: 600, margin: '0 auto' }}>
-        <div style={{ fontSize: 48, marginBottom: 16 }}>🧠</div>
-        <h2 style={{ fontSize: 24, fontWeight: 700, marginBottom: 8 }}>AI Daily Briefing</h2>
-        <p style={{ color: 'var(--text-muted)', marginBottom: 24, lineHeight: 1.6 }}>
-          Get an AI-powered overview of your day — calendar events, important emails, and a recommended schedule.
-        </p>
-        <button className="btn-brand" onClick={loadBriefing} style={{ fontSize: 15, padding: '12px 28px' }}>
-          🚀 Generate Today&apos;s Briefing
-        </button>
-        <p style={{ fontSize: 11, color: 'var(--text-subtle)', marginTop: 12 }}>Uses 1 AI credit</p>
-      </div>
-    )
-  }
+  // Auto-load on mount
+  useEffect(() => { loadBriefing() }, [])
 
-  if (loading) {
+  if (loading && !briefing) {
     return (
       <div style={{ padding: 40, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16 }}>
         <div style={{ display: 'flex', gap: 6 }}>
@@ -83,28 +73,39 @@ export default function BriefingPanel() {
           <div className="typing-dot" style={{ width: 10, height: 10 }} />
           <div className="typing-dot" style={{ width: 10, height: 10 }} />
         </div>
-        <p style={{ color: 'var(--text-muted)', fontSize: 13 }}>Analyzing your calendar, emails, and tasks…</p>
+        <p style={{ color: 'var(--text-muted)', fontSize: 13 }}>Generating your AI briefing…</p>
       </div>
     )
   }
 
-  if (error || !briefing) {
+  if (error && !briefing) {
     return (
       <div style={{ padding: 40, textAlign: 'center' }}>
-        <p style={{ color: 'var(--danger)', marginBottom: 16 }}>{error ?? 'Failed to load briefing.'}</p>
-        <button className="btn-brand" onClick={loadBriefing}>🔄 Retry</button>
+        <p style={{ color: 'var(--danger)', marginBottom: 16 }}>{error}</p>
+        <button className="btn-brand" onClick={() => loadBriefing()}>🔄 Retry</button>
       </div>
     )
   }
 
   return (
     <div style={{ overflowY: 'auto', height: '100%' }} className="container-padding">
-      {/* Greeting */}
-      <div style={{ marginBottom: 28 }}>
-        <h2 style={{ fontSize: 22, fontWeight: 700, marginBottom: 6 }}>{briefing.greeting}</h2>
-        <p style={{ fontSize: 13, color: 'var(--text-muted)' }}>
-          {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}
-        </p>
+      {/* Header with Refresh */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 28 }}>
+        <div>
+          <h2 style={{ fontSize: 22, fontWeight: 700, marginBottom: 6 }}>{briefing.greeting}</h2>
+          <p style={{ fontSize: 13, color: 'var(--text-muted)' }}>
+            {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}
+          </p>
+        </div>
+        <button
+          onClick={() => loadBriefing(true)}
+          disabled={refreshing}
+          className="btn-ghost"
+          style={{ fontSize: 16, padding: '6px 10px', borderRadius: 8, opacity: refreshing ? 0.5 : 1, transition: 'all 0.2s' }}
+          title="Refresh briefing"
+        >
+          {refreshing ? '⏳' : '🔄'}
+        </button>
       </div>
 
       {/* Today's Reminders */}
@@ -197,9 +198,6 @@ export default function BriefingPanel() {
         </div>
       )}
 
-      <button className="btn-ghost" onClick={loadBriefing} style={{ width: '100%', justifyContent: 'center', fontSize: 12 }}>
-        🔄 Refresh Briefing
-      </button>
     </div>
   )
 }
