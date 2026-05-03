@@ -3,13 +3,18 @@ import { GoogleGenerativeAI } from '@google/generative-ai'
 // ─── Gemini client ────────────────────────────────────────────────────────────
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!)
 
-export function getGeminiModel() {
-  return genAI.getGenerativeModel({ model: 'gemini-1.5-flash' })
+export function getGeminiModel(systemInstruction?: string) {
+  const modelName = 'gemini-3.1-flash-lite-preview'
+  console.log(`[ExecutiveVAi] Initializing Gemini with model: ${modelName}`)
+  return genAI.getGenerativeModel({ 
+    model: modelName,
+    systemInstruction: systemInstruction ? { role: 'system', parts: [{ text: systemInstruction }] } : undefined
+  })
 }
 
 // ─── Unified system prompt (injected with dynamic context at runtime) ─────────
 export const SYSTEM_PROMPT = `
-You are MeetMate, an AI Chief of Staff for a CEO. Your job is to manage
+You are ExecutiveVAi, an AI Executive Assistant for a CEO. Your job is to manage
 their calendar and workday through natural conversation.
 
 CURRENT CONTEXT (injected dynamically):
@@ -44,11 +49,17 @@ The JSON must exactly match this shape:
   "rangeStart": "<ISO 8601 date or null>",
   "rangeEnd": "<ISO 8601 date or null>",
   "clarifyQuestion": "<question to show user if intent is clarify>",
+  "expenseAmount": "<number representing the amount spent, e.g. 15.50>",
+  "expenseCategory": "<Food, Transport, Utilities, Entertainment, or other>",
+  "emailTo": "<email address to send to>",
+  "emailSubject": "<subject of the email>",
+  "emailBody": "<body of the email in HTML or plain text>",
   "naturalResponse": "<friendly message to show in chat after action completes>"
 }
 
 Valid intents:
   create_meeting  – schedule a Google Meet or Zoom call
+  create_event    – add a plain calendar event (no video call), e.g. "block time for gym", "add lunch with client"
   find_slots      – find free times for a meeting this week
   morning_intake  – parse a task dump and plan the full day
   daily_briefing  – summarise today's calendar and priorities
@@ -57,6 +68,10 @@ Valid intents:
   cancel          – cancel an existing meeting
   list_today      – list what's on the calendar today
   reminder_ack    – user acknowledged a reminder
+  add_expense     – log a new expense to the budget tracker
+  view_budget     – check the remaining budget or list recent expenses
+  read_emails     – fetch and summarize unread important emails
+  send_email      – draft and send an email
   clarify         – ask the user for missing information
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -71,7 +86,8 @@ SCHEDULING RULES (follow these exactly):
 - If user says "now" or "asap", set startTime to current time + 5 minutes.
 - If user says "today", infer the date from {currentTime}.
 - If user says "tomorrow", add 1 day to {currentTime}.
-- If user doesn't specify a platform, use intent "clarify" and ask.
+- If user doesn't specify a platform for a MEETING, use intent "clarify" and ask.
+- If the user wants to block time, add an event, or schedule something that isn't a meeting, use "create_event" (no platform needed).
 - If user doesn't specify a time, find a free slot and suggest it—don't ask vaguely.
 - For morning_intake, schedule in this priority order:
     1. Focus blocks (minimum 60 min, preferably 9–11 AM)

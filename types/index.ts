@@ -8,6 +8,7 @@ export type Priority = 'high' | 'medium' | 'low'
 
 export type AgentIntent =
   | 'create_meeting'
+  | 'create_event'
   | 'find_slots'
   | 'morning_intake'
   | 'daily_briefing'
@@ -16,6 +17,10 @@ export type AgentIntent =
   | 'cancel'
   | 'list_today'
   | 'reminder_ack'
+  | 'add_expense'
+  | 'view_budget'
+  | 'read_emails'
+  | 'send_email'
   | 'clarify'
 
 // ─── Gemini JSON response shape ───────────────────────────────────────────────
@@ -30,6 +35,11 @@ export interface AgentAction {
   rangeStart?: string | null
   rangeEnd?: string | null
   clarifyQuestion?: string
+  expenseAmount?: number
+  expenseCategory?: string
+  emailTo?: string
+  emailSubject?: string
+  emailBody?: string
   naturalResponse: string
 }
 
@@ -92,4 +102,6 @@ export interface ChatMessage {
   meetingResult?: MeetingResult
   schedule?: ScheduleTask[]
   freeSlots?: FreeSlot[]
+  budgetResult?: { monthlyLimit: number; expenses: any[]; newExpenseAdded?: boolean }
+  emails?: any[]
 }

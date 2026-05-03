@@ -45,10 +45,10 @@ export default function LoginPage() {
           </div>
           <div className="text-center">
             <h1 className="gradient-text" style={{ fontSize: 32, fontWeight: 800, letterSpacing: '-0.02em' }}>
-              MeetMate
+              ExecutiveVAi
             </h1>
             <p style={{ color: 'var(--text-muted)', fontSize: 15, marginTop: 6 }}>
-              Your AI Chief of Staff
+              Your AI Executive Assistant
             </p>
           </div>
         </div>
@@ -107,13 +107,13 @@ export default function LoginPage() {
           </div>
 
           <p style={{ color: 'var(--text-subtle)', fontSize: 12, marginTop: 20, textAlign: 'center', lineHeight: 1.6 }}>
-            Your calendar data stays private. MeetMate only reads your busy/free times and creates events on your behalf.
+            Your data stays private. ExecutiveVAi only accesses what you explicitly allow.
           </p>
         </div>
 
         {/* Feature pills */}
         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', justifyContent: 'center' }}>
-          {['📅 Smart Scheduling', '🤖 AI Briefings', '⏰ Reminders', '📊 Time Analysis'].map((f) => (
+          {['📅 Smart Scheduling', '🤖 AI Assistant', '📧 Email Intelligence', '💰 Budget Tracking', '📊 Time Analysis'].map((f) => (
             <span key={f} style={{
               background: 'var(--surface-2)', border: '1px solid var(--border)',
               borderRadius: 20, padding: '6px 12px', fontSize: 12, color: 'var(--text-muted)',

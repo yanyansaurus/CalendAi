@@ -1,9 +1,11 @@
 import { auth } from '@/lib/auth'
 import { getGeminiModel, SYSTEM_PROMPT } from '@/lib/gemini'
 import { parseIntent } from '@/lib/intentParser'
-import { getFreeBusy, createGoogleMeet, createCalendarEvent } from '@/lib/googleCalendar'
+import { getFreeBusy, createGoogleMeet, createCalendarEvent, updateCalendarEvent, deleteCalendarEvent } from '@/lib/googleCalendar'
+import { getUnreadEmails, sendEmail } from '@/lib/gmail'
 import { createZoomMeeting } from '@/lib/zoom'
 import { getSchedule, saveSchedule, scheduleRemindersForPlan } from '@/lib/reminderEngine'
+import { getBudgetData, addExpense } from '@/lib/budgetEngine'
 import { colorIdForType } from '@/lib/intentParser'
 import type { ScheduleTask, MeetingResult, FreeSlot } from '@/types'
 import { computeFreeSlots } from '@/lib/googleCalendar'
@@ -35,17 +37,52 @@ export async function POST(req: Request) {
     .replace('{todaySchedule}',  JSON.stringify(todaySchedule))
 
   // ── Call Gemini ────────────────────────────────────────────────────────────
-  const model = getGeminiModel()
-  const chat  = model.startChat({
-    systemInstruction: systemPrompt,
-    history: history.map((m: { role: string; content: string }) => ({
-      role:  m.role === 'assistant' ? 'model' : 'user',
-      parts: [{ text: m.content }],
-    })),
+  const model = getGeminiModel(systemPrompt)
+  
+  // Transform history and ensure it's valid for Google SDK
+  let formattedHistory = (history || []).map((m: { role: string; content: string }) => ({
+    role:  (m.role === 'assistant' || m.role === 'model') ? 'model' : 'user',
+    parts: [{ text: m.content || '' }],
+  }))
+
+  // 1. Must start with 'user'
+  while (formattedHistory.length > 0 && formattedHistory[0].role !== 'user') {
+    formattedHistory.shift()
+  }
+
+  // 2. No consecutive roles (merge them)
+  const cleanedHistory: any[] = []
+  for (const msg of formattedHistory) {
+    if (cleanedHistory.length > 0 && cleanedHistory[cleanedHistory.length - 1].role === msg.role) {
+      cleanedHistory[cleanedHistory.length - 1].parts[0].text += '\n' + msg.parts[0].text
+    } else {
+      cleanedHistory.push(msg)
+    }
+  }
+
+  const chat = model.startChat({
+    history: cleanedHistory,
   })
 
-  const result      = await chat.sendMessage(message)
-  const rawResponse = result.response.text()
+  let rawResponse: string
+  try {
+    const result = await chat.sendMessage(message)
+    rawResponse  = result.response.text()
+  } catch (err: any) {
+    if (err.status === 429) {
+      const retryMatch = err.message?.match(/retry in ([\d.]+)s/i)
+      const retrySec   = retryMatch ? Math.ceil(parseFloat(retryMatch[1])) : 30
+      return NextResponse.json({
+        type: 'chat',
+        text: `⏳ I'm being rate-limited by the AI service. Please wait ~${retrySec} seconds and try again.`,
+      })
+    }
+    console.error('Gemini API error:', err)
+    return NextResponse.json({
+      type: 'chat',
+      text: '⚠️ Something went wrong with the AI service. Please try again in a moment.',
+    })
+  }
 
   const parsed = parseIntent(rawResponse)
 
@@ -109,6 +146,43 @@ export async function POST(req: Request) {
         action,
         meetingResult,
       })
+    }
+
+    // ── Create a plain calendar event ─────────────────────────────────────
+    case 'create_event': {
+      if (!googleToken) {
+        return NextResponse.json({ type: 'chat', text: 'Please connect your Google Calendar first.' })
+      }
+
+      const startTime = action.startTime ?? new Date(Date.now() + 5 * 60000).toISOString()
+      const duration  = action.duration  ?? 60
+      const title     = action.title     ?? 'Event'
+      const endTime   = new Date(new Date(startTime).getTime() + duration * 60000).toISOString()
+
+      // Pick a color based on the event type if tasks are provided
+      const taskType = action.tasks?.[0]?.type
+      const colorId  = taskType ? colorIdForType(taskType) : '9' // default to blueberry
+
+      try {
+        const ev = await createCalendarEvent(googleToken, {
+          title,
+          startTime,
+          endTime,
+          colorId,
+        })
+
+        return NextResponse.json({
+          type:   'chat',
+          text:   action.naturalResponse ?? `✅ Done! I've added "${title}" to your calendar.`,
+          action: { ...action, eventId: ev.eventId },
+        })
+      } catch (err: any) {
+        console.error('Create event error:', err)
+        return NextResponse.json({
+          type: 'chat',
+          text: `⚠️ Failed to create the event: ${err.message ?? 'Unknown error'}`,
+        })
+      }
     }
 
     // ── Find free slots ───────────────────────────────────────────────────
@@ -194,6 +268,137 @@ export async function POST(req: Request) {
         text:     action.naturalResponse,
         action,
         schedule: plan,
+      })
+    }
+
+    // ── Reschedule a meeting ──────────────────────────────────────────────
+    case 'reschedule': {
+      if (!googleToken) return NextResponse.json({ type: 'chat', text: 'Google Calendar not connected.' })
+      const title = action.title?.toLowerCase()
+      const task = todaySchedule.find(t => t.name.toLowerCase().includes(title ?? ''))
+      
+      if (!task?.eventId) {
+        return NextResponse.json({ type: 'chat', text: `I couldn't find a meeting named "${action.title}" to reschedule.` })
+      }
+
+      const duration = action.duration ?? task.estimatedMinutes
+      const end = new Date(new Date(action.startTime!).getTime() + duration * 60000).toISOString()
+      
+      await updateCalendarEvent(googleToken, task.eventId, {
+        startTime: action.startTime!,
+        endTime: end
+      })
+
+      return NextResponse.json({
+        type: 'chat',
+        text: action.naturalResponse ?? `OK, I've moved your meeting to ${new Date(action.startTime!).toLocaleTimeString()}.`,
+        action
+      })
+    }
+
+    // ── Cancel a meeting ──────────────────────────────────────────────────
+    case 'cancel': {
+      if (!googleToken) return NextResponse.json({ type: 'chat', text: 'Google Calendar not connected.' })
+      const title = action.title?.toLowerCase()
+      const task = todaySchedule.find(t => t.name.toLowerCase().includes(title ?? ''))
+      
+      if (!task?.eventId) {
+        return NextResponse.json({ type: 'chat', text: `I couldn't find a meeting named "${action.title}" to cancel.` })
+      }
+
+      await deleteCalendarEvent(googleToken, task.eventId)
+      
+      return NextResponse.json({
+        type: 'chat',
+        text: action.naturalResponse ?? `Done. I've cancelled "${task.name}".`,
+        action
+      })
+    }
+
+    // ── Time Analysis ─────────────────────────────────────────────────────
+    case 'time_analysis': {
+      // We'll just return a chat response for now, but we could trigger the UI tab switch in the future
+      return NextResponse.json({
+        type: 'chat',
+        text: action.naturalResponse ?? "I've analyzed your week. You can see the full breakdown in the Time Analysis tab!",
+        action
+      })
+    }
+
+    // ── Budget & Expenses ─────────────────────────────────────────────────
+    case 'add_expense': {
+      if (!action.expenseAmount) {
+        return NextResponse.json({ type: 'chat', text: "How much was the expense?" })
+      }
+      const data = await addExpense(userId, {
+        amount: action.expenseAmount,
+        category: action.expenseCategory ?? 'Other',
+        description: action.title ?? 'Expense',
+        type: 'expense',
+      })
+      
+      const totalSpent = data.expenses.filter(e => e.type === 'expense').reduce((acc, curr) => acc + curr.amount, 0)
+      const remaining = data.monthlyLimit - totalSpent
+
+      return NextResponse.json({
+        type: 'chat',
+        text: action.naturalResponse ?? `Logged $${action.expenseAmount} for ${action.expenseCategory ?? 'Other'}. You have $${remaining} left for the month.`,
+        action,
+        budgetResult: { ...data, newExpenseAdded: true }
+      })
+    }
+
+    case 'view_budget': {
+      const data = await getBudgetData(userId)
+      const totalSpent = data.expenses.filter(e => (e.type || 'expense') === 'expense').reduce((acc, curr) => acc + curr.amount, 0)
+      const remaining = data.monthlyLimit - totalSpent
+
+      return NextResponse.json({
+        type: 'chat',
+        text: action.naturalResponse ?? `You've spent $${totalSpent} out of your $${data.monthlyLimit} budget. You have $${remaining} remaining.`,
+        action,
+        budgetResult: data
+      })
+    }
+
+    // ── Emails ────────────────────────────────────────────────────────────
+    case 'read_emails': {
+      if (!googleToken) {
+        return NextResponse.json({ type: 'chat', text: 'Please connect your Google account to read emails.' })
+      }
+      const emails = await getUnreadEmails(googleToken, 5)
+      
+      let summaryText = action.naturalResponse
+      if (emails.length === 0) {
+        summaryText = "You have no new unread emails in your Primary inbox."
+      }
+
+      return NextResponse.json({
+        type: 'chat',
+        text: summaryText,
+        action,
+        emails
+      })
+    }
+
+    case 'send_email': {
+      if (!googleToken) {
+        return NextResponse.json({ type: 'chat', text: 'Please connect your Google account to send emails.' })
+      }
+      if (!action.emailTo || !action.emailSubject || !action.emailBody) {
+        return NextResponse.json({ type: 'chat', text: "I need an email address, a subject, and a body to send the email." })
+      }
+
+      const result = await sendEmail(googleToken, action.emailTo, action.emailSubject, action.emailBody)
+      
+      if (!result.success) {
+        return NextResponse.json({ type: 'chat', text: `Failed to send email: ${result.error}` })
+      }
+
+      return NextResponse.json({
+        type: 'chat',
+        text: action.naturalResponse ?? `Email sent to ${action.emailTo}.`,
+        action
       })
     }
 

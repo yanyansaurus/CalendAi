@@ -12,19 +12,46 @@ const QUICK_PROMPTS = [
   { label: '📊 Analyse my week', text: 'Analyse how I spent my time this week' },
 ]
 
+const WELCOME_MSG: ChatMessage = {
+  id:        'welcome',
+  role:      'assistant',
+  content:   'Good day! I\'m ExecutiveVAi, your AI Executive Assistant. I can schedule meetings, manage emails, track budgets, find free slots, and brief you on your calendar — all through natural conversation. What would you like to do?',
+  timestamp: new Date().toISOString(),
+}
+
 export default function ChatPanel() {
-  const [messages, setMessages]   = useState<ChatMessage[]>([
-    {
-      id:        'welcome',
-      role:      'assistant',
-      content:   'Good day! I\'m MeetMate, your AI Chief of Staff. I can schedule Google Meet and Zoom calls, plan your day, find free slots, and brief you on your calendar — all through natural conversation. What would you like to do?',
-      timestamp: new Date().toISOString(),
-    },
-  ])
-  const [input, setInput]         = useState('')
-  const [isTyping, setIsTyping]   = useState(false)
-  const [reminders, setReminders] = useState<Reminder[]>([])
-  const bottomRef                 = useRef<HTMLDivElement>(null)
+  const [messages, setMessages]       = useState<ChatMessage[]>([WELCOME_MSG])
+  const [input, setInput]             = useState('')
+  const [isTyping, setIsTyping]       = useState(false)
+  const [reminders, setReminders]     = useState<Reminder[]>([])
+  const [historyLoaded, setHistoryLoaded] = useState(false)
+  const bottomRef                     = useRef<HTMLDivElement>(null)
+
+  // ── Load chat history from cloud on mount ─────────────────────────────────
+  useEffect(() => {
+    fetch('/api/chat/history')
+      .then(res => res.ok ? res.json() : null)
+      .then(data => {
+        if (data?.messages?.length) {
+          setMessages([WELCOME_MSG, ...data.messages])
+        }
+        setHistoryLoaded(true)
+      })
+      .catch(() => setHistoryLoaded(true))
+  }, [])
+
+  // ── Save chat history to cloud whenever messages change ───────────────────
+  useEffect(() => {
+    if (!historyLoaded) return // don't save until initial load is done
+    // Save all messages except the static welcome message
+    const toSave = messages.filter(m => m.id !== 'welcome')
+    if (toSave.length === 0) return
+    fetch('/api/chat/history', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ messages: toSave }),
+    }).catch(() => { /* silent — don't block chat */ })
+  }, [messages, historyLoaded])
 
   // Scroll to bottom on new messages
   useEffect(() => {
@@ -36,6 +63,7 @@ export default function ChatPanel() {
     const poll = async () => {
       try {
         const res  = await fetch('/api/schedule/reminder')
+        if (!res.ok) return // silently skip if not authenticated
         const data = await res.json()
         if (data.reminders?.length) {
           setReminders((prev) => [...prev, ...data.reminders])
@@ -49,6 +77,13 @@ export default function ChatPanel() {
 
   const dismissReminder = useCallback((id: string) => {
     setReminders((prev) => prev.filter((r) => r.id !== id))
+  }, [])
+
+  const clearHistory = useCallback(async () => {
+    setMessages([WELCOME_MSG])
+    try {
+      await fetch('/api/chat/history', { method: 'DELETE' })
+    } catch { /* silent */ }
   }, [])
 
   const sendMessage = useCallback(async (text: string) => {
@@ -166,6 +201,44 @@ export default function ChatPanel() {
               </div>
             )}
 
+            {/* Email list */}
+            {msg.emails && msg.emails.length > 0 && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 12, maxWidth: 500, marginTop: 8 }}>
+                {msg.emails.map((email: any, i: number) => (
+                  <div key={i} className="glass" style={{ padding: 16, borderRadius: 12 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
+                      <span style={{ fontWeight: 600, fontSize: 13, color: 'var(--text)' }}>{email.from.split('<')[0].trim()}</span>
+                      <span style={{ fontSize: 11, color: 'var(--text-subtle)' }}>
+                        {new Date(email.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+                      </span>
+                    </div>
+                    <div style={{ fontWeight: 600, fontSize: 14, color: 'var(--brand-light)', marginBottom: 8 }}>
+                      {email.subject}
+                    </div>
+                    <div style={{ fontSize: 13, color: 'var(--text-muted)', lineHeight: 1.5 }}>
+                      {email.body.substring(0, 150)}...
+                    </div>
+                    <div style={{ marginTop: 12, display: 'flex', gap: 8 }}>
+                      <button
+                        className="btn-ghost"
+                        style={{ fontSize: 11, padding: '4px 10px', borderRadius: 6 }}
+                        onClick={() => setInput(`Reply to ${email.from.split('<')[0].trim()}: `)}
+                      >
+                        ↩️ Reply
+                      </button>
+                      <button
+                        className="btn-ghost"
+                        style={{ fontSize: 11, padding: '4px 10px', borderRadius: 6 }}
+                        onClick={() => sendMessage(`Summarize the email from ${email.from.split('<')[0].trim()}`)}
+                      >
+                        📝 Summarize
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
             <span style={{ fontSize: 11, color: 'var(--text-subtle)', marginTop: 2 }}>
               {new Date(msg.timestamp).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
             </span>
@@ -212,6 +285,28 @@ export default function ChatPanel() {
             {p.label}
           </button>
         ))}
+        {messages.length > 1 && (
+          <button
+            id="btn-clear-history"
+            onClick={clearHistory}
+            style={{
+              background: 'transparent', border: '1px solid rgba(248,113,113,0.3)',
+              borderRadius: 20, padding: '6px 12px', fontSize: 12,
+              color: 'var(--danger)', cursor: 'pointer',
+              transition: 'all 0.15s',
+            }}
+            onMouseEnter={(e) => {
+              (e.target as HTMLElement).style.borderColor = 'var(--danger)'
+              ;(e.target as HTMLElement).style.background = 'rgba(248,113,113,0.08)'
+            }}
+            onMouseLeave={(e) => {
+              (e.target as HTMLElement).style.borderColor = 'rgba(248,113,113,0.3)'
+              ;(e.target as HTMLElement).style.background = 'transparent'
+            }}
+          >
+            🗑️ Clear History
+          </button>
+        )}
       </div>
 
       {/* Input bar */}
@@ -226,7 +321,7 @@ export default function ChatPanel() {
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder="Ask MeetMate anything… e.g. 'Set up a Zoom call tomorrow at 3pm'"
+            placeholder="Ask ExecutiveVAi anything… e.g. 'Set up a Zoom call tomorrow at 3pm'"
             rows={1}
             style={{
               flex: 1, background: 'transparent', border: 'none', outline: 'none',

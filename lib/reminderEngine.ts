@@ -7,28 +7,63 @@ let redisClient: any = null
 // ─── Use Redis Labs in production, local in-memory store in dev ───────────────
 async function getKV() {
   if (process.env.calend_ai_kv_REDIS_URL) {
-    if (!redisClient) {
-      const { createClient } = await import('redis')
-      redisClient = createClient({ url: process.env.calend_ai_kv_REDIS_URL })
-      await redisClient.connect()
-    }
-    return {
-      async get<T = string>(key: string): Promise<T | null> {
-        const val = await redisClient.get(key)
-        if (!val) return null
-        try { return JSON.parse(val) as T } catch { return val as unknown as T }
-      },
-      async set(key: string, value: unknown, opts?: { ex?: number }) {
-        const val = typeof value === 'string' ? value : JSON.stringify(value)
-        if (opts?.ex) {
-          await redisClient.set(key, val, { EX: opts.ex })
-        } else {
-          await redisClient.set(key, val)
+    try {
+      if (!redisClient) {
+        const { createClient } = await import('redis')
+        redisClient = createClient({ 
+          url: process.env.calend_ai_kv_REDIS_URL,
+          socket: {
+            reconnectStrategy: (retries) => Math.min(retries * 50, 2000)
+          }
+        })
+        redisClient.on('error', (err: any) => {
+          if (err.message !== 'Socket closed unexpectedly') {
+            console.error('Redis Client Error', err)
+          }
+        })
+        await redisClient.connect()
+      } else if (!redisClient.isOpen) {
+        try {
+          await redisClient.connect()
+        } catch (e) {
+          console.error('Failed to reconnect Redis', e)
         }
-      },
-      async keys(pattern: string): Promise<string[]> {
-        return await redisClient.keys(pattern)
       }
+      
+      return {
+        async get<T = string>(key: string): Promise<T | null> {
+          try {
+            const val = await redisClient.get(key)
+            if (!val) return null
+            try { return JSON.parse(val) as T } catch { return val as unknown as T }
+          } catch (e) {
+            console.error('Redis GET error', e)
+            return null
+          }
+        },
+        async set(key: string, value: unknown, opts?: { ex?: number }) {
+          try {
+            const val = typeof value === 'string' ? value : JSON.stringify(value)
+            if (opts?.ex) {
+              await redisClient.set(key, val, { EX: opts.ex })
+            } else {
+              await redisClient.set(key, val)
+            }
+          } catch (e) {
+            console.error('Redis SET error', e)
+          }
+        },
+        async keys(pattern: string): Promise<string[]> {
+          try {
+            return await redisClient.keys(pattern)
+          } catch {
+            return []
+          }
+        }
+      }
+    } catch (err) {
+      console.error('Failed to connect to Redis', err)
+      return localKV
     }
   }
   return localKV
@@ -42,9 +77,29 @@ export async function saveSchedule(userId: string, tasks: ScheduleTask[]) {
 
 export async function getSchedule(userId: string): Promise<ScheduleTask[]> {
   const kv  = await getKV()
-  const raw = await kv.get<string>(`schedule:${userId}:today`)
-  if (!raw) return []
-  try { return JSON.parse(raw as string) } catch { return [] }
+  const raw = await kv.get<ScheduleTask[]>(`schedule:${userId}:today`)
+  return raw ?? []
+}
+
+// ─── Chat history (cloud-persisted) ──────────────────────────────────────────
+const CHAT_HISTORY_TTL = 7 * 86400  // 7 days
+
+export async function saveChatHistory(userId: string, messages: any[]) {
+  const kv = await getKV()
+  // Keep only the last 50 messages to avoid bloating
+  const trimmed = messages.slice(-50)
+  await kv.set(`chat:${userId}:history`, JSON.stringify(trimmed), { ex: CHAT_HISTORY_TTL })
+}
+
+export async function getChatHistory(userId: string): Promise<any[]> {
+  const kv  = await getKV()
+  const raw = await kv.get<any[]>(`chat:${userId}:history`)
+  return raw ?? []
+}
+
+export async function clearChatHistory(userId: string) {
+  const kv = await getKV()
+  await kv.set(`chat:${userId}:history`, JSON.stringify([]), { ex: CHAT_HISTORY_TTL })
 }
 
 // ─── Reminder engine ──────────────────────────────────────────────────────────

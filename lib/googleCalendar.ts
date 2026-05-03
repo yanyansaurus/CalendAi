@@ -235,3 +235,41 @@ export async function getWeekEvents(accessToken: string) {
     ),
   }))
 }
+
+// ─── Update an existing calendar event ────────────────────────────────────────
+export async function updateCalendarEvent(
+  accessToken: string,
+  eventId: string,
+  opts: {
+    title?: string
+    startTime?: string
+    endTime?: string
+    description?: string
+  },
+) {
+  const auth = getAuthClient(accessToken)
+  const calendar = google.calendar({ version: 'v3', auth })
+
+  const requestBody: any = {}
+  if (opts.title) requestBody.summary = opts.title
+  if (opts.description) requestBody.description = opts.description
+  if (opts.startTime) requestBody.start = { dateTime: opts.startTime }
+  if (opts.endTime) requestBody.end = { dateTime: opts.endTime }
+
+  await calendar.events.patch({
+    calendarId: 'primary',
+    eventId,
+    requestBody,
+  })
+}
+
+// ─── Delete an existing calendar event ────────────────────────────────────────
+export async function deleteCalendarEvent(accessToken: string, eventId: string) {
+  const auth = getAuthClient(accessToken)
+  const calendar = google.calendar({ version: 'v3', auth })
+
+  await calendar.events.delete({
+    calendarId: 'primary',
+    eventId,
+  })
+}
