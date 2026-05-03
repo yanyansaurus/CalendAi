@@ -74,7 +74,7 @@ export default function Dashboard({ session }: DashboardProps) {
 
         {/* Sign Out */}
         <button 
-          onClick={() => signOut({ callbackUrl: '/login' })}
+          onClick={() => signOut({ callbackUrl: '/landing' })}
           className="btn-ghost" 
           style={{ width: '100%', justifyContent: 'center', fontSize: 13, marginBottom: 12 }}
         >
