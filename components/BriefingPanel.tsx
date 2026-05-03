@@ -87,6 +87,8 @@ export default function BriefingPanel() {
     )
   }
 
+  if (!briefing) return null
+
   return (
     <div style={{ overflowY: 'auto', height: '100%' }} className="container-padding">
       {/* Header with Refresh */}
