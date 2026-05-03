@@ -17,7 +17,7 @@ export async function getUnreadEmails(accessToken: string, maxResults = 10) {
   try {
     const res = await gmail.users.messages.list({
       userId: 'me',
-      q: 'is:unread category:primary',
+      q: 'is:unread in:inbox',
       maxResults,
     })
 
