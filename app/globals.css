@@ -199,7 +199,7 @@ html, body {
 @media (max-width: 768px) {
   .hidden-mobile { display: none !important; }
   .show-mobile { display: block !important; }
-  .flex-mobile-col { flexDirection: column !important; }
+  .flex-mobile-col { flex-direction: column !important; }
   
   .container-padding { padding: 16px !important; }
   

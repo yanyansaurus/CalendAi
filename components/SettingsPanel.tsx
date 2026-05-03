@@ -2,7 +2,6 @@
 
 export default function SettingsPanel() {
   return (
-  return (
     <div style={{ maxWidth: 800, margin: '0 auto' }} className="container-padding">
       <header style={{ marginBottom: 32 }}>
         <h2 style={{ fontSize: 24, fontWeight: 700, marginBottom: 8 }}>Settings</h2>
