@@ -37,16 +37,27 @@ export async function getUnreadEmails(accessToken: string, maxResults = 10) {
         const from = headers?.find(h => h.name === 'From')?.value ?? 'Unknown'
         const date = headers?.find(h => h.name === 'Date')?.value ?? ''
         
-        // Extract plain text body
-        let body = ''
-        if (m.data.payload?.parts) {
-          const textPart = m.data.payload.parts.find(p => p.mimeType === 'text/plain')
-          if (textPart?.body?.data) {
-            body = Buffer.from(textPart.body.data, 'base64').toString('utf-8')
+        // Helper to recursively find plain text or HTML body
+        const extractBody = (part: any): string => {
+          if (!part) return ''
+          if (part.mimeType === 'text/plain' && part.body?.data) {
+            return Buffer.from(part.body.data, 'base64').toString('utf-8')
           }
-        } else if (m.data.payload?.body?.data) {
-          body = Buffer.from(m.data.payload.body.data, 'base64').toString('utf-8')
+          if (part.mimeType === 'text/html' && part.body?.data) {
+            const html = Buffer.from(part.body.data, 'base64').toString('utf-8')
+            return html.replace(/<[^>]*>?/gm, ' ').replace(/\s\s+/g, ' ').trim()
+          }
+          if (part.parts && part.parts.length > 0) {
+            for (const p of part.parts) {
+              const text = extractBody(p)
+              if (text) return text
+            }
+          }
+          return ''
         }
+
+        let body = extractBody(m.data.payload) || ''
+
 
         return { id: msg.id!, subject, from, date, body: body.substring(0, 500) + '...' } // Truncate body to save AI tokens
       })
