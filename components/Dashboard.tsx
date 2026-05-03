@@ -184,7 +184,9 @@ export default function Dashboard({ session }: DashboardProps) {
         </header>
 
         <div style={{ flex: 1, overflow: 'hidden', marginBottom: 64 /* space for mobile nav */ }} className="content-area">
-          {activeTab === 'chat' && <ChatPanel />}
+          <div style={{ display: activeTab === 'chat' ? 'block' : 'none', height: '100%' }}>
+            <ChatPanel />
+          </div>
           {activeTab === 'briefing' && <BriefingPanel />}
           {activeTab === 'planner' && plannerView === 'tasks' && <TaskBoard />}
           {activeTab === 'planner' && plannerView === 'calendar' && <WeekSchedule />}
