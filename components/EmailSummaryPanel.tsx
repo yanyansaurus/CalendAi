@@ -171,7 +171,7 @@ export default function EmailSummaryPanel() {
                       window.dispatchEvent(new CustomEvent('switch-tab', { detail: { tab: 'chat' } }))
                       // Tell chat to draft the email
                       window.dispatchEvent(new CustomEvent('send-chat', { 
-                        detail: { message: `Draft a professional reply to ${item.from} about "${item.subject}". The suggested action is: ${item.suggestedAction}. DO NOT SEND IT YET, just draft it.` } 
+                        detail: { message: `Use the draft_email intent to draft a professional reply to ${item.emailAddress || item.from} about "${item.subject}". The suggested action is: ${item.suggestedAction}. DO NOT send it, just draft it.` } 
                       }))
                       // Remove from list
                       setSummary(prev => prev ? {

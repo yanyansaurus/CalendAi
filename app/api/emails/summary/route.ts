@@ -61,6 +61,7 @@ Generate a summary in this EXACT JSON format (no markdown, no code fences):
   "actionItems": [
     {
       "from": "Sender name",
+      "emailAddress": "sender@domain.com",
       "subject": "Email subject",
       "summary": "1-2 sentence summary of what this email is about",
       "suggestedAction": "What the user should do (e.g. Reply, Review, Schedule meeting)",
@@ -105,6 +106,7 @@ Rules:
         categories: [],
         actionItems: emails.slice(0, 5).map(e => ({
           from: e.from?.split('<')[0]?.trim() ?? 'Unknown',
+          emailAddress: e.from?.match(/<([^>]+)>/)?.[1] ?? e.from,
           subject: e.subject,
           summary: 'Review this email',
           suggestedAction: 'Read and respond',
