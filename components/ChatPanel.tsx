@@ -6,16 +6,18 @@ import DayPlanCard from '@/components/DayPlanCard'
 import ReminderBubble from '@/components/ReminderBubble'
 
 const QUICK_PROMPTS = [
-  { label: '☀️ Good morning', text: 'Good morning MeetMate! What\'s on my plate today?' },
+  { label: '☀️ Good morning', text: 'Good morning! What\'s on my plate today?' },
   { label: '📋 Plan my day', text: 'I need to plan my day. I have ' },
-  { label: '🔍 Find free time', text: 'Find me time for a 1-hour strategy session this week' },
-  { label: '📊 Analyse my week', text: 'Analyse how I spent my time this week' },
+  { label: '🔍 Free time', text: 'Find me time for a 1-hour session this week' },
+  { label: '💰 Budget', text: 'How much have I spent this month?' },
+  { label: '📧 Emails', text: 'Check my unread emails' },
+  { label: '📊 Analyse week', text: 'Analyse how I spent my time this week' },
 ]
 
 const WELCOME_MSG: ChatMessage = {
   id:        'welcome',
   role:      'assistant',
-  content:   'Good day! I\'m ExecutiveVAi, your AI Executive Assistant. I can schedule meetings, manage emails, track budgets, find free slots, and brief you on your calendar — all through natural conversation. What would you like to do?',
+  content:   'Good day! I\'m ExecutiveVAi, your AI Executive Assistant. Here\'s what I can do:\n\n📅 Schedule meetings, find free slots, plan your day\n💰 Track expenses, check your budget\n📧 Read & send emails\n📊 Analyse your weekly time\n\nJust tell me what you need!',
   timestamp: new Date().toISOString(),
 }
 
