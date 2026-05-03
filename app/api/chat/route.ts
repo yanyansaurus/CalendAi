@@ -23,17 +23,23 @@ export async function POST(req: Request) {
   const zoomToken      = session.zoomAccessToken
   const timezone       = req.headers.get('x-timezone') ?? 'UTC'
 
-  // ── Build dynamic context ──────────────────────────────────────────────────
   let busySlots: Array<{ start: string; end: string }> = []
   if (googleToken) {
     try { busySlots = await getFreeBusy(googleToken, 'today') } catch { /* ignore */ }
   }
   const todaySchedule = await getSchedule(userId)
 
+  // ── Format context to prevent AI timezone hallucinations ───────────────────
+  const localTime = new Date().toLocaleString('en-US', { timeZone: timezone })
+  const formattedBusySlots = busySlots.map(slot => ({
+    start: new Date(slot.start).toLocaleString('en-US', { timeZone: timezone, hour: 'numeric', minute: '2-digit', hour12: true }),
+    end: new Date(slot.end).toLocaleString('en-US', { timeZone: timezone, hour: 'numeric', minute: '2-digit', hour12: true })
+  }))
+
   const systemPrompt = SYSTEM_PROMPT
-    .replace('{currentTime}',    new Date().toISOString())
+    .replace('{currentTime}',    localTime)
     .replace('{userTimezone}',   timezone)
-    .replace('{busySlots}',      JSON.stringify(busySlots))
+    .replace('{busySlots}',      JSON.stringify(formattedBusySlots))
     .replace('{todaySchedule}',  JSON.stringify(todaySchedule))
 
   // ── Call Gemini ────────────────────────────────────────────────────────────
