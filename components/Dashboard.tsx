@@ -4,6 +4,8 @@ import ChatPanel from '@/components/ChatPanel'
 import AnalysisDashboard from '@/components/AnalysisDashboard'
 import WeekSchedule from '@/components/WeekSchedule'
 import FinanceDashboard from '@/components/FinanceDashboard'
+import BriefingPanel from '@/components/BriefingPanel'
+import TaskBoard from '@/components/TaskBoard'
 import SettingsPanel from '@/components/SettingsPanel'
 import { signOut } from 'next-auth/react'
 
@@ -12,16 +14,18 @@ interface DashboardProps {
 }
 
 export default function Dashboard({ session }: DashboardProps) {
-  const [activeTab, setActiveTab] = useState<'chat' | 'schedule' | 'finances' | 'analysis' | 'settings'>('chat')
+  const [activeTab, setActiveTab] = useState<'chat' | 'briefing' | 'schedule' | 'tasks' | 'finances' | 'analysis' | 'settings'>('chat')
   
   const hasGoogle = !!session?.googleAccessToken
   const hasZoom   = !!session?.zoomAccessToken
 
   const navItems = [
     { id: 'chat',     icon: '💬', label: 'Chat' },
+    { id: 'briefing', icon: '🧠', label: 'AI Briefing' },
     { id: 'schedule', icon: '📅', label: 'Schedule' },
-    { id: 'finances', icon: '💰', label: 'Track Finances' },
-    { id: 'analysis', icon: '📊', label: 'Time Analysis' },
+    { id: 'tasks',    icon: '✅', label: 'Tasks' },
+    { id: 'finances', icon: '💰', label: 'Finances' },
+    { id: 'analysis', icon: '📊', label: 'Analysis' },
     { id: 'settings', icon: '⚙️', label: 'Settings' },
   ] as const
 
@@ -136,7 +140,9 @@ export default function Dashboard({ session }: DashboardProps) {
 
         <div style={{ flex: 1, overflow: 'hidden', marginBottom: 64 /* space for mobile nav */ }} className="content-area">
           {activeTab === 'chat' && <ChatPanel />}
+          {activeTab === 'briefing' && <BriefingPanel />}
           {activeTab === 'schedule' && <WeekSchedule />}
+          {activeTab === 'tasks' && <TaskBoard />}
           {activeTab === 'finances' && <FinanceDashboard />}
           {activeTab === 'analysis' && <AnalysisDashboard />}
           {activeTab === 'settings' && <SettingsPanel />}
