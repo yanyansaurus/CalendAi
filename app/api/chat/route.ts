@@ -96,6 +96,15 @@ export async function POST(req: Request) {
 
   const parsed = parseIntent(rawResponse)
 
+  // ── Safety Override ───────────────────────────────────────────────────────
+  // If the AI stubbornyl chooses send_email despite being told to draft it, we intercept it.
+  if (!parsed.isChat && parsed.action?.intent === 'send_email') {
+    const msgLower = message.toLowerCase()
+    if (msgLower.includes('just draft it') || msgLower.includes('do not send') || msgLower.includes('draft a')) {
+      parsed.action.intent = 'draft_email'
+    }
+  }
+
   // ── Plain chat reply, no action needed ────────────────────────────────────
   if (parsed.isChat) {
     return NextResponse.json({ type: 'chat', text: parsed.chatText })

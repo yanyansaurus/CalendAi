@@ -43,6 +43,11 @@ const COMMAND_CATEGORIES = [
 
 function DraftEmailCard({ action, onSend }: { action: any, onSend: (to: string, subject: string, body: string) => void }) {
   const [body, setBody] = useState(action.emailBody || '')
+  
+  useEffect(() => {
+    setBody(action.emailBody || '')
+  }, [action.emailBody])
+
   return (
     <div className="glass animate-fade-up" style={{ padding: 16, borderRadius: 12, marginTop: 8, width: '100%', border: '1px solid rgba(99,102,241,0.3)' }}>
       <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-subtle)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 12 }}>
@@ -343,7 +348,7 @@ export default function ChatPanel() {
               />
             )}
 
-            <span style={{ fontSize: 11, color: 'var(--text-subtle)', marginTop: 2 }}>
+            <span suppressHydrationWarning style={{ fontSize: 11, color: 'var(--text-subtle)', marginTop: 2 }}>
               {new Date(msg.timestamp).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
             </span>
           </div>
