@@ -2,11 +2,34 @@ import { randomUUID } from 'crypto'
 import type { Reminder, ScheduleTask } from '@/types'
 import { localKV } from '@/lib/localKV'
 
-// ─── Use Vercel KV in production, local in-memory store in dev ───────────────
+let redisClient: any = null
+
+// ─── Use Redis Labs in production, local in-memory store in dev ───────────────
 async function getKV() {
-  if (process.env.KV_REST_API_URL && process.env.KV_REST_API_TOKEN) {
-    const { kv } = await import('@vercel/kv')
-    return kv as typeof localKV
+  if (process.env.calend_ai_kv_REDIS_URL) {
+    if (!redisClient) {
+      const { createClient } = await import('redis')
+      redisClient = createClient({ url: process.env.calend_ai_kv_REDIS_URL })
+      await redisClient.connect()
+    }
+    return {
+      async get<T = string>(key: string): Promise<T | null> {
+        const val = await redisClient.get(key)
+        if (!val) return null
+        try { return JSON.parse(val) as T } catch { return val as unknown as T }
+      },
+      async set(key: string, value: unknown, opts?: { ex?: number }) {
+        const val = typeof value === 'string' ? value : JSON.stringify(value)
+        if (opts?.ex) {
+          await redisClient.set(key, val, { EX: opts.ex })
+        } else {
+          await redisClient.set(key, val)
+        }
+      },
+      async keys(pattern: string): Promise<string[]> {
+        return await redisClient.keys(pattern)
+      }
+    }
   }
   return localKV
 }
@@ -31,7 +54,7 @@ export async function scheduleReminder(
   message: string,
   fireAt: Date,
 ) {
-  const kv: typeof localKV = await getKV()
+  const kv = await getKV()
   const reminder: Reminder = {
     id:       randomUUID(),
     message,
