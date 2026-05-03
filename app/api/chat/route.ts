@@ -161,7 +161,7 @@ export async function POST(req: Request) {
     // ── Create a plain calendar event ─────────────────────────────────────
     case 'create_event': {
       if (!googleToken) {
-        return NextResponse.json({ type: 'chat', text: 'Please connect your Google Calendar first.' })
+        return NextResponse.json({ type: 'chat', text: '⚠️ Google Calendar is not connected. Please sign out and sign back in to reconnect.' })
       }
 
       const startTime = action.startTime ?? new Date(Date.now() + 5 * 60000).toISOString()
@@ -173,6 +173,8 @@ export async function POST(req: Request) {
       const taskType = action.tasks?.[0]?.type
       const colorId  = taskType ? colorIdForType(taskType) : '9' // default to blueberry
 
+      console.log(`[ExecutiveVAi] Creating event: "${title}" | ${startTime} → ${endTime} | Token: ${googleToken ? 'present' : 'MISSING'}`)
+
       try {
         const ev = await createCalendarEvent(googleToken, {
           title,
@@ -181,13 +183,24 @@ export async function POST(req: Request) {
           colorId,
         })
 
+        console.log(`[ExecutiveVAi] Event created successfully: ${ev.eventId}`)
+
         return NextResponse.json({
           type:   'chat',
           text:   action.naturalResponse ?? `✅ Done! I've added "${title}" to your calendar.`,
           action: { ...action, eventId: ev.eventId },
         })
       } catch (err: any) {
-        console.error('Create event error:', err)
+        console.error('[ExecutiveVAi] Create event error:', err.status, err.message, err.errors)
+        
+        // If it's a 401, the token expired and refresh failed
+        if (err.code === 401 || err.status === 401) {
+          return NextResponse.json({
+            type: 'chat',
+            text: '⚠️ Your Google session has expired. Please **sign out and sign back in** to refresh your connection.',
+          })
+        }
+
         return NextResponse.json({
           type: 'chat',
           text: `⚠️ Failed to create the event: ${err.message ?? 'Unknown error'}`,
