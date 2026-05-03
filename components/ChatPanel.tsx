@@ -5,14 +5,40 @@ import MeetingLinkCard from '@/components/MeetingLinkCard'
 import DayPlanCard from '@/components/DayPlanCard'
 import ReminderBubble from '@/components/ReminderBubble'
 
-const QUICK_PROMPTS = [
-  { label: '☀️ Good morning', text: 'Good morning! What\'s on my plate today?' },
-  { label: '📋 Plan my day', text: 'I need to plan my day. I have ' },
-  { label: '🔍 Free time', text: 'Find me time for a 1-hour session this week' },
-  { label: '💰 Budget', text: 'How much have I spent this month?' },
-  { label: '📧 Check inbox', text: 'Check my unread emails' },
-  { label: '✉️ Send email', text: 'Send an email to ' },
-  { label: '📊 Analyse week', text: 'Analyse how I spent my time this week' },
+const COMMAND_CATEGORIES = [
+  {
+    label: '📅 Calendar',
+    commands: [
+      { icon: '📅', name: 'Create event', text: 'Add an event called ' },
+      { icon: '🤝', name: 'Schedule meeting', text: 'Schedule a meeting with ' },
+      { icon: '🔍', name: 'Find free time', text: 'Find me time for a 1-hour session this week' },
+      { icon: '📋', name: 'Plan my day', text: 'I need to plan my day. I have ' },
+      { icon: '☀️', name: 'Daily briefing', text: 'Good morning! What\'s on my plate today?' },
+      { icon: '🔄', name: 'Reschedule', text: 'Reschedule my ' },
+      { icon: '❌', name: 'Cancel event', text: 'Cancel my ' },
+    ],
+  },
+  {
+    label: '📧 Email',
+    commands: [
+      { icon: '📨', name: 'Check inbox', text: 'Check my unread emails' },
+      { icon: '✉️', name: 'Send email', text: 'Send an email to ' },
+      { icon: '✍️', name: 'Draft reply', text: 'Draft a reply to ' },
+    ],
+  },
+  {
+    label: '💰 Finance',
+    commands: [
+      { icon: '💸', name: 'Log expense', text: 'Log expense: ' },
+      { icon: '📊', name: 'Check budget', text: 'How much have I spent this month?' },
+    ],
+  },
+  {
+    label: '📊 Analysis',
+    commands: [
+      { icon: '⏱️', name: 'Time analysis', text: 'Analyse how I spent my time this week' },
+    ],
+  },
 ]
 
 const WELCOME_MSG: ChatMessage = {
@@ -28,7 +54,20 @@ export default function ChatPanel() {
   const [isTyping, setIsTyping]       = useState(false)
   const [reminders, setReminders]     = useState<Reminder[]>([])
   const [historyLoaded, setHistoryLoaded] = useState(false)
+  const [showCommands, setShowCommands] = useState(false)
   const bottomRef                     = useRef<HTMLDivElement>(null)
+  const commandRef                    = useRef<HTMLDivElement>(null)
+
+  // Close command menu on click outside
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (commandRef.current && !commandRef.current.contains(e.target as Node)) {
+        setShowCommands(false)
+      }
+    }
+    if (showCommands) document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [showCommands])
 
   // ── Load chat history from cloud on mount ─────────────────────────────────
   useEffect(() => {
@@ -267,65 +306,89 @@ export default function ChatPanel() {
         <div ref={bottomRef} />
       </div>
 
-      {/* Quick prompt chips */}
-      <div style={{ padding: '0 20px 12px', display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-        {QUICK_PROMPTS.map((p) => (
-          <button
-            key={p.label}
-            id={`quick-${p.label.replace(/\s+/g, '-')}`}
-            onClick={() => {
-              if (p.text.endsWith(' ')) { setInput(p.text); }
-              else { sendMessage(p.text); }
-            }}
-            style={{
-              background: 'var(--surface-2)', border: '1px solid var(--border)',
-              borderRadius: 20, padding: '6px 12px', fontSize: 12,
-              color: 'var(--text-muted)', cursor: 'pointer',
-              transition: 'all 0.15s',
-            }}
-            onMouseEnter={(e) => {
-              (e.target as HTMLElement).style.borderColor = 'var(--brand-light)'
-              ;(e.target as HTMLElement).style.color = 'var(--text)'
-            }}
-            onMouseLeave={(e) => {
-              (e.target as HTMLElement).style.borderColor = 'var(--border)'
-              ;(e.target as HTMLElement).style.color = 'var(--text-muted)'
-            }}
-          >
-            {p.label}
-          </button>
-        ))}
-        {messages.length > 1 && (
-          <button
-            id="btn-clear-history"
-            onClick={clearHistory}
-            style={{
-              background: 'transparent', border: '1px solid rgba(248,113,113,0.3)',
-              borderRadius: 20, padding: '6px 12px', fontSize: 12,
-              color: 'var(--danger)', cursor: 'pointer',
-              transition: 'all 0.15s',
-            }}
-            onMouseEnter={(e) => {
-              (e.target as HTMLElement).style.borderColor = 'var(--danger)'
-              ;(e.target as HTMLElement).style.background = 'rgba(248,113,113,0.08)'
-            }}
-            onMouseLeave={(e) => {
-              (e.target as HTMLElement).style.borderColor = 'rgba(248,113,113,0.3)'
-              ;(e.target as HTMLElement).style.background = 'transparent'
-            }}
-          >
-            🗑️ Clear History
-          </button>
-        )}
-      </div>
+      {/* Command Dropdown */}
+      {showCommands && (
+        <div
+          ref={commandRef}
+          style={{
+            position: 'absolute', bottom: 140, left: 20, right: 20,
+            maxHeight: 340, overflowY: 'auto',
+            background: 'var(--surface)', border: '1px solid var(--border)',
+            borderRadius: 14, boxShadow: '0 8px 32px rgba(0,0,0,0.3)',
+            zIndex: 50, padding: '8px 0',
+          }}
+        >
+          {COMMAND_CATEGORIES.map(cat => (
+            <div key={cat.label}>
+              <div style={{ padding: '8px 16px 4px', fontSize: 11, fontWeight: 700, color: 'var(--text-subtle)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                {cat.label}
+              </div>
+              {cat.commands.map(cmd => (
+                <button
+                  key={cmd.name}
+                  onClick={() => {
+                    if (cmd.text.endsWith(' ')) { setInput(cmd.text) }
+                    else { sendMessage(cmd.text) }
+                    setShowCommands(false)
+                  }}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: 10, width: '100%',
+                    padding: '8px 16px', background: 'none', border: 'none',
+                    color: 'var(--text)', fontSize: 13, cursor: 'pointer',
+                    transition: 'background 0.1s', textAlign: 'left',
+                  }}
+                  onMouseEnter={e => (e.currentTarget.style.background = 'rgba(99,102,241,0.1)')}
+                  onMouseLeave={e => (e.currentTarget.style.background = 'none')}
+                >
+                  <span style={{ fontSize: 16 }}>{cmd.icon}</span>
+                  <span>{cmd.name}</span>
+                </button>
+              ))}
+            </div>
+          ))}
+          {messages.length > 1 && (
+            <>
+              <div style={{ height: 1, background: 'var(--border)', margin: '4px 0' }} />
+              <button
+                onClick={() => { clearHistory(); setShowCommands(false) }}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: 10, width: '100%',
+                  padding: '8px 16px', background: 'none', border: 'none',
+                  color: 'var(--danger)', fontSize: 13, cursor: 'pointer',
+                  transition: 'background 0.1s', textAlign: 'left',
+                }}
+                onMouseEnter={e => (e.currentTarget.style.background = 'rgba(248,113,113,0.08)')}
+                onMouseLeave={e => (e.currentTarget.style.background = 'none')}
+              >
+                <span style={{ fontSize: 16 }}>🗑️</span>
+                <span>Clear chat history</span>
+              </button>
+            </>
+          )}
+        </div>
+      )}
 
       {/* Input bar */}
       <div style={{ padding: '0 20px 20px' }}>
-        <div style={{ display: 'flex', gap: 10, alignItems: 'flex-end',
+        <div style={{ display: 'flex', gap: 8, alignItems: 'flex-end',
                       background: 'var(--surface-2)', border: '1px solid var(--border)',
-                      borderRadius: 16, padding: '8px 8px 8px 16px',
+                      borderRadius: 16, padding: '8px 8px 8px 12px',
                       transition: 'border-color 0.2s' }}
              onFocus={() => {}} >
+          {/* Command menu button */}
+          <button
+            onClick={() => setShowCommands(!showCommands)}
+            style={{
+              width: 36, height: 36, borderRadius: 10, border: 'none', cursor: 'pointer',
+              background: showCommands ? 'rgba(99,102,241,0.2)' : 'var(--surface-3)',
+              color: showCommands ? 'var(--brand-light)' : 'var(--text-muted)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              fontSize: 16, flexShrink: 0, transition: 'all 0.15s',
+            }}
+            title="Show commands"
+          >
+            ⚡
+          </button>
           <textarea
             id="chat-input"
             value={input}
