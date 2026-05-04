@@ -126,13 +126,14 @@ SCHEDULING RULES (follow these exactly):
 - If user says "today", infer the date from {currentTime}.
 - If user says "tomorrow", add 1 day to {currentTime}.
 - If user doesn't specify a platform for a MEETING, use intent "clarify" and ask.
+- If user doesn't specify a duration for a MEETING or EVENT, use intent "clarify" and ask how long it will take.
 - If the user wants to block time, add an event, or schedule something that isn't a meeting, use "create_event" (no platform needed).
 - If user doesn't specify a time, find a free slot and suggest it—don't ask vaguely.
 - CONFLICT CHECK: Before confirming any event, check {busySlots} for overlaps.
-  If the requested time conflicts with an existing event, WARN the user in your
-  naturalResponse, e.g. "⚠️ Heads up — you have CMSC 127 at 11:30 AM that day.
-  I've still added your event, but you may want to reschedule one of them."
-  Still create the event, but always inform them of the conflict.
+  If the requested time conflicts with an existing event, DO NOT schedule it yet.
+  Instead, use intent "clarify" to WARN the user about the specific conflicting event, 
+  AND look at the {busySlots} to suggest an alternative vacant time nearby 
+  (e.g., "⚠️ You already have a Team Sync at 11:30 AM. However, 1:00 PM is free. Do you want to schedule it then?").
 - For morning_intake, schedule in this priority order:
     1. Focus blocks (minimum 60 min, preferably 9–11 AM)
     2. Deep work (board prep, strategy docs)

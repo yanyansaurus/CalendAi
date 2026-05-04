@@ -40,16 +40,12 @@ export async function getZoomAccessToken(): Promise<string> {
 
   const basicAuth = Buffer.from(`${clientId}:${clientSecret}`).toString('base64')
 
-  const res = await fetch('https://zoom.us/oauth/token', {
+  const res = await fetch(`https://zoom.us/oauth/token?grant_type=account_credentials&account_id=${accountId}`, {
     method: 'POST',
     headers: {
       'Authorization': `Basic ${basicAuth}`,
       'Content-Type':  'application/x-www-form-urlencoded',
     },
-    body: new URLSearchParams({
-      grant_type: 'account_credentials',
-      account_id: accountId,
-    }),
   })
 
   if (!res.ok) {

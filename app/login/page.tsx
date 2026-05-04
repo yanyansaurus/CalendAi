@@ -60,7 +60,7 @@ export default function LoginPage() {
           </h2>
           <p style={{ color: 'var(--text-muted)', fontSize: 13, marginBottom: 24, lineHeight: 1.6 }}>
             Sign in with Google to manage your calendar and create Google Meet links.
-            Connect Zoom to create Zoom meetings too.
+            Zoom is configured automatically on the server.
           </p>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
@@ -87,23 +87,7 @@ export default function LoginPage() {
               )}
             </button>
 
-            {/* Zoom */}
-            <button
-              id="btn-login-zoom"
-              className="btn-ghost w-full justify-center"
-              onClick={() => handleSignIn('zoom')}
-              disabled={loading !== null}
-              style={{ fontSize: 15, padding: '14px 24px' }}
-            >
-              {loading === 'zoom' ? (
-                <span>Connecting…</span>
-              ) : (
-                <>
-                  <span style={{ fontSize: 18 }}>📹</span>
-                  Connect Zoom
-                </>
-              )}
-            </button>
+
           </div>
 
           <p style={{ color: 'var(--text-subtle)', fontSize: 12, marginTop: 20, textAlign: 'center', lineHeight: 1.6 }}>

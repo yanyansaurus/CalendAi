@@ -149,11 +149,7 @@ export async function POST(req: Request) {
           zoomLink:  zoom.joinUrl,
           joinUrl:   zoom.joinUrl,
         }
-        // Also block on Google Calendar if available
-        if (googleToken) {
-          const end = new Date(new Date(startTime).getTime() + duration * 60000).toISOString()
-          await createCalendarEvent(googleToken, { title, startTime, endTime: end, colorId: '2' })
-        }
+
       } else if (googleToken) {
         const meet = await createGoogleMeet(googleToken, {
           title,

@@ -43,9 +43,13 @@ const COMMAND_CATEGORIES = [
 
 function DraftEmailCard({ action, onSend }: { action: any, onSend: (to: string, subject: string, body: string) => void }) {
   const [body, setBody] = useState(action.emailBody || '')
+  const [to, setTo] = useState(action.emailTo || '')
+  const [subject, setSubject] = useState(action.emailSubject || '')
   
   useEffect(() => {
     setBody(action.emailBody || '')
+    setTo(action.emailTo || '')
+    setSubject(action.emailSubject || '')
   }, [action.emailBody])
 
   const meetingDetails = action.meetingDetails
@@ -88,13 +92,27 @@ function DraftEmailCard({ action, onSend }: { action: any, onSend: (to: string, 
       <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-subtle)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 12 }}>
         Draft Email
       </div>
-      <div style={{ marginBottom: 8 }}>
-        <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>To: </span>
-        <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)' }}>{action.emailTo}</span>
+      <div style={{ marginBottom: 8, display: 'flex', alignItems: 'center', gap: 8 }}>
+        <span style={{ fontSize: 12, color: 'var(--text-muted)', width: 50 }}>To: </span>
+        <input 
+          value={to}
+          onChange={e => setTo(e.target.value)}
+          style={{ 
+            flex: 1, background: 'transparent', border: 'none', borderBottom: '1px solid var(--border)',
+            fontSize: 13, fontWeight: 600, color: 'var(--text)', outline: 'none', padding: '4px 0'
+          }}
+        />
       </div>
-      <div style={{ marginBottom: 12 }}>
-        <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>Subject: </span>
-        <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)' }}>{action.emailSubject}</span>
+      <div style={{ marginBottom: 12, display: 'flex', alignItems: 'center', gap: 8 }}>
+        <span style={{ fontSize: 12, color: 'var(--text-muted)', width: 50 }}>Subject: </span>
+        <input 
+          value={subject}
+          onChange={e => setSubject(e.target.value)}
+          style={{ 
+            flex: 1, background: 'transparent', border: 'none', borderBottom: '1px solid var(--border)',
+            fontSize: 13, fontWeight: 600, color: 'var(--text)', outline: 'none', padding: '4px 0'
+          }}
+        />
       </div>
       <textarea 
         value={body}
@@ -132,25 +150,44 @@ function DraftEmailCard({ action, onSend }: { action: any, onSend: (to: string, 
         <button
           className="btn-brand"
           style={{ flex: 1, padding: '10px', fontSize: 13, display: 'flex', justifyContent: 'center', gap: 6 }}
-          onClick={() => onSend(action.emailTo, action.emailSubject, body)}
+          onClick={() => onSend(to, subject, body)}
         >
           🚀 Send Email Now
         </button>
         {hasMeeting && (
-          <button
-            className="btn-ghost"
-            style={{
-              flex: 1, padding: '10px', fontSize: 13, display: 'flex', justifyContent: 'center', gap: 6,
-              border: '1px solid rgba(52, 211, 153, 0.3)', color: '#34d399',
-            }}
-            onClick={() => {
-              const cmd = buildScheduleCommand()
-              // Dispatch the command via the chat system
-              window.dispatchEvent(new CustomEvent('send-chat', { detail: { message: cmd } }))
-            }}
-          >
-            📅 Schedule Meeting
-          </button>
+          <>
+            <button
+              className="btn-ghost"
+              style={{
+                flex: 1, padding: '10px', fontSize: 13, display: 'flex', justifyContent: 'center', gap: 6,
+                border: '1px solid rgba(52, 211, 153, 0.3)', color: '#34d399',
+              }}
+              onClick={() => {
+                const cmd = buildScheduleCommand()
+                window.dispatchEvent(new CustomEvent('send-chat', { detail: { message: cmd } }))
+              }}
+            >
+              📹 Create Meeting
+            </button>
+            <button
+              className="btn-ghost"
+              style={{
+                flex: 1, padding: '10px', fontSize: 13, display: 'flex', justifyContent: 'center', gap: 6,
+                border: '1px solid rgba(96, 165, 250, 0.3)', color: '#60a5fa',
+              }}
+              onClick={() => {
+                const title = meetingDetails.title || action.emailSubject || 'Event'
+                const dt = meetingDetails.suggestedTime ? new Date(meetingDetails.suggestedTime) : new Date()
+                const dateStr = dt.toLocaleString()
+                const dur = meetingDetails.duration || 30
+                window.dispatchEvent(new CustomEvent('send-chat', { 
+                  detail: { message: `Add an event to my calendar for "${title}" on ${dateStr} for ${dur} minutes` } 
+                }))
+              }}
+            >
+              🗓️ Add to Calendar
+            </button>
+          </>
         )}
       </div>
     </div>
@@ -352,8 +389,37 @@ export default function ChatPanel() {
               {msg.content}
             </div>
 
-            {/* Meeting link card */}
-            {msg.meetingResult && <MeetingLinkCard meeting={msg.meetingResult} />}
+            {/* Meeting link card & Follow-up Actions */}
+            {msg.meetingResult && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8, width: '100%' }}>
+                <MeetingLinkCard meeting={msg.meetingResult} />
+                <div className="animate-fade-up" style={{ display: 'flex', gap: 8, flexWrap: 'wrap', animationDelay: '0.2s' }}>
+                  <button 
+                    className="btn-ghost" 
+                    style={{ fontSize: 12, padding: '6px 12px', background: 'var(--surface-2)', border: '1px solid var(--border)' }}
+                    onClick={() => sendMessage(`Draft an email to the attendees sharing this meeting link: ${msg.meetingResult?.joinUrl}`)}
+                  >
+                    📧 Draft Email with Link
+                  </button>
+                  <button 
+                    className="btn-ghost" 
+                    style={{ fontSize: 12, padding: '6px 12px', background: 'var(--surface-2)', border: '1px solid var(--border)' }}
+                    onClick={() => sendMessage(`Prepare a meeting agenda for this call`)}
+                  >
+                    📝 Draft Agenda
+                  </button>
+                  {msg.meetingResult.platform === 'zoom' && (
+                    <button 
+                      className="btn-ghost" 
+                      style={{ fontSize: 12, padding: '6px 12px', background: 'var(--surface-2)', border: '1px solid var(--border)' }}
+                      onClick={() => sendMessage(`Add an event to my calendar for "${msg.meetingResult?.title}" on ${new Date(msg.meetingResult?.startTime || '').toLocaleString()} for ${msg.meetingResult?.duration} minutes`)}
+                    >
+                      🗓️ Add to Calendar
+                    </button>
+                  )}
+                </div>
+              </div>
+            )}
 
             {/* Day plan cards */}
             {msg.schedule && msg.schedule.length > 0 && (
