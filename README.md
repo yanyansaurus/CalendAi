@@ -26,7 +26,7 @@ ExecutiveVAi is your comprehensive AI-powered executive assistant designed to ha
 ## 🛠️ Tech Stack
 - **Framework:** Next.js 14 (App Router)
 - **Authentication:** NextAuth.js
-- **AI Integration:** Google Gemini 1.5 Flash (Vision + Chat)
+- **AI Integration:** Google Gemini 3.1 Flash Lite / 2.0 Flash (Vision + Chat)
 - **Database:** Redis Labs (Persistent KV)
 - **APIs:** Google Calendar, Gmail, Zoom
 - **Styling:** Vanilla CSS & Tailwind CSS
@@ -36,9 +36,60 @@ ExecutiveVAi is your comprehensive AI-powered executive assistant designed to ha
 ## 🚀 Local Setup Guide
 
 ### 📋 Prerequisites
-- **Node.js**: v18.0 or higher
-- **npm**: v9.0 or higher
-- **Redis**: A Redis Labs account (or a local instance)
+
+| Tool | Version | Download |
+|------|---------|----------|
+| **Node.js** | v18.0+ | [nodejs.org](https://nodejs.org/) |
+| **npm** | v9.0+ | *(included with Node.js)* |
+| **Git** | latest | [git-scm.com](https://git-scm.com/) |
+| **Redis** | — | [Redis Labs (cloud)](https://redis.com/try-free/) or local |
+
+#### Install Prerequisites by OS
+
+<details>
+<summary>🍎 <b>macOS</b></summary>
+
+```bash
+# Install Homebrew (if not installed)
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+
+# Install Node.js & Git
+brew install node git
+
+# Verify
+node -v && npm -v && git --version
+```
+</details>
+
+<details>
+<summary>🐧 <b>Linux (Ubuntu/Debian)</b></summary>
+
+```bash
+# Install Node.js via NodeSource
+curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
+sudo apt-get install -y nodejs git
+
+# Verify
+node -v && npm -v && git --version
+```
+</details>
+
+<details>
+<summary>🪟 <b>Windows</b></summary>
+
+```powershell
+# Option 1: Download installers
+# Node.js → https://nodejs.org/ (LTS recommended)
+# Git     → https://git-scm.com/download/win
+
+# Option 2: Install via winget (Windows 11)
+winget install OpenJS.NodeJS.LTS
+winget install Git.Git
+
+# Verify (restart terminal after install)
+node -v && npm -v && git --version
+```
+</details>
 
 ---
 
@@ -53,7 +104,7 @@ ExecutiveVAi is your comprehensive AI-powered executive assistant designed to ha
    ```
 2. **Environment**:
    ```bash
-   cp .env.local.example .env.local
+   cp .env.example .env.local
    ```
 3. **Run**:
    ```bash
@@ -69,9 +120,9 @@ ExecutiveVAi is your comprehensive AI-powered executive assistant designed to ha
    npm install
    ```
 2. **Environment**:
-   Manually copy `.env.local.example` to `.env.local` or use PowerShell:
+   Manually copy `.env.example` to `.env.local` or use PowerShell:
    ```powershell
-   copy .env.local.example .env.local
+   copy .env.example .env.local
    ```
 3. **Run**:
    ```cmd
@@ -90,12 +141,12 @@ Fill in the following in your `.env.local`:
 - `GOOGLE_CLIENT_ID`
 - `GOOGLE_CLIENT_SECRET`
 
-### 2. Zoom Integration (App Marketplace)
-- Create an OAuth app.
-- Add Redirect URI: `http://localhost:3000/api/auth/callback/zoom`
-- Scopes: `meeting:write`, `meeting:write:admin`
+### 2. Zoom Integration (Server-to-Server OAuth)
+- Go to [marketplace.zoom.us](https://marketplace.zoom.us/) → Build App → **Server-to-Server OAuth**
+- Add scopes: `meeting:write:admin`
 - `ZOOM_CLIENT_ID`
 - `***REMOVED***`
+- `ZOOM_ACCOUNT_ID`
 
 ### 3. Gemini AI
 - Get your key from [Google AI Studio](https://aistudio.google.com/app/apikey).

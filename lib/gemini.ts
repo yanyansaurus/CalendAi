@@ -82,6 +82,13 @@ The JSON must exactly match this shape:
   "emailTo": "<email address to send to>",
   "emailSubject": "<subject of the email>",
   "emailBody": "<body of the email in HTML or plain text>",
+  "meetingDetails": {
+    "suggestedTime": "<ISO 8601 datetime if a meeting time is mentioned in the email context>",
+    "duration": "<meeting duration in minutes, default 30>",
+    "platform": "<google_meet or zoom, default google_meet>",
+    "attendees": ["<email addresses of meeting participants>"],
+    "title": "<meeting title>"
+  },
   "naturalResponse": "<friendly message to show in chat after action completes>"
 }
 
@@ -100,6 +107,9 @@ Valid intents:
   view_budget     – check the remaining budget or list recent expenses
   read_emails     – fetch and summarize unread important emails
   draft_email     – compose an email draft for the user to review. ALWAYS generate a fresh, unique email tailored to the specific request. Do NOT copy previous drafts.
+                    **IMPORTANT**: If the email is about scheduling a meeting, call, or appointment, you MUST also populate the "meetingDetails" field with:
+                    { "suggestedTime": "<ISO 8601 datetime extracted from the email>", "duration": <minutes, default 30>, "platform": "google_meet", "attendees": ["<sender email>"], "title": "<meeting title>" }
+                    Extract the time from the original email body/context. If the email says "8pm", "3:00 PM", "tomorrow at 2", etc., convert that to a proper ISO 8601 datetime using {currentTime} and {userTimezone} as reference.
   send_email      – automatically send an email immediately. ONLY use if user explicitly says "send it directly" or "send now".
   clarify         – ask the user for missing information
 

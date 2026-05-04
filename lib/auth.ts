@@ -2,27 +2,8 @@ import NextAuth from 'next-auth'
 import Google from 'next-auth/providers/google'
 import type { NextAuthConfig } from 'next-auth'
 
-// ─── Zoom custom OAuth provider ───────────────────────────────────────────────
-const ZoomProvider = {
-  id: 'zoom',
-  name: 'Zoom',
-  type: 'oauth' as const,
-  clientId: process.env.ZOOM_CLIENT_ID!,
-  clientSecret: process.env.***REMOVED***!,
-  authorization: {
-    url: 'https://zoom.us/oauth/authorize',
-    params: { scope: 'meeting:write meeting:write:admin' },
-  },
-  token: 'https://zoom.us/oauth/token',
-  userinfo: 'https://api.zoom.us/v2/users/me',
-  profile(profile: { id: string; email: string; display_name: string }) {
-    return {
-      id: profile.id,
-      name: profile.display_name,
-      email: profile.email,
-    }
-  },
-}
+// Zoom is now handled via Server-to-Server OAuth (no user-facing provider needed).
+// See lib/zoom.ts for the token management.
 
 export const authConfig: NextAuthConfig = {
   providers: [
@@ -44,7 +25,6 @@ export const authConfig: NextAuthConfig = {
         },
       },
     }),
-    ZoomProvider,
   ],
   pages: {
     signIn: '/login',
@@ -60,11 +40,6 @@ export const authConfig: NextAuthConfig = {
             googleExpiry:       (account.expires_at ?? 0) * 1000, // store in ms
           }
         }
-        if (account.provider === 'zoom') {
-          token.zoomAccessToken  = account.access_token
-          token.zoomRefreshToken = account.refresh_token
-          token.zoomExpiry       = account.expires_at
-        }
       }
 
       // Check if Google token is expired
@@ -77,7 +52,6 @@ export const authConfig: NextAuthConfig = {
     async session({ session, token }) {
       session.googleAccessToken  = token.googleAccessToken  as string | undefined
       session.googleRefreshToken = token.googleRefreshToken as string | undefined
-      session.zoomAccessToken    = token.zoomAccessToken    as string | undefined
       return session
     },
   },

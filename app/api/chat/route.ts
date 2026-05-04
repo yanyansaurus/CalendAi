@@ -3,7 +3,7 @@ import { getGeminiModel, getFallbackGeminiModel, SYSTEM_PROMPT } from '@/lib/gem
 import { parseIntent } from '@/lib/intentParser'
 import { getFreeBusy, createGoogleMeet, createCalendarEvent, updateCalendarEvent, deleteCalendarEvent } from '@/lib/googleCalendar'
 import { getUnreadEmails, sendEmail } from '@/lib/gmail'
-import { createZoomMeeting } from '@/lib/zoom'
+import { createZoomMeeting, getZoomAccessToken, isZoomConfigured } from '@/lib/zoom'
 import { getSchedule, saveSchedule, scheduleRemindersForPlan } from '@/lib/reminderEngine'
 import { getBudgetData, addExpense } from '@/lib/budgetEngine'
 import { colorIdForType } from '@/lib/intentParser'
@@ -20,7 +20,7 @@ export async function POST(req: Request) {
   const { message, history = [] } = await req.json()
   const userId         = session.user.email
   const googleToken    = session.googleAccessToken
-  const zoomToken      = session.zoomAccessToken
+  const zoomConfigured = isZoomConfigured()
   const timezone       = req.headers.get('x-timezone') ?? 'UTC'
 
   let busySlots: Array<{ start: string; end: string }> = []
@@ -133,7 +133,8 @@ export async function POST(req: Request) {
       const title     = action.title     ?? 'Meeting'
       let meetingResult: MeetingResult | null = null
 
-      if (action.platform === 'zoom' && zoomToken) {
+      if (action.platform === 'zoom' && zoomConfigured) {
+        const zoomToken = await getZoomAccessToken()
         const zoom = await createZoomMeeting(zoomToken, {
           title,
           startTime,
@@ -471,6 +472,12 @@ CHAT: You have 3 unread emails. Here's what needs attention:
       if (!action.emailTo || !action.emailSubject || !action.emailBody) {
         return NextResponse.json({ type: 'chat', text: "I need an email address, a subject, and a body to draft the email." })
       }
+      
+      // Log if meeting details were extracted from the email context
+      if (action.meetingDetails) {
+        console.log(`[ExecutiveVAi] Draft includes meeting details:`, JSON.stringify(action.meetingDetails))
+      }
+      
       return NextResponse.json({
         type: 'chat',
         text: action.naturalResponse ?? `Here is your draft for ${action.emailTo}.`,

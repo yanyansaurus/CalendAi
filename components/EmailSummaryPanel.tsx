@@ -170,9 +170,9 @@ export default function EmailSummaryPanel() {
                     onClick={() => {
                       // Switch to chat tab
                       window.dispatchEvent(new CustomEvent('switch-tab', { detail: { tab: 'chat' } }))
-                      // Tell chat to draft the email
+                      // Tell chat to draft the email, including the email summary so the AI can extract meeting details
                       window.dispatchEvent(new CustomEvent('send-chat', { 
-                        detail: { message: `Use the draft_email intent to draft a professional reply to ${item.emailAddress || item.from} about "${item.subject}". The suggested action is: ${item.suggestedAction}. DO NOT send it, just draft it.` } 
+                        detail: { message: `Use the draft_email intent to draft a professional reply to ${item.emailAddress || item.from} about "${item.subject}". The suggested action is: ${item.suggestedAction}. The email summary says: "${item.summary}". If this email mentions a meeting time, extract it into meetingDetails. DO NOT send it, just draft it.` } 
                       }))
                       // Remove from list
                       setSummary(prev => prev ? {

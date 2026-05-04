@@ -41,6 +41,14 @@ export interface AgentAction {
   emailTo?: string
   emailSubject?: string
   emailBody?: string
+  // Extracted meeting details when drafting replies about meetings
+  meetingDetails?: {
+    suggestedTime?: string    // ISO 8601 datetime
+    duration?: number         // minutes
+    platform?: MeetingPlatform | null
+    attendees?: string[]
+    title?: string
+  }
   naturalResponse: string
 }
 

@@ -48,6 +48,41 @@ function DraftEmailCard({ action, onSend }: { action: any, onSend: (to: string, 
     setBody(action.emailBody || '')
   }, [action.emailBody])
 
+  const meetingDetails = action.meetingDetails
+  const hasMeeting = meetingDetails && (meetingDetails.suggestedTime || meetingDetails.title)
+
+  // Build a scheduling command with the extracted meeting details
+  const buildScheduleCommand = () => {
+    const parts: string[] = []
+    const title = meetingDetails.title || action.emailSubject || 'Meeting'
+    const platform = meetingDetails.platform || 'google_meet'
+    const duration = meetingDetails.duration || 30
+    
+    parts.push(`Schedule a ${duration}-minute ${platform === 'zoom' ? 'Zoom' : 'Google Meet'} meeting titled "${title}"`)
+    
+    if (meetingDetails.suggestedTime) {
+      const dt = new Date(meetingDetails.suggestedTime)
+      const timeStr = dt.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })
+      const dateStr = dt.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })
+      parts.push(`on ${dateStr} at ${timeStr}`)
+    }
+    
+    if (meetingDetails.attendees?.length) {
+      parts.push(`with ${meetingDetails.attendees.join(', ')}`)
+    }
+    
+    return parts.join(' ')
+  }
+
+  // Format the meeting time for display
+  const formatMeetingTime = () => {
+    if (!meetingDetails?.suggestedTime) return null
+    const dt = new Date(meetingDetails.suggestedTime)
+    const timeStr = dt.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })
+    const dateStr = dt.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })
+    return `${dateStr} at ${timeStr}`
+  }
+
   return (
     <div className="glass animate-fade-up" style={{ padding: 16, borderRadius: 12, marginTop: 8, width: '100%', border: '1px solid rgba(99,102,241,0.3)' }}>
       <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-subtle)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 12 }}>
@@ -71,13 +106,53 @@ function DraftEmailCard({ action, onSend }: { action: any, onSend: (to: string, 
           outline: 'none'
         }}
       />
-      <button
-        className="btn-brand"
-        style={{ width: '100%', marginTop: 12, padding: '10px', fontSize: 13, display: 'flex', justifyContent: 'center', gap: 6 }}
-        onClick={() => onSend(action.emailTo, action.emailSubject, body)}
-      >
-        🚀 Send Email Now
-      </button>
+
+      {/* Meeting Details Banner — shown when the email is about scheduling */}
+      {hasMeeting && (
+        <div style={{
+          marginTop: 12, padding: '10px 14px', borderRadius: 10,
+          background: 'rgba(52, 211, 153, 0.08)', border: '1px solid rgba(52, 211, 153, 0.25)',
+          display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap',
+        }}>
+          <span style={{ fontSize: 16 }}>📅</span>
+          <div style={{ flex: 1, minWidth: 150 }}>
+            <div style={{ fontSize: 12, fontWeight: 700, color: '#34d399' }}>
+              Meeting Detected
+            </div>
+            <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 2 }}>
+              {meetingDetails.title || action.emailSubject}
+              {formatMeetingTime() && ` · ${formatMeetingTime()}`}
+              {meetingDetails.duration && ` · ${meetingDetails.duration} min`}
+            </div>
+          </div>
+        </div>
+      )}
+
+      <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
+        <button
+          className="btn-brand"
+          style={{ flex: 1, padding: '10px', fontSize: 13, display: 'flex', justifyContent: 'center', gap: 6 }}
+          onClick={() => onSend(action.emailTo, action.emailSubject, body)}
+        >
+          🚀 Send Email Now
+        </button>
+        {hasMeeting && (
+          <button
+            className="btn-ghost"
+            style={{
+              flex: 1, padding: '10px', fontSize: 13, display: 'flex', justifyContent: 'center', gap: 6,
+              border: '1px solid rgba(52, 211, 153, 0.3)', color: '#34d399',
+            }}
+            onClick={() => {
+              const cmd = buildScheduleCommand()
+              // Dispatch the command via the chat system
+              window.dispatchEvent(new CustomEvent('send-chat', { detail: { message: cmd } }))
+            }}
+          >
+            📅 Schedule Meeting
+          </button>
+        )}
+      </div>
     </div>
   )
 }
@@ -333,7 +408,7 @@ export default function ChatPanel() {
                       <button
                         className="btn-brand"
                         style={{ fontSize: 11, padding: '6px 12px', borderRadius: 6, flex: 1 }}
-                        onClick={() => sendMessage(`Draft a professional reply to the email from ${email.from.split('<')[0].trim()} about "${email.subject}". Keep it brief and polite.`)}
+                        onClick={() => sendMessage(`Draft a professional reply to the email from ${email.from.split('<')[0].trim()} about "${email.subject}". The email body says: "${email.body.substring(0, 300)}". If this email mentions a meeting time, extract it into meetingDetails. Keep it brief and polite.`)}
                       >
                         ✍️ Draft Reply
                       </button>

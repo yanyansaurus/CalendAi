@@ -30,7 +30,7 @@ export default function Dashboard({ session }: DashboardProps) {
   }, [])
   
   const hasGoogle = !!session?.googleAccessToken
-  const hasZoom   = !!session?.zoomAccessToken
+  const hasZoom   = true  // Zoom uses Server-to-Server OAuth — always available if configured
 
   const navItems: { id: TabId; icon: string; label: string }[] = [
     { id: 'chat',     icon: '💬', label: 'Chat' },
