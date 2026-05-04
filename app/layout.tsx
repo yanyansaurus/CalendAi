@@ -11,15 +11,22 @@ const inter = Inter({
 })
 
 export const metadata: Metadata = {
-  title: 'MeetMate — AI Executive Assistant',
+  title: 'Executive VAi — AI Executive Assistant',
   description:
-    'Chat with your AI Chief of Staff. Schedule Google Meet & Zoom calls, plan your day, and get intelligent calendar briefings — all through natural conversation.',
-  keywords: ['AI assistant', 'calendar', 'executive', 'meeting scheduler', 'Google Meet', 'Zoom'],
+    'Chat with your AI Executive Assistant. Schedule Google Meet & Zoom calls, plan your day, and get intelligent calendar briefings — all through natural conversation.',
+  keywords: ['AI assistant', 'calendar', 'executive', 'meeting scheduler', 'Google Meet', 'Zoom', 'Executive VAi'],
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={inter.variable}>
+    <html lang="en" className={inter.variable} suppressHydrationWarning>
+      <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){try{var t=localStorage.getItem('executive-vai-theme');if(t==='light'||t==='dark'){document.documentElement.setAttribute('data-theme',t)}}catch(e){}})()`,
+          }}
+        />
+      </head>
       <body>
         <Providers>{children}</Providers>
         <Analytics />

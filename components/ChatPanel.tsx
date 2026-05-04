@@ -43,6 +43,39 @@ const COMMAND_CATEGORIES = [
   },
 ]
 
+function SuggestionBubble({ suggestion, onDismiss, onAccept }: { suggestion: any, onDismiss: (id: string) => void, onAccept: (s: any) => void }) {
+  return (
+    <div className="reminder-bubble animate-fade-up" style={{ width: 280, borderLeft: '4px solid var(--brand)', background: 'var(--surface)' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
+        <span style={{ fontSize: 10, fontWeight: 700, color: 'var(--brand-light)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+          ✨ Suggested Action
+        </span>
+        <button onClick={() => onDismiss(suggestion.id)} style={{ border: 'none', background: 'none', cursor: 'pointer', color: 'var(--text-subtle)', padding: 0 }}>✕</button>
+      </div>
+      <p style={{ fontSize: 12, fontWeight: 600, color: 'var(--text)', marginBottom: 4 }}>{suggestion.from}</p>
+      <p style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 12, lineHeight: 1.4 }}>{suggestion.question}</p>
+      <div style={{ display: 'flex', gap: 8 }}>
+        <button 
+          className="btn-brand" 
+          style={{ flex: 1, padding: '6px', fontSize: 11, borderRadius: 6 }}
+          onClick={() => onAccept(suggestion)}
+        >
+          ✅ Yes, do it
+        </button>
+        <button 
+          className="btn-ghost" 
+          style={{ padding: '6px 12px', fontSize: 11, borderRadius: 6 }}
+          onClick={() => onDismiss(suggestion.id)}
+        >
+          Ignore
+        </button>
+      </div>
+    </div>
+  )
+}
+
+
+
 function DraftEmailCard({ action, onSend }: { action: any, onSend: (to: string, subject: string, body: string) => void }) {
   const [body, setBody] = useState(action.emailBody || '')
   const [to, setTo] = useState(action.emailTo || '')
@@ -209,6 +242,7 @@ export default function ChatPanel() {
   const [isTyping, setIsTyping]       = useState(false)
   const [isListening, setIsListening] = useState(false)
   const [reminders, setReminders]     = useState<Reminder[]>([])
+  const [suggestions, setSuggestions] = useState<any[]>([])
   const [historyLoaded, setHistoryLoaded] = useState(false)
   const [showCommands, setShowCommands] = useState(false)
   const [showPalette, setShowPalette] = useState(false)
@@ -217,6 +251,23 @@ export default function ChatPanel() {
   const bottomRef                     = useRef<HTMLDivElement>(null)
   const commandRef                    = useRef<HTMLDivElement>(null)
   const fileInputRef                  = useRef<HTMLInputElement>(null)
+
+  // Save suggestions to localStorage
+  useEffect(() => {
+    if (suggestions.length > 0) {
+      localStorage.setItem('executive_vai_suggestions', JSON.stringify(suggestions))
+    }
+  }, [suggestions])
+
+  // Initial load
+  useEffect(() => {
+    const saved = localStorage.getItem('executive_vai_chat_history')
+    if (saved) setMessages(JSON.parse(saved))
+    setHistoryLoaded(true)
+
+    const savedSuggestions = localStorage.getItem('executive_vai_suggestions')
+    if (savedSuggestions) setSuggestions(JSON.parse(savedSuggestions))
+  }, [])
 
   // Listen for custom 'send-chat' events from other components (like EmailSummaryPanel)
   useEffect(() => {
@@ -410,6 +461,23 @@ export default function ChatPanel() {
 
       {/* Reminder bubbles */}
       <div style={{ position: 'fixed', top: 24, right: 24, zIndex: 100, display: 'flex', flexDirection: 'column', gap: 12 }}>
+        {suggestions.map((s) => (
+          <SuggestionBubble 
+            key={s.id} 
+            suggestion={s} 
+            onDismiss={(id) => {
+              const next = suggestions.filter(x => x.id !== id)
+              setSuggestions(next)
+              localStorage.setItem('executive_vai_suggestions', JSON.stringify(next))
+            }}
+            onAccept={(s) => {
+              sendMessage(s.command)
+              const next = suggestions.filter(x => x.id !== s.id)
+              setSuggestions(next)
+              localStorage.setItem('executive_vai_suggestions', JSON.stringify(next))
+            }}
+          />
+        ))}
         {reminders.map((r) => (
           <ReminderBubble key={r.id} reminder={r} onDismiss={dismissReminder} />
         ))}
@@ -422,9 +490,14 @@ export default function ChatPanel() {
                style={{ display: 'flex', flexDirection: 'column', gap: 8,
                         alignItems: msg.role === 'user' ? 'flex-end' : 'flex-start' }}>
 
-            {/* Bubble */}
-            <div className={msg.role === 'user' ? 'bubble-user' : 'bubble-ai'} style={{ maxWidth: '90%' }}>
-              {msg.content}
+            {/* Bubble Container */}
+            <div style={{ display: 'flex', gap: 8, alignItems: 'flex-end', maxWidth: '90%', flexDirection: msg.role === 'user' ? 'row-reverse' : 'row' }}>
+              {msg.role === 'assistant' && (
+                <img src="/logo.png" alt="AI" style={{ width: 28, height: 28, borderRadius: 6, flexShrink: 0, marginBottom: 4 }} />
+              )}
+              <div className={msg.role === 'user' ? 'bubble-user' : 'bubble-ai'} style={{ flex: 1 }}>
+                {msg.content}
+              </div>
             </div>
 
             {/* Meeting link card & Follow-up Actions */}

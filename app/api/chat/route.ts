@@ -1,7 +1,7 @@
 import { auth } from '@/lib/auth'
 import { getGeminiModel, getFallbackGeminiModel, SYSTEM_PROMPT } from '@/lib/gemini'
 import { parseIntent } from '@/lib/intentParser'
-import { getFreeBusy, createGoogleMeet, createCalendarEvent, updateCalendarEvent, deleteCalendarEvent } from '@/lib/googleCalendar'
+import { getFreeBusy, createGoogleMeet, createCalendarEvent, updateCalendarEvent, deleteCalendarEvent, getTodayEvents } from '@/lib/googleCalendar'
 import { getUnreadEmails, sendEmail } from '@/lib/gmail'
 import { createZoomMeeting, getZoomAccessToken, isZoomConfigured } from '@/lib/zoom'
 import { getSchedule, saveSchedule, scheduleRemindersForPlan } from '@/lib/reminderEngine'
@@ -17,15 +17,19 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  const { message, history = [], imageBase64 } = await req.json()
+  const { message, history = [], imageBase64, meetingPreference = 'Google Meet' } = await req.json()
   const userId         = session.user.email
   const googleToken    = session.googleAccessToken
   const zoomConfigured = isZoomConfigured()
   const timezone       = req.headers.get('x-timezone') ?? 'UTC'
 
   let busySlots: Array<{ start: string; end: string }> = []
+  let todayEvents: Array<any> = []
   if (googleToken) {
-    try { busySlots = await getFreeBusy(googleToken, 'today') } catch { /* ignore */ }
+    try { 
+      busySlots = await getFreeBusy(googleToken, 'today') 
+      todayEvents = await getTodayEvents(googleToken)
+    } catch { /* ignore */ }
   }
   const todaySchedule = await getSchedule(userId)
 
@@ -35,12 +39,20 @@ export async function POST(req: Request) {
     start: new Date(slot.start).toLocaleString('en-US', { timeZone: timezone, hour: 'numeric', minute: '2-digit', hour12: true }),
     end: new Date(slot.end).toLocaleString('en-US', { timeZone: timezone, hour: 'numeric', minute: '2-digit', hour12: true })
   }))
+  const formattedTodayEvents = todayEvents.map(ev => ({
+    title: ev.title,
+    description: ev.description?.substring(0, 200), // Truncate description to save tokens
+    start: new Date(ev.start).toLocaleString('en-US', { timeZone: timezone, hour: 'numeric', minute: '2-digit', hour12: true }),
+    end: new Date(ev.end).toLocaleString('en-US', { timeZone: timezone, hour: 'numeric', minute: '2-digit', hour12: true })
+  }))
 
   const systemPrompt = SYSTEM_PROMPT
     .replace('{currentTime}',    localTime)
     .replace('{userTimezone}',   timezone)
     .replace('{busySlots}',      JSON.stringify(formattedBusySlots))
+    .replace('{todayEvents}',    JSON.stringify(formattedTodayEvents))
     .replace('{todaySchedule}',  JSON.stringify(todaySchedule))
+    .replace('{meetingPreference}', meetingPreference)
 
   // ── Call Gemini ────────────────────────────────────────────────────────────
   const model = getGeminiModel(systemPrompt)
@@ -114,9 +126,10 @@ export async function POST(req: Request) {
         })
       }
       console.error('Fallback model error:', fallbackErr)
+      const specificError = fallbackErr.message || 'Unknown error'
       return NextResponse.json({
         type: 'chat',
-        text: '⚠️ Something went wrong with the AI service. Please try again in a moment.',
+        text: `⚠️ AI Service Error: ${specificError}. Please check your quota or try again in a moment.`,
       })
     }
   }
@@ -383,15 +396,6 @@ export async function POST(req: Request) {
       })
     }
 
-    // ── Time Analysis ─────────────────────────────────────────────────────
-    case 'time_analysis': {
-      // We'll just return a chat response for now, but we could trigger the UI tab switch in the future
-      return NextResponse.json({
-        type: 'chat',
-        text: action.naturalResponse ?? "I've analyzed your week. You can see the full breakdown in the Time Analysis tab!",
-        action
-      })
-    }
 
     // ── Budget & Expenses ─────────────────────────────────────────────────
     case 'add_expense': {
@@ -429,7 +433,6 @@ export async function POST(req: Request) {
       })
     }
 
-    // ── Emails ────────────────────────────────────────────────────────────
     case 'read_emails': {
       if (!googleToken) {
         return NextResponse.json({ type: 'chat', text: 'Please connect your Google account to read emails.' })
@@ -502,6 +505,15 @@ CHAT: You have 3 unread emails. Here's what needs attention:
       return NextResponse.json({
         type: 'chat',
         text: action.naturalResponse ?? `Here is your draft for ${action.emailTo}.`,
+        action
+      })
+    }
+
+    case 'draft_meeting':
+    case 'draft_event': {
+      return NextResponse.json({
+        type: 'chat',
+        text: action.naturalResponse ?? `Here is the draft for your ${action.intent === 'draft_meeting' ? 'meeting' : 'event'}.`,
         action
       })
     }

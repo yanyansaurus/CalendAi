@@ -1,9 +1,13 @@
 'use client'
 import { signIn } from 'next-auth/react'
 import { useState } from 'react'
+import { useTheme } from '@/components/ThemeProvider'
+
+
 
 export default function LoginPage() {
   const [loading, setLoading] = useState<'google' | 'zoom' | null>(null)
+  const { theme, toggleTheme } = useTheme()
 
   const handleSignIn = async (provider: 'google' | 'zoom') => {
     setLoading(provider)
@@ -13,6 +17,21 @@ export default function LoginPage() {
   return (
     <main className="min-h-screen flex items-center justify-center relative overflow-hidden"
           style={{ background: 'var(--bg)' }}>
+
+      {/* Theme toggle */}
+      <button
+        onClick={toggleTheme}
+        style={{
+          position: 'absolute', top: 20, right: 20, zIndex: 20,
+          width: 40, height: 40, borderRadius: 12, border: '1px solid var(--border)',
+          background: 'var(--surface-2)', cursor: 'pointer',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          fontSize: 18, transition: 'all 0.2s',
+        }}
+        title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
+      >
+        {theme === 'dark' ? '☀️' : '🌙'}
+      </button>
 
       {/* Background orbs */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
@@ -34,21 +53,22 @@ export default function LoginPage() {
            style={{ maxWidth: 420, width: '100%' }}>
 
         {/* Logo */}
-        <div className="flex flex-col items-center gap-3">
+        <div className="flex flex-col items-center gap-4">
           <div style={{
-            width: 64, height: 64, borderRadius: 20,
-            background: 'linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontSize: 28, boxShadow: '0 8px 32px rgba(99,102,241,0.4)',
+            width: 88, height: 88, borderRadius: 24,
+            boxShadow: '0 12px 40px var(--brand-glow)',
+            overflow: 'hidden',
+            background: '#0a0a0f',
+            padding: 0
           }}>
-            🤖
+            <img src="/logo.png" alt="Logo" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
           </div>
           <div className="text-center">
-            <h1 className="gradient-text" style={{ fontSize: 32, fontWeight: 800, letterSpacing: '-0.02em' }}>
+            <h1 className="gradient-text" style={{ fontSize: 36, fontWeight: 900, letterSpacing: '-0.04em' }}>
               ExecutiveVAi
             </h1>
-            <p style={{ color: 'var(--text-muted)', fontSize: 15, marginTop: 6 }}>
-              Your AI Executive Assistant
+            <p style={{ color: 'var(--text-muted)', fontSize: 16, marginTop: 10, fontWeight: 600 }}>
+              Your AI Chief of Staff
             </p>
           </div>
         </div>
@@ -97,7 +117,7 @@ export default function LoginPage() {
 
         {/* Feature pills */}
         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', justifyContent: 'center' }}>
-          {['📅 Smart Scheduling', '🤖 AI Assistant', '📧 Email Intelligence', '💰 Budget Tracking', '📊 Time Analysis'].map((f) => (
+          {['📅 Smart Scheduling', '🤖 AI Assistant', '📧 Email Intelligence', '💰 Budget Tracking'].map((f) => (
             <span key={f} style={{
               background: 'var(--surface-2)', border: '1px solid var(--border)',
               borderRadius: 20, padding: '6px 12px', fontSize: 12, color: 'var(--text-muted)',

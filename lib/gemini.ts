@@ -7,6 +7,8 @@ const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!)
 const MODEL_PRIORITY = [
   'gemini-3.1-flash-lite-preview',
   'gemini-2.0-flash',
+  'gemini-1.5-flash',
+  'gemini-1.5-pro',
 ]
 
 export function getGeminiModel(systemInstruction?: string) {
@@ -49,6 +51,7 @@ CURRENT CONTEXT (injected dynamically):
 - Current time: {currentTime}
 - User timezone: {userTimezone}
 - Today's busy calendar slots: {busySlots}
+- Today's detailed calendar events: {todayEvents}
 - Today's scheduled task plan: {todaySchedule}
 
 You must respond in one of two ways ONLY:
@@ -94,8 +97,10 @@ The JSON must exactly match this shape:
 }
 
 Valid intents:
-  create_meeting  – schedule a Google Meet or Zoom call
-  create_event    – add a plain calendar event (no video call), e.g. "block time for gym", "add lunch with client"
+  draft_meeting   – draft a Google Meet or Zoom call for the user to review. Default action when the user wants to schedule a meeting.
+  draft_event     – compose an event draft (no video call) for the user to review. Default action when user wants to add an event.
+  create_meeting  – schedule a Google Meet or Zoom call. ONLY use this if the user explicitly confirms a previously drafted meeting.
+  create_event    – add a plain calendar event. ONLY use this if the user explicitly confirms a previously drafted event.
   find_slots      – find free times for a meeting this week
   morning_intake  – parse a task dump and plan the full day
   daily_briefing  – summarise today's calendar and priorities
@@ -127,15 +132,16 @@ SCHEDULING RULES (follow these exactly):
 - If user says "now" or "asap", set startTime to current time + 5 minutes.
 - If user says "today", infer the date from {currentTime}.
 - If user says "tomorrow", add 1 day to {currentTime}.
-- If user doesn't specify a platform for a MEETING, use intent "clarify" and ask.
+- If the user asks to schedule a meeting without specifying a platform, default to {meetingPreference}.
 - If user doesn't specify a duration for a MEETING or EVENT, use intent "clarify" and ask how long it will take.
-- If the user wants to block time, add an event, or schedule something that isn't a meeting, use "create_event" (no platform needed).
+- If the user wants to block time, add an event, or schedule something that isn't a meeting, use "draft_event" (no platform needed).
 - If user doesn't specify a time, find a free slot and suggest it—don't ask vaguely.
 - CONFLICT CHECK: Before confirming any event, check {busySlots} for overlaps.
   If the requested time conflicts with an existing event, DO NOT schedule it yet.
   Instead, use intent "clarify" to WARN the user about the specific conflicting event, 
   AND look at the {busySlots} to suggest an alternative vacant time nearby 
   (e.g., "⚠️ You already have a Team Sync at 11:30 AM. However, 1:00 PM is free. Do you want to schedule it then?").
+- EMPTY CALENDAR CHECK: If the user's calendar ({todayEvents} and {todaySchedule}) for today or tomorrow has fewer than 2 events total, explicitly append a polite suggestion to your naturalResponse asking if they would like to "fill the blanks" and have you schedule some deep work, focus blocks, or learning sessions for them. IMPORTANT: ONLY ask the question. DO NOT draft events, schedule meetings, or generate dummy tasks in the JSON payload unless the user explicitly agrees to it first.
 - For morning_intake, schedule in this priority order:
     1. Focus blocks (minimum 60 min, preferably 9–11 AM)
     2. Deep work (board prep, strategy docs)

@@ -236,6 +236,31 @@ export async function getWeekEvents(accessToken: string) {
   }))
 }
 
+// ─── Fetch today's detailed events for AI context ─────────────────────────────
+export async function getTodayEvents(accessToken: string) {
+  const auth = getAuthClient(accessToken)
+  const calendar = google.calendar({ version: 'v3', auth })
+
+  const now = new Date()
+  const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0).toISOString()
+  const endOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59).toISOString()
+
+  const res = await calendar.events.list({
+    calendarId:   'primary',
+    timeMin:      startOfDay,
+    timeMax:      endOfDay,
+    singleEvents: true,
+    orderBy:      'startTime',
+  })
+
+  return (res.data.items ?? []).map((e) => ({
+    title:       e.summary ?? 'Busy',
+    description: e.description ?? '',
+    start:       e.start?.dateTime ?? e.start?.date ?? '',
+    end:         e.end?.dateTime   ?? e.end?.date   ?? '',
+  }))
+}
+
 // ─── Update an existing calendar event ────────────────────────────────────────
 export async function updateCalendarEvent(
   accessToken: string,

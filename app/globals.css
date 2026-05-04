@@ -4,24 +4,71 @@
 @tailwind components;
 @tailwind utilities;
 
-/* ─── Design tokens ─────────────────────────────────────────────────────────── */
+/* ─── Design tokens (Dark — default) ───────────────────────────────────────── */
 :root {
-  --bg:           #0f0f13;
-  --surface:      #17171e;
-  --surface-2:    #1e1e28;
-  --surface-3:    #26263a;
-  --border:       rgba(255,255,255,0.07);
-  --brand:        #6366f1;
-  --brand-light:  #818cf8;
-  --brand-glow:   rgba(99,102,241,0.25);
-  --text:         #f1f1f5;
-  --text-muted:   #8b8ba8;
-  --text-subtle:  #4a4a6a;
-  --focus-color:  #a78bfa;
-  --deep-color:   #60a5fa;
-  --meeting-color:#34d399;
-  --admin-color:  #fbbf24;
-  --danger:       #f87171;
+  --bg:           #0a0a0f;
+  --surface:      #12121a;
+  --surface-2:    #1a1a26;
+  --surface-3:    #222235;
+  --border:       rgba(255,255,255,0.08);
+  --brand:        #4f46e5;
+  --brand-light:  #6366f1;
+  --brand-glow:   rgba(79,70,229,0.3);
+  --text:         #f8fafc;
+  --text-muted:   #94a3b8;
+  --text-subtle:  #475569;
+  --focus-color:  #818cf8;
+  --deep-color:   #3b82f6;
+  --meeting-color:#10b981;
+  --admin-color:  #f59e0b;
+  --danger:       #ef4444;
+}
+
+/* ─── Design tokens (Light) ────────────────────────────────────────────────── */
+[data-theme="light"] {
+  --bg:           #f8fafc;
+  --surface:      #ffffff;
+  --surface-2:    #f1f5f9;
+  --surface-3:    #e2e8f0;
+  --border:       rgba(15, 23, 42, 0.08);
+  --brand:        #4f46e5;
+  --brand-light:  #4338ca;
+  --brand-glow:   rgba(79,70,229,0.15);
+  --text:         #0f172a;
+  --text-muted:   #475569;
+  --text-subtle:  #94a3b8;
+  --focus-color:  #6366f1;
+  --deep-color:   #2563eb;
+  --meeting-color:#059669;
+  --admin-color:  #d97706;
+  --danger:       #dc2626;
+}
+
+/* Light mode overrides for glass and bubbles */
+[data-theme="light"] .glass {
+  background: rgba(255, 255, 255, 0.7);
+  border-color: rgba(0,0,0,0.06);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+}
+
+[data-theme="light"] .bubble-ai {
+  background: var(--surface-2);
+  border-color: var(--border);
+}
+
+[data-theme="light"] .btn-ghost:hover {
+  background: rgba(99,102,241,0.06);
+}
+
+[data-theme="light"] ::-webkit-scrollbar-thumb {
+  background: #c4c8d4;
+}
+
+[data-theme="light"] .gradient-text {
+  background: linear-gradient(135deg, #7c3aed 0%, #4f46e5 50%, #3b82f6 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
 /* ─── Base reset ────────────────────────────────────────────────────────────── */
@@ -194,6 +241,9 @@ html, body {
 }
 
 .animate-fade-up { animation: fadeUp 0.4s ease-out; }
+
+/* ─── Global Layout Utilities ──────────────────────────────────────────────── */
+.container-padding { padding: 32px; }
 
 /* ─── Responsive Utilities ─────────────────────────────────────────────────── */
 @media (max-width: 768px) {

@@ -69,7 +69,7 @@ export default function BriefingPanel() {
     setError(null)
     try {
       const res = await fetch('/api/briefing', {
-        headers: { 'x-timezone': Intl.DateTimeFormat().resolvedOptions().timeZone }
+        headers: { 'x-timezone': localStorage.getItem('executive_vai_timezone') || Intl.DateTimeFormat().resolvedOptions().timeZone }
       })
       if (!res.ok) throw new Error('Failed to load briefing')
       const data = await res.json()

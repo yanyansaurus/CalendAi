@@ -22,6 +22,8 @@ export type AgentIntent =
   | 'read_emails'
   | 'draft_email'
   | 'send_email'
+  | 'draft_meeting'
+  | 'draft_event'
   | 'clarify'
   | 'travel_mode'
 

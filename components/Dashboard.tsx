@@ -1,24 +1,26 @@
 'use client'
 import { useState, useEffect } from 'react'
 import ChatPanel from '@/components/ChatPanel'
-import AnalysisDashboard from '@/components/AnalysisDashboard'
 import WeekSchedule from '@/components/WeekSchedule'
 import FinanceDashboard from '@/components/FinanceDashboard'
 import BriefingPanel from '@/components/BriefingPanel'
 import TaskBoard from '@/components/TaskBoard'
 import EmailSummaryPanel from '@/components/EmailSummaryPanel'
 import SettingsPanel from '@/components/SettingsPanel'
+import { useTheme } from '@/components/ThemeProvider'
+import OnboardingModal from '@/components/OnboardingModal'
 import { signOut } from 'next-auth/react'
 
 interface DashboardProps {
   session: any
 }
 
-type TabId = 'chat' | 'briefing' | 'planner' | 'emails' | 'finances' | 'analysis' | 'settings'
+type TabId = 'chat' | 'briefing' | 'planner' | 'emails' | 'finances' | 'settings'
 
 export default function Dashboard({ session }: DashboardProps) {
   const [activeTab, setActiveTab] = useState<TabId>('chat')
   const [plannerView, setPlannerView] = useState<'tasks' | 'calendar'>('tasks')
+  const { theme, toggleTheme } = useTheme()
   
   // Listen for tab switch events from child components
   useEffect(() => {
@@ -38,15 +40,15 @@ export default function Dashboard({ session }: DashboardProps) {
     { id: 'planner',  icon: '📋', label: 'Planner' },
     { id: 'emails',   icon: '📧', label: 'Emails' },
     { id: 'finances', icon: '💰', label: 'Finances' },
-    { id: 'analysis', icon: '📊', label: 'Analysis' },
     { id: 'settings', icon: '⚙️', label: 'Settings' },
   ]
 
   // Show 5 most important tabs in mobile bottom nav
-  const mobileNavItems = navItems.filter(i => !['analysis', 'settings'].includes(i.id))
+  const mobileNavItems = navItems.filter(i => !['settings'].includes(i.id))
 
   return (
     <div style={{ display: 'flex', height: '100vh', overflow: 'hidden', background: 'var(--bg)' }}>
+      <OnboardingModal />
       {/* Sidebar - Hidden on mobile */}
       <aside className="hidden-mobile" style={{
         width: 240, flexShrink: 0, borderRight: '1px solid var(--border)',
@@ -55,12 +57,10 @@ export default function Dashboard({ session }: DashboardProps) {
       }}>
         {/* Logo */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 32 }}>
-          <div style={{
-            width: 36, height: 36, borderRadius: 10,
-            background: 'linear-gradient(135deg, #6366f1, #4f46e5)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontSize: 18, boxShadow: '0 4px 12px rgba(99,102,241,0.35)',
-          }}>🤖</div>
+          <img src="/logo.png" alt="ExecutiveVAi Logo" style={{
+            width: 36, height: 36, borderRadius: 8,
+            objectFit: 'contain'
+          }} />
           <span style={{ fontWeight: 700, fontSize: 16, letterSpacing: '-0.01em' }}>ExecutiveVAi</span>
         </div>
 
@@ -71,26 +71,68 @@ export default function Dashboard({ session }: DashboardProps) {
         </div>
 
         {/* Nav links */}
-        <nav style={{ display: 'flex', flexDirection: 'column', gap: 4, flex: 1 }}>
+        <nav style={{ 
+          display: 'flex', flexDirection: 'column', gap: 6, flex: 1, 
+          overflowY: 'auto', minHeight: 0, paddingRight: 4, marginBottom: 16 
+        }}>
           {navItems.map((item) => (
             <div 
               key={item.id} 
               onClick={() => setActiveTab(item.id)}
               style={{
-                display: 'flex', alignItems: 'center', gap: 10,
-                padding: '9px 12px', borderRadius: 8, cursor: 'pointer',
-                background: activeTab === item.id ? 'rgba(99,102,241,0.15)' : 'transparent',
+                display: 'flex', alignItems: 'center', gap: 12,
+                padding: '10px 14px', borderRadius: 10, cursor: 'pointer',
+                background: activeTab === item.id ? 'var(--brand-glow)' : 'transparent',
                 color:      activeTab === item.id ? 'var(--brand-light)' : 'var(--text-muted)',
-                fontSize: 13, fontWeight: activeTab === item.id ? 600 : 400,
-                border: activeTab === item.id ? '1px solid rgba(99,102,241,0.2)' : '1px solid transparent',
-                transition: 'all 0.15s',
+                fontSize: 14, fontWeight: activeTab === item.id ? 600 : 500,
+                border: activeTab === item.id ? '1px solid rgba(99,102,241,0.3)' : '1px solid transparent',
+                transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+                flexShrink: 0,
+              }}
+              onMouseEnter={e => {
+                if (activeTab !== item.id) {
+                  e.currentTarget.style.background = 'rgba(255,255,255,0.03)'
+                }
+              }}
+              onMouseLeave={e => {
+                if (activeTab !== item.id) {
+                  e.currentTarget.style.background = 'transparent'
+                }
               }}
             >
-              <span>{item.icon}</span>
+              <span style={{ fontSize: 18 }}>{item.icon}</span>
               <span>{item.label}</span>
             </div>
           ))}
         </nav>
+
+        {/* Theme Toggle */}
+        <button
+          onClick={toggleTheme}
+          style={{
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+            width: '100%', padding: '8px 12px', borderRadius: 10,
+            background: 'var(--surface-2)', border: '1px solid var(--border)',
+            cursor: 'pointer', marginBottom: 8, transition: 'all 0.2s',
+          }}
+        >
+          <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>
+            {theme === 'dark' ? '🌙 Dark' : '☀️ Light'}
+          </span>
+          <div style={{
+            width: 40, height: 22, borderRadius: 11, position: 'relative',
+            background: theme === 'dark' ? 'var(--surface-3)' : 'var(--brand)',
+            transition: 'background 0.3s',
+          }}>
+            <div style={{
+              width: 16, height: 16, borderRadius: '50%',
+              background: '#fff', position: 'absolute', top: 3,
+              left: theme === 'dark' ? 3 : 21,
+              transition: 'left 0.3s ease',
+              boxShadow: '0 1px 3px rgba(0,0,0,0.2)',
+            }} />
+          </div>
+        </button>
 
         {/* Sign Out */}
         <button 
@@ -135,7 +177,7 @@ export default function Dashboard({ session }: DashboardProps) {
           padding: '0 16px', flexShrink: 0,
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            <div className="show-mobile" style={{ display: 'none', fontSize: 18 }}>🤖</div>
+            <img src="/logo.png" alt="Logo" className="show-mobile" style={{ display: 'none', width: 24, height: 24, objectFit: 'contain' }} />
             <h1 style={{ fontSize: 15, fontWeight: 700, lineHeight: 1 }}>
               {navItems.find(i => i.id === activeTab)?.label}
             </h1>
@@ -192,7 +234,7 @@ export default function Dashboard({ session }: DashboardProps) {
           {activeTab === 'planner' && plannerView === 'calendar' && <WeekSchedule />}
           {activeTab === 'emails' && <EmailSummaryPanel />}
           {activeTab === 'finances' && <FinanceDashboard />}
-          {activeTab === 'analysis' && <AnalysisDashboard />}
+
           {activeTab === 'settings' && <SettingsPanel />}
         </div>
       </main>
