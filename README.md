@@ -7,13 +7,15 @@ ExecutiveVAi is your comprehensive AI-powered executive assistant designed to ha
 ## 🌟 Key Features
 
 ### 1. Smart Calendar & Scheduling
-- **Automated Booking**: Scans connected emails for meeting requests, cross-references availability, and confirms times.
-- **Conflict Resolution**: Intelligent suggestions for prioritizing overlapping meetings and auto-drafting rescheduling emails.
+- **Interactive Booking**: AI clarifies durations, cross-references your availability, and confirms times. Generates working Zoom or Google Meet links on the fly.
+- **Smart Conflict Resolution**: If you try to double-book, the AI halts the action, warns you of the conflict, and scans your calendar to suggest the nearest vacant time slot.
+- **Post-Meeting Quick Actions**: Instantly offers contextual follow-ups after booking (e.g., *🗓️ Add to Calendar*, *📝 Draft Agenda*, *📧 Draft Email with Link*).
 - **Time-Blocking**: Automatically carves out "deep work" time or travel buffers between back-to-back appointments.
 
 ### 2. Intelligent Communication (Gatekeeping)
 - **Inbox Triage**: AI-driven filter that sorts emails into categories like "Needs Immediate Action," "Read Later," and "Spam/Delegable."
-- **Smart Drafting**: Auto-drafts replies based on your personal tone and conversation history.
+- **Interactive Email Drafting**: Auto-drafts replies based on your personal tone and email context. Renders an interactive UI card where you can freely edit the *To*, *Subject*, and *Body* before sending.
+- **Meeting Detection**: Automatically extracts meeting requests from emails and presents a single-click "Schedule Meeting" button.
 - **Executive Summaries**: Distills long email threads into actionable bullet points.
 
 ### 3. Finance Engine (Track Finances)
