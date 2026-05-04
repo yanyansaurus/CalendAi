@@ -44,10 +44,27 @@ export default function MeetingLinkCard({ meeting }: Props) {
         background: 'var(--surface-3)', borderRadius: 8,
         padding: '8px 12px', fontSize: 12,
         color: 'var(--brand-light)', wordBreak: 'break-all',
-        marginBottom: 10, fontFamily: 'monospace',
+        marginBottom: 12, fontFamily: 'monospace',
       }}>
         {link}
       </div>
+
+      {/* Agenda Checklist */}
+      {meeting.agenda && meeting.agenda.length > 0 && (
+        <div style={{ marginBottom: 16 }}>
+          <p style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-subtle)', textTransform: 'uppercase', marginBottom: 8, letterSpacing: '0.03em' }}>
+            Suggested Agenda
+          </p>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+            {meeting.agenda.map((item, i) => (
+              <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <input type="checkbox" readOnly checked style={{ accentColor: 'var(--brand)', cursor: 'default' }} />
+                <span style={{ fontSize: 13, color: 'var(--text)' }}>{item}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Actions */}
       <div style={{ display: 'flex', gap: 8 }}>

@@ -167,6 +167,7 @@ export async function POST(req: Request) {
           title,
           startTime,
           duration,
+          agenda:    action.agenda,
           zoomLink:  zoom.joinUrl,
           joinUrl:   zoom.joinUrl,
         }
@@ -183,6 +184,7 @@ export async function POST(req: Request) {
           title,
           startTime,
           duration,
+          agenda:   action.agenda,
           meetLink: meet.meetLink,
           eventId:  meet.eventId,
         }
@@ -519,6 +521,15 @@ CHAT: You have 3 unread emails. Here's what needs attention:
       return NextResponse.json({
         type: 'chat',
         text: action.naturalResponse ?? `Email sent to ${action.emailTo}.`,
+        action
+      })
+    }
+
+    // ── Travel Mode ───────────────────────────────────────────────────────
+    case 'travel_mode': {
+      return NextResponse.json({
+        type: 'chat',
+        text: action.naturalResponse || `Safe travels to ${action.targetCity}! I've noted the timezone change. Would you like me to shift your existing meetings to align with local time?`,
         action
       })
     }

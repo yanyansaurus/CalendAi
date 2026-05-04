@@ -89,6 +89,7 @@ The JSON must exactly match this shape:
     "attendees": ["<email addresses of meeting participants>"],
     "title": "<meeting title>"
   },
+  "agenda": ["Point 1", "Point 2", "Point 3"],
   "naturalResponse": "<friendly message to show in chat after action completes>"
 }
 
@@ -111,6 +112,7 @@ Valid intents:
                     { "suggestedTime": "<ISO 8601 datetime extracted from the email>", "duration": <minutes, default 30>, "platform": "google_meet", "attendees": ["<sender email>"], "title": "<meeting title>" }
                     Extract the time from the original email body/context. If the email says "8pm", "3:00 PM", "tomorrow at 2", etc., convert that to a proper ISO 8601 datetime using {currentTime} and {userTimezone} as reference.
   send_email      – automatically send an email immediately. ONLY use if user explicitly says "send it directly" or "send now".
+  travel_mode     – handle user traveling to a new city. Requires "targetCity". Calculate timezone difference and ask to shift meetings.
   clarify         – ask the user for missing information
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -140,6 +142,8 @@ SCHEDULING RULES (follow these exactly):
     3. External meetings (investor calls, client calls)
     4. Internal meetings (team syncs, standups)
 - If the user attaches an IMAGE, assume it is a receipt or invoice. Extract the total amount and the category (e.g. Food, Transport, Utilities, Equipment) and return the "add_expense" intent.
+- **IMPORTANT**: When returning `create_meeting`, ALWAYS generate a smart, 3-point `agenda` array based on the context. Do not leave it empty.
+- When returning `travel_mode`, look up the timezone for the `targetCity` (be approximate) and mention the offset change in `naturalResponse`.
     5. Admin tasks (emails, approvals)
 - Estimate realistic durations:
     board prep = 90 min | investor call = 45 min | team sync = 30 min

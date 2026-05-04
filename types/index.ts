@@ -23,6 +23,7 @@ export type AgentIntent =
   | 'draft_email'
   | 'send_email'
   | 'clarify'
+  | 'travel_mode'
 
 // ─── Gemini JSON response shape ───────────────────────────────────────────────
 export interface AgentAction {
@@ -32,6 +33,7 @@ export interface AgentAction {
   duration?: number           // minutes
   startTime?: string | null   // ISO 8601
   attendees?: string[]
+  agenda?: string[]           // auto-generated meeting agenda
   tasks?: ScheduleTask[]
   rangeStart?: string | null
   rangeEnd?: string | null
@@ -41,6 +43,7 @@ export interface AgentAction {
   emailTo?: string
   emailSubject?: string
   emailBody?: string
+  targetCity?: string
   // Extracted meeting details when drafting replies about meetings
   meetingDetails?: {
     suggestedTime?: string    // ISO 8601 datetime
@@ -84,6 +87,7 @@ export interface MeetingResult {
   title: string
   startTime: string
   duration: number
+  agenda?: string[]
   meetLink?: string
   zoomLink?: string
   joinUrl?: string
