@@ -329,11 +329,13 @@ export async function POST(req: Request) {
     case 'daily_briefing':
     case 'list_today': {
       const plan = await getSchedule(userId)
+      const budget = await getBudgetData(userId)
       return NextResponse.json({
         type:     'schedule',
         text:     action.naturalResponse,
         action,
         schedule: plan,
+        budgetResult: budget
       })
     }
 

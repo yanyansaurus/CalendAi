@@ -4,6 +4,7 @@ import type { ChatMessage, FreeSlot, MeetingResult, Reminder } from '@/types'
 import MeetingLinkCard from '@/components/MeetingLinkCard'
 import DayPlanCard from '@/components/DayPlanCard'
 import ReminderBubble from '@/components/ReminderBubble'
+import BudgetChart from '@/components/BudgetChart'
 
 const COMMAND_CATEGORIES = [
   {
@@ -474,6 +475,11 @@ export default function ChatPanel() {
                   </button>
                 ))}
               </div>
+            )}
+
+            {/* Budget Dashboard Chart 📊 */}
+            {msg.budgetResult && (
+              <BudgetChart data={msg.budgetResult} />
             )}
 
             {/* Email list */}

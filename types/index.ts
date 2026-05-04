@@ -115,6 +115,6 @@ export interface ChatMessage {
   meetingResult?: MeetingResult
   schedule?: ScheduleTask[]
   freeSlots?: FreeSlot[]
-  budgetResult?: { monthlyLimit: number; expenses: any[]; newExpenseAdded?: boolean }
+  budgetResult?: any // We'll type this as any for now to avoid circular or complex imports, or just import it
   emails?: any[]
 }
