@@ -5,6 +5,7 @@ import MeetingLinkCard from '@/components/MeetingLinkCard'
 import DayPlanCard from '@/components/DayPlanCard'
 import ReminderBubble from '@/components/ReminderBubble'
 import BudgetChart from '@/components/BudgetChart'
+import CommandPalette from '@/components/CommandPalette'
 
 const COMMAND_CATEGORIES = [
   {
@@ -210,6 +211,7 @@ export default function ChatPanel() {
   const [reminders, setReminders]     = useState<Reminder[]>([])
   const [historyLoaded, setHistoryLoaded] = useState(false)
   const [showCommands, setShowCommands] = useState(false)
+  const [showPalette, setShowPalette] = useState(false)
   const [imageBase64, setImageBase64] = useState<string | null>(null)
   const [isVoiceMode, setIsVoiceMode] = useState(false)
   const bottomRef                     = useRef<HTMLDivElement>(null)
@@ -256,6 +258,18 @@ export default function ChatPanel() {
         setHistoryLoaded(true)
       })
       .catch(() => setHistoryLoaded(true))
+  }, [])
+
+  // ── Keyboard Shortcut: Cmd+K ──────────────────────────────────────────
+  useEffect(() => {
+    const handleGlobalKey = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+        e.preventDefault()
+        setShowPalette(prev => !prev)
+      }
+    }
+    window.addEventListener('keydown', handleGlobalKey)
+    return () => window.removeEventListener('keydown', handleGlobalKey)
   }, [])
 
   // ── Save chat history to cloud whenever messages change ───────────────────
@@ -744,6 +758,16 @@ export default function ChatPanel() {
           Press <kbd style={{ background: 'var(--surface-3)', padding: '1px 5px', borderRadius: 4, fontSize: 10 }}>Enter</kbd> to send · <kbd style={{ background: 'var(--surface-3)', padding: '1px 5px', borderRadius: 4, fontSize: 10 }}>Shift+Enter</kbd> for new line
         </p>
       </div>
+      {/* Command Palette (Cmd+K) */}
+      <CommandPalette 
+        isOpen={showPalette} 
+        onClose={() => setShowPalette(false)} 
+        onSelect={(text) => {
+          setInput(text)
+          // focus input after a small delay
+          setTimeout(() => document.getElementById('chat-input')?.focus(), 50)
+        }} 
+      />
     </div>
   )
 }
