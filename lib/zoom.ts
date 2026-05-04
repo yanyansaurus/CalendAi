@@ -32,10 +32,10 @@ export async function getZoomAccessToken(): Promise<string> {
 
   const accountId    = process.env.ZOOM_ACCOUNT_ID
   const clientId     = process.env.ZOOM_CLIENT_ID
-  const clientSecret = process.env.***REMOVED***
+  const clientSecret = process.env.ZOOM_CLIENT_SECRET
 
   if (!accountId || !clientId || !clientSecret) {
-    throw new Error('Missing Zoom credentials. Set ZOOM_ACCOUNT_ID, ZOOM_CLIENT_ID, and ***REMOVED*** in .env.local')
+    throw new Error('Missing Zoom credentials. Set ZOOM_ACCOUNT_ID, ZOOM_CLIENT_ID, and ZOOM_CLIENT_SECRET in .env.local')
   }
 
   const basicAuth = Buffer.from(`${clientId}:${clientSecret}`).toString('base64')
@@ -66,7 +66,7 @@ export async function getZoomAccessToken(): Promise<string> {
  * Check if Zoom is configured (all required env vars present).
  */
 export function isZoomConfigured(): boolean {
-  return !!(process.env.ZOOM_ACCOUNT_ID && process.env.ZOOM_CLIENT_ID && process.env.***REMOVED***)
+  return !!(process.env.ZOOM_ACCOUNT_ID && process.env.ZOOM_CLIENT_ID && process.env.ZOOM_CLIENT_SECRET)
 }
 
 // ─── Create a Zoom meeting ───────────────────────────────────────────────────

@@ -209,8 +209,11 @@ export default function ChatPanel() {
   const [reminders, setReminders]     = useState<Reminder[]>([])
   const [historyLoaded, setHistoryLoaded] = useState(false)
   const [showCommands, setShowCommands] = useState(false)
+  const [imageBase64, setImageBase64] = useState<string | null>(null)
+  const [isVoiceMode, setIsVoiceMode] = useState(false)
   const bottomRef                     = useRef<HTMLDivElement>(null)
   const commandRef                    = useRef<HTMLDivElement>(null)
+  const fileInputRef                  = useRef<HTMLInputElement>(null)
 
   // Listen for custom 'send-chat' events from other components (like EmailSummaryPanel)
   useEffect(() => {
@@ -310,17 +313,19 @@ export default function ChatPanel() {
   }, [])
 
   const sendMessage = useCallback(async (text: string) => {
-    if (!text.trim()) return
+    if (!text.trim() && !imageBase64) return
 
     const userMsg: ChatMessage = {
       id:        crypto.randomUUID(),
       role:      'user',
-      content:   text,
+      content:   text || '[Uploaded Image]',
       timestamp: new Date().toISOString(),
     }
 
     setMessages((prev) => [...prev, userMsg])
     setInput('')
+    const currentImg = imageBase64
+    setImageBase64(null)
     setIsTyping(true)
 
     try {
@@ -331,7 +336,7 @@ export default function ChatPanel() {
           'Content-Type':  'application/json',
           'x-timezone':    Intl.DateTimeFormat().resolvedOptions().timeZone,
         },
-        body: JSON.stringify({ message: text, history }),
+        body: JSON.stringify({ message: text, history, imageBase64: currentImg }),
       })
 
       const data = await res.json()
@@ -348,6 +353,14 @@ export default function ChatPanel() {
       }
 
       setMessages((prev) => [...prev, aiMsg])
+
+      // Text-To-Speech if in voice mode
+      if (isVoiceMode && 'speechSynthesis' in window && data.text) {
+        const utterance = new SpeechSynthesisUtterance(data.text)
+        utterance.rate = 1.05 // slightly faster for a more natural assistant feel
+        window.speechSynthesis.speak(utterance)
+      }
+      setIsVoiceMode(false) // reset voice mode after one response
     } catch (err) {
       setMessages((prev) => [...prev, {
         id:        crypto.randomUUID(),
@@ -365,6 +378,16 @@ export default function ChatPanel() {
       e.preventDefault()
       sendMessage(input)
     }
+  }
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    const reader = new FileReader()
+    reader.onload = (event) => {
+      setImageBase64(event.target?.result as string)
+    }
+    reader.readAsDataURL(file)
   }
 
   return (
@@ -593,7 +616,6 @@ export default function ChatPanel() {
                       borderRadius: 16, padding: '8px 8px 8px 12px',
                       transition: 'border-color 0.2s' }}
              onFocus={() => {}} >
-          {/* Command menu button */}
           <button
             onClick={() => setShowCommands(!showCommands)}
             style={{
@@ -607,20 +629,54 @@ export default function ChatPanel() {
           >
             ⚡
           </button>
-          <textarea
-            id="chat-input"
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={handleKeyDown}
-            placeholder="Ask ExecutiveVAi anything… e.g. 'Set up a Zoom call tomorrow at 3pm'"
-            rows={1}
+          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 8 }}>
+            {imageBase64 && (
+              <div style={{ position: 'relative', width: 60, height: 60 }}>
+                <img src={imageBase64} alt="Attached" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: 8, border: '1px solid var(--border)' }} />
+                <button 
+                  onClick={() => setImageBase64(null)} 
+                  style={{ position: 'absolute', top: -6, right: -6, background: '#ef4444', color: 'white', borderRadius: '50%', width: 18, height: 18, fontSize: 10, border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                >
+                  ✕
+                </button>
+              </div>
+            )}
+            <textarea
+              id="chat-input"
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={handleKeyDown}
+              placeholder="Ask ExecutiveVAi anything… e.g. 'Set up a Zoom call tomorrow at 3pm'"
+              rows={1}
+              style={{
+                width: '100%', background: 'transparent', border: 'none', outline: 'none',
+                color: 'var(--text)', fontSize: 14, resize: 'none',
+                fontFamily: 'inherit', lineHeight: 1.6, paddingTop: 6,
+                maxHeight: 120, overflowY: 'auto',
+              }}
+            />
+          </div>
+          {/* Feature: Image Attachment 📎 */}
+          <button
+            onClick={() => fileInputRef.current?.click()}
             style={{
-              flex: 1, background: 'transparent', border: 'none', outline: 'none',
-              color: 'var(--text)', fontSize: 14, resize: 'none',
-              fontFamily: 'inherit', lineHeight: 1.6, paddingTop: 6,
-              maxHeight: 120, overflowY: 'auto',
+              width: 36, height: 36, borderRadius: 10, border: 'none', cursor: 'pointer',
+              background: 'transparent', color: 'var(--text-muted)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              fontSize: 18, flexShrink: 0, transition: 'color 0.2s',
             }}
+            title="Attach Receipt or Image"
+          >
+            📎
+          </button>
+          <input 
+            type="file" 
+            accept="image/*" 
+            ref={fileInputRef} 
+            style={{ display: 'none' }} 
+            onChange={handleFileChange} 
           />
+
           {/* Feature: Voice Commands 🎙️ */}
           <button
             onClick={() => {

@@ -139,6 +139,7 @@ SCHEDULING RULES (follow these exactly):
     2. Deep work (board prep, strategy docs)
     3. External meetings (investor calls, client calls)
     4. Internal meetings (team syncs, standups)
+- If the user attaches an IMAGE, assume it is a receipt or invoice. Extract the total amount and the category (e.g. Food, Transport, Utilities, Equipment) and return the "add_expense" intent.
     5. Admin tasks (emails, approvals)
 - Estimate realistic durations:
     board prep = 90 min | investor call = 45 min | team sync = 30 min

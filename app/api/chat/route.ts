@@ -17,7 +17,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  const { message, history = [] } = await req.json()
+  const { message, history = [], imageBase64 } = await req.json()
   const userId         = session.user.email
   const googleToken    = session.googleAccessToken
   const zoomConfigured = isZoomConfigured()
@@ -72,7 +72,17 @@ export async function POST(req: Request) {
 
   let rawResponse: string
   try {
-    const result = await chat.sendMessage(message)
+    let sendPayload: any = message
+    if (imageBase64) {
+      const match = imageBase64.match(/^data:(image\/\w+);base64,(.+)$/)
+      if (match) {
+        sendPayload = [
+          { text: message },
+          { inlineData: { mimeType: match[1], data: match[2] } }
+        ]
+      }
+    }
+    const result = await chat.sendMessage(sendPayload)
     rawResponse  = result.response.text()
   } catch (err: any) {
     console.error('Primary model error:', err.status, err.message)
@@ -81,7 +91,18 @@ export async function POST(req: Request) {
       console.log('[ExecutiveVAi] Retrying with fallback model...')
       const fallbackModel = getFallbackGeminiModel(systemPrompt)
       const fallbackChat = fallbackModel.startChat({ history: cleanedHistory })
-      const fallbackResult = await fallbackChat.sendMessage(message)
+      
+      let sendPayload: any = message
+      if (imageBase64) {
+        const match = imageBase64.match(/^data:(image\/\w+);base64,(.+)$/)
+        if (match) {
+          sendPayload = [
+            { text: message },
+            { inlineData: { mimeType: match[1], data: match[2] } }
+          ]
+        }
+      }
+      const fallbackResult = await fallbackChat.sendMessage(sendPayload)
       rawResponse = fallbackResult.response.text()
     } catch (fallbackErr: any) {
       if (fallbackErr.status === 429) {

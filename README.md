@@ -147,7 +147,7 @@ Fill in the following in your `.env.local`:
 - Go to [marketplace.zoom.us](https://marketplace.zoom.us/) → Build App → **Server-to-Server OAuth**
 - Add scopes: `meeting:write:admin`
 - `ZOOM_CLIENT_ID`
-- `***REMOVED***`
+- `ZOOM_CLIENT_SECRET`
 - `ZOOM_ACCOUNT_ID`
 
 ### 3. Gemini AI

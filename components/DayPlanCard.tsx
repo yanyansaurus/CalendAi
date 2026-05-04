@@ -53,21 +53,47 @@ export default function DayPlanCard({ task }: Props) {
         </p>
       </div>
 
-      {(task.meetLink ?? task.zoomLink) && (
-        <a
-          href={task.meetLink ?? task.zoomLink}
-          target="_blank"
-          rel="noopener noreferrer"
+      <div style={{ display: 'flex', gap: 6, flexShrink: 0, alignItems: 'center' }}>
+        {(task.meetLink ?? task.zoomLink) && (
+          <a
+            href={task.meetLink ?? task.zoomLink}
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{
+              fontSize: 11, padding: '4px 10px',
+              background: 'var(--surface-3)', borderRadius: 6,
+              color: 'var(--meeting-color)', textDecoration: 'none',
+              border: '1px solid rgba(52,211,153,0.2)',
+            }}
+          >
+            Join
+          </a>
+        )}
+        <button
+          title="Reschedule"
+          onClick={() => window.dispatchEvent(new CustomEvent('send-chat', { detail: { message: `Reschedule ${task.name}` } }))}
           style={{
-            flexShrink: 0, fontSize: 11, padding: '4px 10px',
-            background: 'var(--surface-3)', borderRadius: 6,
-            color: 'var(--meeting-color)', textDecoration: 'none',
-            border: '1px solid rgba(52,211,153,0.2)',
+            fontSize: 12, padding: '4px 6px', background: 'transparent', border: 'none', cursor: 'pointer',
+            opacity: 0.6, transition: 'opacity 0.2s', color: 'var(--text-muted)'
           }}
+          onMouseOver={e => (e.currentTarget.style.opacity = '1')}
+          onMouseOut={e => (e.currentTarget.style.opacity = '0.6')}
         >
-          Join
-        </a>
-      )}
+          🔄
+        </button>
+        <button
+          title="Cancel"
+          onClick={() => window.dispatchEvent(new CustomEvent('send-chat', { detail: { message: `Cancel ${task.name}` } }))}
+          style={{
+            fontSize: 12, padding: '4px 6px', background: 'transparent', border: 'none', cursor: 'pointer',
+            opacity: 0.6, transition: 'opacity 0.2s', color: '#ef4444'
+          }}
+          onMouseOver={e => (e.currentTarget.style.opacity = '1')}
+          onMouseOut={e => (e.currentTarget.style.opacity = '0.6')}
+        >
+          ❌
+        </button>
+      </div>
     </div>
   )
 }
