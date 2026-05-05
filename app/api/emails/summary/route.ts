@@ -1,5 +1,5 @@
 import { auth } from '@/lib/auth'
-import { getGeminiModel } from '@/lib/gemini'
+import { getAIResponse } from '@/lib/ai'
 import { getUnreadEmails } from '@/lib/gmail'
 import { NextResponse } from 'next/server'
 
@@ -87,13 +87,18 @@ Rules:
 
   let summary: any = null
   try {
-    const model = getGeminiModel()
-    const result = await model.generateContent(summaryPrompt)
-    let text = result.response.text().trim()
-    text = text.replace(/^```json?\s*/i, '').replace(/```\s*$/i, '').trim()
+    const text = await getAIResponse([
+      { role: "system", content: "You are a specialized JSON generator for email summaries. Output ONLY valid JSON." },
+      { role: "user", content: summaryPrompt }
+    ], { 
+      jsonMode: true, 
+      provider: "groq", 
+      model: "llama-3.3-70b-versatile" 
+    });
+    
     summary = JSON.parse(text)
   } catch (err) {
-    console.error('[EmailSummary] Gemini failed:', err)
+    console.error('[EmailSummary] AI failed:', err)
     summary = {
       overview: `You have ${emails.length} unread emails.`,
       totalEmails: emails.length,

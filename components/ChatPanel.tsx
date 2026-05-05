@@ -255,6 +255,7 @@ export default function ChatPanel() {
   const [showWeekModal, setShowWeekModal] = useState(false)
   const [imageBase64, setImageBase64] = useState<string | null>(null)
   const [isVoiceMode, setIsVoiceMode] = useState(false)
+  const [isRescheduling, setIsRescheduling] = useState(false)
   const bottomRef                     = useRef<HTMLDivElement>(null)
   const commandRef                    = useRef<HTMLDivElement>(null)
   const fileInputRef                  = useRef<HTMLInputElement>(null)
@@ -361,7 +362,7 @@ export default function ChatPanel() {
           if ('Notification' in window && Notification.permission === 'granted') {
             data.reminders.forEach((r: any) => {
               new Notification('ExecutiveVAi Reminder', { 
-                body: r.title,
+                body: r.message || r.taskName || 'Upcoming Task',
                 icon: 'https://cdn-icons-png.flaticon.com/512/825/825590.png'
               })
             })
@@ -446,12 +447,18 @@ export default function ChatPanel() {
         meetingResult: data.meetingResult,
         schedule:      data.schedule,
         freeSlots:     data.freeSlots,
+        suggestedAnswers: data.suggestedAnswers || [],
       }
 
       setMessages((prev) => [...prev, aiMsg])
 
       if (data.action?.intent === 'show_routine_modal') {
         setShowRoutineModal(true)
+      }
+
+      if (data.action?.intent === 'show_week_modal') {
+        setIsRescheduling(true)
+        setShowWeekModal(true)
       }
 
       // Text-To-Speech if in voice mode
@@ -671,6 +678,30 @@ export default function ChatPanel() {
             <span suppressHydrationWarning style={{ fontSize: 11, color: 'var(--text-subtle)', marginTop: 2 }}>
               {new Date(msg.timestamp).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
             </span>
+
+            {/* Suggested Answers Buttons */}
+            {msg.role === 'assistant' && msg.suggestedAnswers && msg.suggestedAnswers.length > 0 && messages.indexOf(msg) === messages.length - 1 && (
+              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 4, marginLeft: 36 }}>
+                {msg.suggestedAnswers.map((answer, idx) => (
+                  <button
+                    key={idx}
+                    className="btn-ghost animate-fade-in"
+                    style={{ 
+                      fontSize: 12, 
+                      padding: '6px 14px', 
+                      borderRadius: 20, 
+                      border: '1px solid var(--brand-light)',
+                      background: 'rgba(99,102,241,0.05)',
+                      color: 'var(--brand-light)',
+                      animationDelay: `${idx * 0.1}s`
+                    }}
+                    onClick={() => sendMessage(answer)}
+                  >
+                    {answer}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
         ))}
 
@@ -707,7 +738,8 @@ export default function ChatPanel() {
                 <button
                   key={cmd.name}
                   onClick={() => {
-                    if (cmd.name === 'Create event' || cmd.name === 'Schedule meeting' || cmd.name === 'Plan my day') {
+                    if (cmd.name === 'Create event' || cmd.name === 'Schedule meeting' || cmd.name === 'Plan my day' || cmd.name === 'Reschedule') {
+                      if (cmd.name === 'Reschedule') setIsRescheduling(true)
                       setShowWeekModal(true)
                       setShowCommands(false)
                       return
@@ -916,9 +948,20 @@ export default function ChatPanel() {
 
       {showWeekModal && (
         <WeekScheduleModal 
-          onClose={() => setShowWeekModal(false)}
+          onClose={() => {
+            setShowWeekModal(false)
+            setIsRescheduling(false)
+          }}
+          isRescheduleMode={isRescheduling}
+          onSelectEvent={(ev) => {
+            setIsRescheduling(false)
+            setShowWeekModal(false)
+            setInput(`Reschedule "${ev.title}" to `)
+            setTimeout(() => document.getElementById('chat-input')?.focus(), 50)
+          }}
           onSelectSlot={(dateStr, timeStr, title, description, durationStr, recurrence) => {
             setShowWeekModal(false)
+            setIsRescheduling(false)
             
             let prompt = `Add an event called "${title}" on ${dateStr} at ${timeStr} for ${durationStr}`
             if (description.trim()) {

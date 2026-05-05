@@ -11,9 +11,11 @@ interface CalendarEvent {
 interface Props {
   onClose: () => void
   onSelectSlot: (dateStr: string, timeStr: string, title: string, description: string, durationStr: string, recurrence: string) => void
+  onSelectEvent?: (event: CalendarEvent) => void
+  isRescheduleMode?: boolean
 }
 
-export default function WeekScheduleModal({ onClose, onSelectSlot }: Props) {
+export default function WeekScheduleModal({ onClose, onSelectSlot, onSelectEvent, isRescheduleMode }: Props) {
   const [events, setEvents] = useState<CalendarEvent[]>([])
   const [loading, setLoading] = useState(true)
 
@@ -81,51 +83,61 @@ export default function WeekScheduleModal({ onClose, onSelectSlot }: Props) {
         <div style={{ padding: '20px 24px', borderBottom: '1px solid var(--border)', display: 'flex', flexDirection: 'column', gap: 16 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <div>
-              <h2 style={{ fontSize: 20, fontWeight: 800 }}>Draft New Event</h2>
-              <p style={{ fontSize: 13, color: 'var(--text-muted)' }}>Configure details, then click a slot below to insert.</p>
+              <h2 style={{ fontSize: 20, fontWeight: 800 }}>
+                {isRescheduleMode ? '🔄 Select Event to Reschedule' : '📅 Draft New Event'}
+              </h2>
+              <p style={{ fontSize: 13, color: 'var(--text-muted)' }}>
+                {isRescheduleMode 
+                  ? 'Click an existing event (highlighted) to pick it for rescheduling.' 
+                  : 'Configure details, then click a slot below to insert.'}
+              </p>
             </div>
             <button onClick={onClose} style={{ background: 'var(--surface-3)', border: 'none', width: 32, height: 32, borderRadius: '50%', color: 'var(--text)', cursor: 'pointer' }}>✕</button>
           </div>
 
-          <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
-            <div style={{ flex: '1 1 200px' }}>
-              <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--text-subtle)', marginBottom: 4 }}>Event Title</label>
-              <input value={title} onChange={e => setTitle(e.target.value)} style={{ width: '100%', padding: '8px 12px', background: 'var(--surface-2)', border: '1px solid var(--border)', borderRadius: 8, color: 'var(--text)', fontSize: 14 }} placeholder="E.g., Strategy Sync" />
-            </div>
-            <div style={{ flex: '1 1 300px' }}>
-              <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--text-subtle)', marginBottom: 4 }}>Description (Optional)</label>
-              <input value={description} onChange={e => setDescription(e.target.value)} style={{ width: '100%', padding: '8px 12px', background: 'var(--surface-2)', border: '1px solid var(--border)', borderRadius: 8, color: 'var(--text)', fontSize: 14 }} placeholder="E.g., Discuss Q3 goals" />
-            </div>
-          </div>
-
-          <div style={{ display: 'flex', gap: 24, flexWrap: 'wrap', alignItems: 'center' }}>
-            {/* Duration */}
-            <div>
-              <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--text-subtle)', marginBottom: 6 }}>Duration</label>
-              <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
-                {['15m', '30m', '1hr', '2hr'].map(mode => (
-                  <button key={mode} onClick={() => setDurationMode(mode as any)} style={{ padding: '6px 12px', fontSize: 12, borderRadius: 6, cursor: 'pointer', border: '1px solid', borderColor: durationMode === mode ? 'var(--brand)' : 'var(--border)', background: durationMode === mode ? 'rgba(99,102,241,0.1)' : 'var(--surface-2)', color: durationMode === mode ? 'var(--brand-light)' : 'var(--text)', fontWeight: durationMode === mode ? 700 : 500, transition: 'all 0.2s' }}>{mode}</button>
-                ))}
-                <button onClick={() => setDurationMode('custom')} style={{ padding: '6px 12px', fontSize: 12, borderRadius: 6, cursor: 'pointer', border: '1px solid', borderColor: durationMode === 'custom' ? 'var(--brand)' : 'var(--border)', background: durationMode === 'custom' ? 'rgba(99,102,241,0.1)' : 'var(--surface-2)', color: durationMode === 'custom' ? 'var(--brand-light)' : 'var(--text)', fontWeight: durationMode === 'custom' ? 700 : 500, transition: 'all 0.2s' }}>Custom</button>
-                {durationMode === 'custom' && (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginLeft: 6 }}>
-                    <input type="number" value={customMins} onChange={e => setCustomMins(e.target.value)} style={{ width: 60, padding: '6px', background: 'var(--surface-3)', border: '1px solid var(--brand)', borderRadius: 6, color: 'var(--text)', fontSize: 12, textAlign: 'center' }} />
-                    <span style={{ fontSize: 12, color: 'var(--text-subtle)' }}>mins</span>
-                  </div>
-                )}
+          {!isRescheduleMode && (
+            <>
+              <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
+                <div style={{ flex: '1 1 200px' }}>
+                  <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--text-subtle)', marginBottom: 4 }}>Event Title</label>
+                  <input value={title} onChange={e => setTitle(e.target.value)} style={{ width: '100%', padding: '8px 12px', background: 'var(--surface-2)', border: '1px solid var(--border)', borderRadius: 8, color: 'var(--text)', fontSize: 14 }} placeholder="E.g., Strategy Sync" />
+                </div>
+                <div style={{ flex: '1 1 300px' }}>
+                  <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--text-subtle)', marginBottom: 4 }}>Description (Optional)</label>
+                  <input value={description} onChange={e => setDescription(e.target.value)} style={{ width: '100%', padding: '8px 12px', background: 'var(--surface-2)', border: '1px solid var(--border)', borderRadius: 8, color: 'var(--text)', fontSize: 14 }} placeholder="E.g., Discuss Q3 goals" />
+                </div>
               </div>
-            </div>
 
-            {/* Recurrence */}
-            <div>
-              <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--text-subtle)', marginBottom: 6 }}>Recurrence</label>
-              <select value={recurrence} onChange={e => setRecurrence(e.target.value as any)} style={{ padding: '6px 12px', fontSize: 12, borderRadius: 6, cursor: 'pointer', border: '1px solid var(--border)', background: 'var(--surface-2)', color: 'var(--text)', outline: 'none' }}>
-                <option value="One-time">One-time Event</option>
-                <option value="Weekly">Weekly</option>
-                <option value="Permanent">Permanent (Daily)</option>
-              </select>
-            </div>
-          </div>
+              <div style={{ display: 'flex', gap: 24, flexWrap: 'wrap', alignItems: 'center' }}>
+                {/* Duration */}
+                <div>
+                  <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--text-subtle)', marginBottom: 6 }}>Duration</label>
+                  <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+                    {['15m', '30m', '1hr', '2hr'].map(mode => (
+                      <button key={mode} onClick={() => setDurationMode(mode as any)} style={{ padding: '6px 12px', fontSize: 12, borderRadius: 6, cursor: 'pointer', border: '1px solid', borderColor: durationMode === mode ? 'var(--brand)' : 'var(--border)', background: durationMode === mode ? 'rgba(99,102,241,0.1)' : 'var(--surface-2)', color: durationMode === mode ? 'var(--brand-light)' : 'var(--text)', fontWeight: durationMode === mode ? 700 : 500, transition: 'all 0.2s' }}>{mode}</button>
+                    ))}
+                    <button onClick={() => setDurationMode('custom')} style={{ padding: '6px 12px', fontSize: 12, borderRadius: 6, cursor: 'pointer', border: '1px solid', borderColor: durationMode === 'custom' ? 'var(--brand)' : 'var(--border)', background: durationMode === 'custom' ? 'rgba(99,102,241,0.1)' : 'var(--surface-2)', color: durationMode === 'custom' ? 'var(--brand-light)' : 'var(--text)', fontWeight: durationMode === 'custom' ? 700 : 500, transition: 'all 0.2s' }}>Custom</button>
+                    {durationMode === 'custom' && (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginLeft: 6 }}>
+                        <input type="number" value={customMins} onChange={e => setCustomMins(e.target.value)} style={{ width: 60, padding: '6px', background: 'var(--surface-3)', border: '1px solid var(--brand)', borderRadius: 6, color: 'var(--text)', fontSize: 12, textAlign: 'center' }} />
+                        <span style={{ fontSize: 12, color: 'var(--text-subtle)' }}>mins</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Recurrence */}
+                <div>
+                  <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--text-subtle)', marginBottom: 6 }}>Recurrence</label>
+                  <select value={recurrence} onChange={e => setRecurrence(e.target.value as any)} style={{ padding: '6px 12px', fontSize: 12, borderRadius: 6, cursor: 'pointer', border: '1px solid var(--border)', background: 'var(--surface-2)', color: 'var(--text)', outline: 'none' }}>
+                    <option value="One-time">One-time Event</option>
+                    <option value="Weekly">Weekly</option>
+                    <option value="Permanent">Permanent (Daily)</option>
+                  </select>
+                </div>
+              </div>
+            </>
+          )}
         </div>
 
         {/* Content */}
@@ -173,12 +185,32 @@ export default function WeekScheduleModal({ onClose, onSelectSlot }: Props) {
                         })
 
                         if (conflictingEvent) {
+                          if (isRescheduleMode && onSelectEvent) {
+                            return (
+                              <button
+                                key={hour}
+                                onClick={() => onSelectEvent(conflictingEvent)}
+                                className="animate-pulse"
+                                style={{ 
+                                  fontSize: 11, padding: '8px 10px', background: 'rgba(99, 102, 241, 0.1)', 
+                                  color: 'var(--brand-light)', borderRadius: 8, border: '1px solid var(--brand)',
+                                  textAlign: 'left', cursor: 'pointer', transition: 'all 0.2s'
+                                }}
+                              >
+                                <strong style={{ display: 'block' }}>{timeStr}</strong>
+                                <span style={{ fontSize: 10, opacity: 0.8 }}>{conflictingEvent.title}</span>
+                              </button>
+                            )
+                          }
                           return (
                             <div key={hour} style={{ fontSize: 11, padding: '6px 10px', background: 'rgba(239, 68, 68, 0.05)', color: 'rgba(239, 68, 68, 0.6)', borderRadius: 8, borderLeft: '2px solid rgba(239, 68, 68, 0.3)' }}>
                               <strong style={{ opacity: 0.8 }}>{timeStr}</strong>
+                              <span style={{ fontSize: 10, marginLeft: 4 }}>{conflictingEvent.title}</span>
                             </div>
                           )
                         }
+
+                        if (isRescheduleMode) return null // Only show events in reschedule mode
 
                         return (
                           <button

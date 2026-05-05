@@ -12,7 +12,6 @@ interface EmailInsight {
   from: string
   subject: string
   action: string
-  suggestedTime: string
   priority: string
 }
 
@@ -23,11 +22,25 @@ interface ScheduleRec {
   duration: string
 }
 
+interface UrgentAlert {
+  title: string
+  timeLeft: string
+  urgency: string
+}
+
+interface WeeklyAnalysis {
+  summary: string
+  topCategory: string
+  productivityScore: number
+}
+
 interface Briefing {
   greeting: string
+  urgentAlerts: UrgentAlert[]
   todayReminders: Reminder[]
   emailInsights: EmailInsight[]
   recommendedSchedule: ScheduleRec[]
+  weeklyAnalysis: WeeklyAnalysis
   motivationalNote: string
 }
 
@@ -110,7 +123,7 @@ export default function BriefingPanel() {
   if (!briefing) return null
 
   return (
-    <div style={{ overflowY: 'auto', height: '100%' }} className="container-padding">
+    <div style={{ overflowY: 'auto', height: '100%', paddingBottom: 40 }} className="container-padding">
       {/* Header with Refresh */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 28 }}>
         <div>
@@ -120,7 +133,6 @@ export default function BriefingPanel() {
           </p>
         </div>
         <div style={{ display: 'flex', gap: 8 }}>
-          {/* Feature: Send Daily Briefing to my Email 📰 */}
           <button
             onClick={sendEmailBriefing}
             disabled={emailing || emailSent}
@@ -141,32 +153,73 @@ export default function BriefingPanel() {
         </div>
       </div>
 
-      {/* Today's Reminders / End of Day Tasks */}
+      {/* Urgent Alerts (Priority Digest) */}
+      {briefing.urgentAlerts?.length > 0 && (
+        <section style={{ marginBottom: 28 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
+            <span style={{ fontSize: 18 }} className="animate-pulse">🚨</span>
+            <h3 style={{ fontSize: 16, fontWeight: 700, color: '#f87171' }}>Critical Radar</h3>
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            {briefing.urgentAlerts.map((a, i) => (
+              <div key={i} className="glass animate-pulse" style={{ padding: '16px 20px', borderRadius: 16, background: 'rgba(239, 68, 68, 0.05)', border: '1px solid rgba(239, 68, 68, 0.2)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div>
+                  <p style={{ fontSize: 14, fontWeight: 800, color: '#ef4444' }}>{a.title}</p>
+                  <p style={{ fontSize: 12, color: 'rgba(239, 68, 68, 0.8)' }}>Starts in {a.timeLeft}</p>
+                </div>
+                <div style={{ padding: '4px 12px', background: '#ef4444', color: 'white', fontSize: 11, fontWeight: 900, borderRadius: 20, textTransform: 'uppercase' }}>Now</div>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* Today's Digest / Reminders */}
       {briefing.todayReminders?.length > 0 && (
         <section style={{ marginBottom: 28 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
-            <span style={{ fontSize: 18 }}>⏰</span>
-            <h3 style={{ fontSize: 16, fontWeight: 700 }}>
-              {new Date().getHours() >= 17 ? 'Move to Tomorrow' : "Today's Reminders"}
-            </h3>
+            <span style={{ fontSize: 18 }}>📅</span>
+            <h3 style={{ fontSize: 16, fontWeight: 700 }}>Today&apos;s Highlights</h3>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             {briefing.todayReminders.map((r, i) => (
               <div key={i} className="glass" style={{ padding: 14, borderRadius: 12, display: 'flex', alignItems: 'center', gap: 12, borderLeft: `3px solid ${URGENCY_COLORS[r.urgency] ?? '#94a3b8'}` }}>
-                <div style={{ minWidth: 64, fontSize: 12, fontWeight: 600, color: URGENCY_COLORS[r.urgency] ?? 'var(--text-muted)' }}>
-                  {r.time}
-                </div>
+                <div style={{ minWidth: 64, fontSize: 12, fontWeight: 600, color: URGENCY_COLORS[r.urgency] ?? 'var(--text-muted)' }}>{r.time}</div>
                 <div style={{ flex: 1 }}>
                   <p style={{ fontSize: 13, fontWeight: 600 }}>{r.title}</p>
                   <p style={{ fontSize: 11, color: 'var(--text-subtle)', textTransform: 'capitalize' }}>{r.type}</p>
                 </div>
-                <span style={{
-                  fontSize: 10, padding: '2px 8px', borderRadius: 10, fontWeight: 600, textTransform: 'uppercase',
-                  background: `${URGENCY_COLORS[r.urgency] ?? '#94a3b8'}20`,
-                  color: URGENCY_COLORS[r.urgency] ?? '#94a3b8',
-                }}>{r.urgency}</span>
               </div>
             ))}
+          </div>
+        </section>
+      )}
+
+      {/* Weekly Performance Scorecard */}
+      {briefing.weeklyAnalysis && (
+        <section style={{ marginBottom: 28 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
+            <span style={{ fontSize: 18 }}>📈</span>
+            <h3 style={{ fontSize: 16, fontWeight: 700 }}>Weekly Performance</h3>
+          </div>
+          <div className="glass" style={{ padding: 20, borderRadius: 20, background: 'var(--surface-2)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 16 }}>
+              <div>
+                <p style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 4 }}>Productivity Score</p>
+                <h4 style={{ fontSize: 32, fontWeight: 900, color: 'var(--brand-light)' }}>{briefing.weeklyAnalysis.productivityScore}%</h4>
+              </div>
+              <div style={{ textAlign: 'right' }}>
+                <p style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 4 }}>Top Focus</p>
+                <p style={{ fontSize: 14, fontWeight: 700 }}>{briefing.weeklyAnalysis.topCategory}</p>
+              </div>
+            </div>
+            {/* Score Bar */}
+            <div style={{ height: 8, background: 'var(--surface-3)', borderRadius: 4, overflow: 'hidden', marginBottom: 16 }}>
+              <div style={{ height: '100%', width: `${briefing.weeklyAnalysis.productivityScore}%`, background: 'var(--brand)', borderRadius: 4 }} />
+            </div>
+            <p style={{ fontSize: 13, lineHeight: 1.6, color: 'var(--text-muted)', borderTop: '1px solid var(--border)', paddingTop: 12 }}>
+              {briefing.weeklyAnalysis.summary}
+            </p>
           </div>
         </section>
       )}
@@ -181,41 +234,12 @@ export default function BriefingPanel() {
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             {briefing.emailInsights.map((e, i) => (
               <div key={i} className="glass" style={{ padding: 14, borderRadius: 12 }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6, flexWrap: 'wrap', gap: 4 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
                   <span style={{ fontSize: 13, fontWeight: 600 }}>{e.from}</span>
-                  <span style={{
-                    fontSize: 10, padding: '2px 8px', borderRadius: 10, fontWeight: 600, textTransform: 'uppercase',
-                    background: `${URGENCY_COLORS[e.priority] ?? '#94a3b8'}20`,
-                    color: URGENCY_COLORS[e.priority] ?? '#94a3b8',
-                  }}>{e.priority}</span>
+                  <span style={{ fontSize: 10, padding: '2px 8px', borderRadius: 10, background: `${URGENCY_COLORS[e.priority]}20`, color: URGENCY_COLORS[e.priority], fontWeight: 700 }}>{e.priority.toUpperCase()}</span>
                 </div>
                 <p style={{ fontSize: 12, color: 'var(--brand-light)', fontWeight: 500, marginBottom: 4 }}>{e.subject}</p>
                 <p style={{ fontSize: 12, color: 'var(--text-muted)' }}>💡 {e.action}</p>
-                <p style={{ fontSize: 11, color: 'var(--text-subtle)', marginTop: 4 }}>⏰ {e.suggestedTime}</p>
-              </div>
-            ))}
-          </div>
-        </section>
-      )}
-
-      {/* Recommended Schedule */}
-      {briefing.recommendedSchedule?.length > 0 && (
-        <section style={{ marginBottom: 28 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
-            <span style={{ fontSize: 18 }}>📋</span>
-            <h3 style={{ fontSize: 16, fontWeight: 700 }}>
-              {new Date().getHours() >= 17 ? "Tomorrow's AI Preview" : "AI Recommended Schedule"}
-            </h3>
-          </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            {briefing.recommendedSchedule.map((s, i) => (
-              <div key={i} className="glass" style={{ padding: 14, borderRadius: 12, display: 'flex', gap: 12, alignItems: 'flex-start' }}>
-                <div style={{ minWidth: 64, fontSize: 12, fontWeight: 700, color: 'var(--brand-light)' }}>{s.time}</div>
-                <div style={{ flex: 1 }}>
-                  <p style={{ fontSize: 13, fontWeight: 600, marginBottom: 2 }}>{s.activity}</p>
-                  <p style={{ fontSize: 11, color: 'var(--text-muted)' }}>{s.reason}</p>
-                </div>
-                <span style={{ fontSize: 11, color: 'var(--text-subtle)', whiteSpace: 'nowrap' }}>{s.duration}</span>
               </div>
             ))}
           </div>
@@ -224,17 +248,10 @@ export default function BriefingPanel() {
 
       {/* Motivational Note */}
       {briefing.motivationalNote && (
-        <div className="glass" style={{
-          padding: 20, borderRadius: 16, textAlign: 'center', marginBottom: 28,
-          background: 'linear-gradient(135deg, rgba(99,102,241,0.08), rgba(79,70,229,0.04))',
-          border: '1px solid rgba(99,102,241,0.15)',
-        }}>
-          <p style={{ fontSize: 14, fontStyle: 'italic', color: 'var(--text-muted)', lineHeight: 1.6 }}>
-            ✨ {briefing.motivationalNote}
-          </p>
+        <div className="glass" style={{ padding: 20, borderRadius: 16, textAlign: 'center', background: 'linear-gradient(135deg, rgba(99,102,241,0.05), rgba(79,70,229,0.02))', border: '1px solid var(--border)' }}>
+          <p style={{ fontSize: 13, fontStyle: 'italic', color: 'var(--text-muted)', lineHeight: 1.6 }}>✨ {briefing.motivationalNote}</p>
         </div>
       )}
-
     </div>
   )
 }

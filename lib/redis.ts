@@ -9,11 +9,13 @@ export function getRedisClient() {
     redisClient = createClient({
       url: REDIS_URL,
       socket: {
+        keepAlive: true, // Enable TCP keep-alive
         reconnectStrategy: (retries) => {
-          if (retries > 10) return new Error('Redis reconnection failed after 10 attempts')
-          return Math.min(retries * 50, 2000)
+          // Exponential backoff with a cap
+          const delay = Math.min(retries * 100, 3000)
+          return delay
         },
-        connectTimeout: 5000,
+        connectTimeout: 10000,
       }
     })
 

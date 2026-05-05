@@ -28,6 +28,8 @@ export type AgentIntent =
   | 'travel_mode'
   | 'analyze_routine'
   | 'show_routine_modal'
+  | 'chat'
+  | 'show_week_modal'
 
 // ─── Gemini JSON response shape ───────────────────────────────────────────────
 export interface AgentAction {
@@ -57,6 +59,7 @@ export interface AgentAction {
     title?: string
   }
   naturalResponse: string
+  suggestedAnswers?: string[] // Proactive quick-reply options
 }
 
 // ─── Schedule / Day Plan ──────────────────────────────────────────────────────
@@ -122,4 +125,5 @@ export interface ChatMessage {
   type?: string               // e.g. 'draft_event'
   budgetResult?: any
   emails?: any[]
+  suggestedAnswers?: string[] // Quick replies generated for this message
 }

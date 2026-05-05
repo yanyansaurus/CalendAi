@@ -1,9 +1,6 @@
 import { auth } from '@/lib/auth'
 import { NextResponse } from 'next/server'
-import { GoogleGenerativeAI } from '@google/generative-ai'
-import { getGeminiModel } from '@/lib/gemini'
-
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!)
+import { getAIResponse } from '@/lib/ai'
 
 export async function POST(req: Request) {
   const session = await auth()
@@ -24,42 +21,48 @@ export async function POST(req: Request) {
     const base64 = Buffer.from(bytes).toString('base64')
     const mimeType = file.type || 'image/jpeg'
 
-    // Use Gemini vision to extract expense data
-    const model = getGeminiModel()
-
-    const result = await model.generateContent([
+    const text = await getAIResponse([
       {
-        inlineData: {
-          mimeType,
-          data: base64,
-        },
+        role: "system",
+        content: "You are a specialized JSON generator for receipt scanning. Respond ONLY with valid JSON."
       },
       {
-        text: `Analyze this receipt/bill/invoice image and extract ALL line items as expenses.
+        role: "user",
+        content: [
+          {
+            type: "text",
+            text: `Analyze this receipt/bill/invoice image and extract ALL line items as expenses.
 Return a JSON array of objects with these fields:
 - "description": what was purchased (string)
 - "amount": the price as a number (no currency symbols)
 - "category": one of: Food, Transport, Utilities, Entertainment, Shopping, Health, Education, Subscriptions, Housing, Other
 
-If there's a total, include it as a separate item with description "Total" and category matching the main category.
-If this is a utility bill, use "Utilities". If it's a grocery receipt, use "Food".
-
-IMPORTANT: Return ONLY the JSON array, no markdown, no explanation.
-Example: [{"description": "Coffee", "amount": 4.50, "category": "Food"}]`
+Rules:
+- If utility bill, use "Utilities".
+- If grocery receipt, use "Food".
+- Return ONLY the JSON array.`
+          },
+          {
+            type: "image_url",
+            image_url: {
+              url: `data:${mimeType};base64,${base64}`
+            }
+          }
+        ]
       }
-    ])
+    ], { 
+      jsonMode: true, 
+      provider: "groq" 
+    });
 
-    const responseText = result.response.text().trim()
-    
-    // Parse the JSON response (handle markdown code fences)
+    // Parse the JSON response
     let items: any[]
     try {
-      const cleaned = responseText.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim()
-      items = JSON.parse(cleaned)
+      items = JSON.parse(text)
     } catch {
       return NextResponse.json({ 
         error: 'Could not parse receipt data', 
-        rawResponse: responseText 
+        rawResponse: text 
       }, { status: 422 })
     }
 

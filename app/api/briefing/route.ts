@@ -1,6 +1,5 @@
 import { auth } from '@/lib/auth'
-import { getGeminiModel } from '@/lib/gemini'
-import { GoogleGenerativeAI } from '@google/generative-ai'
+import { getAIResponse } from '@/lib/ai'
 import { getUnreadEmails } from '@/lib/gmail'
 import { getFreeBusy } from '@/lib/googleCalendar'
 import { getTasks } from '@/lib/taskEngine'
@@ -17,6 +16,7 @@ export async function GET(req: Request) {
   // Gather context
   let emails: any[] = []
   let busySlots: any[] = []
+  let lastWeekSlots: any[] = []
   let tasks: any[] = []
 
   try { tasks = await getTasks(userId) } catch { /* ignore */ }
@@ -24,81 +24,72 @@ export async function GET(req: Request) {
   if (googleToken) {
     try { emails = await getUnreadEmails(googleToken, 10) } catch { /* ignore */ }
     try { busySlots = await getFreeBusy(googleToken, 'today') } catch { /* ignore */ }
+    try { 
+      // Fetch last 7 days for the weekly summary
+      const lastWeek = new Date()
+      lastWeek.setDate(lastWeek.getDate() - 7)
+      lastWeekSlots = await getFreeBusy(googleToken, { 
+        start: lastWeek.toISOString(), 
+        end: new Date().toISOString() 
+      })
+    } catch { /* ignore */ }
   }
 
   // Build AI prompt for briefing
   const isEndOfDay = new Date().getHours() >= 17
 
-  const briefingPrompt = isEndOfDay
-    ? `
-You are ExecutiveVAi generating a comprehensive End-of-Day Digest. Current time: ${new Date().toISOString()}, timezone: ${timezone}.
+  const briefingPrompt = `
+    You are ExecutiveVAi, generating a ${isEndOfDay ? 'reflective End-of-Day Digest' : 'Morning Daily Briefing'}.
+    Current time: ${new Date().toISOString()}, timezone: ${timezone}.
 
-Here is the user's massive context for the day:
-- Today's busy calendar slots (what they did): ${JSON.stringify(busySlots)}
-- Active and pending tasks: ${JSON.stringify(tasks.map(t => ({ title: t.title, priority: t.priority, status: t.status, dueDate: t.dueDate })))}
-- Recent unread emails: ${JSON.stringify(emails.map(e => ({ from: e.from, subject: e.subject, snippet: e.body?.substring(0, 500) })))}
+    CONTEXT DATA:
+    - Busy calendar slots (Today): ${JSON.stringify(busySlots)}
+    - Busy calendar slots (Last 7 Days): ${JSON.stringify(lastWeekSlots.length > 20 ? 'Too many to list, but summarize the volume' : lastWeekSlots)}
+    - Active and pending tasks: ${JSON.stringify(tasks.map(t => ({ title: t.title, priority: t.priority, status: t.status, dueDate: t.dueDate })))}
+    - Recent unread emails: ${JSON.stringify(emails.map(e => ({ from: e.from, subject: e.subject, snippet: e.body?.substring(0, 300) })))}
 
-Since this is the end of the day, ingest all this data and generate a digest in this EXACT JSON format (no markdown, no code fences):
-{
-  "greeting": "A reflective evening greeting summarizing the day's theme",
-  "todayReminders": [
-    { "time": "HH:MM AM/PM", "title": "Missed or incomplete task to move to tomorrow", "type": "task|deadline", "urgency": "high|medium|low" }
-  ],
-  "emailInsights": [
-    { "from": "Sender name", "subject": "Email subject", "action": "Action to take tomorrow", "suggestedTime": "Tomorrow AM", "priority": "high|medium|low" }
-  ],
-  "recommendedSchedule": [
-    { "time": "Tomorrow Morning", "activity": "Suggested priority block", "reason": "Based on today's left-overs", "duration": "X min" }
-  ],
-  "motivationalNote": "A relaxing wrap-up note to help them disconnect and rest."
-}
-`
-    : `
-You are ExecutiveVAi generating a daily briefing. Current time: ${new Date().toISOString()}, timezone: ${timezone}.
-
-Here is the user's context:
-- Today's busy calendar slots: ${JSON.stringify(busySlots)}
-- Active tasks: ${JSON.stringify(tasks.map(t => ({ title: t.title, priority: t.priority, status: t.status, dueDate: t.dueDate })))}
-- Recent unread emails (subjects & senders): ${JSON.stringify(emails.map(e => ({ from: e.from, subject: e.subject, snippet: e.body?.substring(0, 100) })))}
-
-Generate a briefing in this EXACT JSON format (no markdown, no code fences):
-{
-  "greeting": "A warm, personalized good morning/afternoon greeting",
-  "todayReminders": [
-    { "time": "HH:MM AM/PM", "title": "Event/task name", "type": "calendar|task|deadline", "urgency": "high|medium|low" }
-  ],
-  "emailInsights": [
-    { "from": "Sender name", "subject": "Email subject", "action": "What the user should do", "suggestedTime": "When to handle it", "priority": "high|medium|low" }
-  ],
-  "recommendedSchedule": [
-    { "time": "HH:MM AM/PM", "activity": "What to do", "reason": "Why this is suggested", "duration": "X min" }
-  ],
-  "motivationalNote": "A brief motivational or productivity tip"
-}
-
-Rules:
-- todayReminders: list ALL calendar events and pending tasks for today
-- emailInsights: pick the top 3-5 most important emails and suggest actions
-- recommendedSchedule: suggest an optimized schedule considering busy slots, tasks, and email actions
-- Keep it concise and actionable
-`
+    GENERATE A BRIEFING IN THIS EXACT JSON FORMAT:
+    {
+      "greeting": "A warm, personalized greeting",
+      "urgentAlerts": [
+        { "title": "Critical item starting soon", "timeLeft": "X mins", "urgency": "high" }
+      ],
+      "todayReminders": [
+        { "time": "HH:MM", "title": "Task/Meeting name", "type": "calendar|task|email", "urgency": "high|medium|low" }
+      ],
+      "emailInsights": [
+        { "from": "Sender", "subject": "Subject", "action": "Recommendation", "priority": "high|medium|low" }
+      ],
+      "recommendedSchedule": [
+        { "time": "Slot", "activity": "Name", "reason": "Why this slot?", "duration": "X min" }
+      ],
+      "weeklyAnalysis": {
+        "summary": "1-2 sentence analysis of the last 7 days (e.g. 'You spent 60% of your time in meetings last week.')",
+        "topCategory": "Meeting | Focus | Admin",
+        "productivityScore": 1-100
+      },
+      "motivationalNote": "A brief tip or encouraging sign-off."
+    }
+  `;
 
   let briefing: any = null
 
   try {
-    const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!)
-    // If it's the end of the day, use the massive 2M context window model for deep analysis
-    const model = getGeminiModel()
-    const result = await model.generateContent(briefingPrompt)
-    let text = result.response.text().trim()
-    // Strip code fences if present
-    text = text.replace(/^```json?\s*/i, '').replace(/```\s*$/i, '').trim()
+    const text = await getAIResponse([
+      { role: "system", content: "You are a specialized JSON generator for executive briefings. Output ONLY valid JSON." },
+      { role: "user", content: briefingPrompt }
+    ], { 
+      jsonMode: true, 
+      provider: "groq", 
+      model: "llama-3.3-70b-versatile" 
+    });
+    
     briefing = JSON.parse(text)
   } catch (err) {
-    console.error('[Briefing] Gemini failed:', err)
-    // Return a basic briefing without AI
+    console.error('[Briefing] AI failed:', err)
     briefing = {
       greeting: `Good ${new Date().getHours() < 12 ? 'morning' : 'afternoon'}!`,
+      urgentAlerts: [],
       todayReminders: busySlots.map(s => ({
         time: new Date(s.start).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }),
         title: 'Calendar event',
@@ -109,10 +100,14 @@ Rules:
         from: e.from?.split('<')[0]?.trim() ?? 'Unknown',
         subject: e.subject,
         action: 'Review and respond',
-        suggestedTime: 'When available',
         priority: 'medium'
       })),
       recommendedSchedule: [],
+      weeklyAnalysis: {
+        summary: "Weekly data is being processed. Stay tuned!",
+        topCategory: "Focus",
+        productivityScore: 85
+      },
       motivationalNote: 'Stay focused and take it one task at a time! 💪'
     }
   }

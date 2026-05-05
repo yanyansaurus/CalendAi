@@ -1,5 +1,6 @@
 import { auth } from '@/lib/auth'
-import { getGeminiModel, SYSTEM_PROMPT } from '@/lib/gemini'
+import { SYSTEM_PROMPT } from '@/lib/gemini'
+import { getAIResponse, AIMessage } from '@/lib/ai'
 import { parseIntent } from '@/lib/intentParser'
 import { getFreeBusy, createGoogleMeet, createCalendarEvent, updateCalendarEvent, deleteCalendarEvent, getTodayEvents, getWeekEvents } from '@/lib/googleCalendar'
 import { getUnreadEmails, sendEmail } from '@/lib/gmail'
@@ -54,64 +55,39 @@ export async function POST(req: Request) {
     .replace('{todaySchedule}',  JSON.stringify(todaySchedule))
     .replace('{meetingPreference}', meetingPreference)
 
-  // ── Call Gemini ────────────────────────────────────────────────────────────
-  const model = getGeminiModel(systemPrompt)
-  
-  // Transform history and ensure it's valid for Google SDK
-  let formattedHistory = (history || []).map((m: { role: string; content: string }) => ({
-    role:  (m.role === 'assistant' || m.role === 'model') ? 'model' : 'user',
-    parts: [{ text: m.content || '' }],
-  }))
+  // ── Call AI Bridge ────────────────────────────────────────────────────────
+  let aiMessages: AIMessage[] = [
+    { role: 'system', content: systemPrompt },
+    ...(history || []).map((m: any) => ({
+      role: (m.role === 'assistant' || m.role === 'model') ? 'assistant' : 'user',
+      content: m.content
+    }))
+  ]
 
-  // 1. Must start with 'user'
-  while (formattedHistory.length > 0 && formattedHistory[0].role !== 'user') {
-    formattedHistory.shift()
+  // Add the current user message
+  if (imageBase64) {
+    aiMessages.push({
+      role: 'user',
+      content: [
+        { type: 'text', text: message },
+        { type: 'image_url', image_url: { url: imageBase64 } }
+      ]
+    })
+  } else {
+    aiMessages.push({ role: 'user', content: message })
   }
-
-  // 2. No consecutive roles (merge them)
-  const cleanedHistory: any[] = []
-  for (const msg of formattedHistory) {
-    if (cleanedHistory.length > 0 && cleanedHistory[cleanedHistory.length - 1].role === msg.role) {
-      cleanedHistory[cleanedHistory.length - 1].parts[0].text += '\n' + msg.parts[0].text
-    } else {
-      cleanedHistory.push(msg)
-    }
-  }
-
-  const chat = model.startChat({
-    history: cleanedHistory,
-  })
 
   let rawResponse: string
   try {
-    let sendPayload: any = message
-    if (imageBase64) {
-      const match = imageBase64.match(/^data:(image\/\w+);base64,(.+)$/)
-      if (match) {
-        sendPayload = [
-          { text: message },
-          { inlineData: { mimeType: match[1], data: match[2] } }
-        ]
-      }
-    }
-    const result = await chat.sendMessage(sendPayload)
-    rawResponse  = result.response.text()
+    rawResponse = await getAIResponse(aiMessages, { 
+      provider: 'groq', 
+      model: 'llama-3.3-70b-versatile' 
+    })
   } catch (err: any) {
-    console.error('[ExecutiveVAi] Gemini Error:', err.status, err.message)
-    
-    if (err.status === 429) {
-      const retryMatch = err.message?.match(/retry in ([\d.]+)s/i)
-      const retrySec   = retryMatch ? Math.ceil(parseFloat(retryMatch[1])) : 30
-      return NextResponse.json({
-        type: 'chat',
-        text: `⏳ I'm being rate-limited by the AI service. Please wait ~${retrySec} seconds and try again.`,
-      })
-    }
-
-    const specificError = err.message || 'Unknown error'
+    console.error('[ExecutiveVAi] AI Error:', err.message)
     return NextResponse.json({
       type: 'chat',
-      text: `⚠️ AI Service Error: ${specificError}. Please check your quota or try again in a moment.`,
+      text: `⚠️ AI Service Error: ${err.message}. Please try again in a moment.`,
     })
   }
 
@@ -126,12 +102,17 @@ export async function POST(req: Request) {
     }
   }
 
-  // ── Plain chat reply, no action needed ────────────────────────────────────
-  if (parsed.isChat) {
-    return NextResponse.json({ type: 'chat', text: parsed.chatText })
-  }
-
+  // ── Unified Response Handling ──────────────────────────────────────────
   const action = parsed.action!
+  const isChat = parsed.isChat || action?.intent === 'chat'
+  
+  if (isChat) {
+    return NextResponse.json({ 
+      type: 'chat', 
+      text: action?.naturalResponse || parsed.chatText || "I'm not sure how to help with that.",
+      suggestedAnswers: action?.suggestedAnswers || []
+    })
+  }
 
   // ── Execute the intent ────────────────────────────────────────────────────
   try {
@@ -143,7 +124,8 @@ export async function POST(req: Request) {
       return NextResponse.json({
         type: 'draft_event',
         text: action.naturalResponse ?? "I've drafted the details for you. Ready to confirm?",
-        action
+        action,
+        suggestedAnswers: action?.suggestedAnswers || []
       })
     }
 
@@ -199,6 +181,7 @@ export async function POST(req: Request) {
         text:          action.naturalResponse,
         action,
         meetingResult,
+        suggestedAnswers: action?.suggestedAnswers || []
       })
     }
 
@@ -236,6 +219,7 @@ export async function POST(req: Request) {
           type:   'chat',
           text:   action.naturalResponse ?? `✅ Done! I've added "${title}" to your calendar.`,
           action: { ...action, eventId: ev.eventId },
+          suggestedAnswers: action?.suggestedAnswers || []
         })
       } catch (err: any) {
         console.error('[ExecutiveVAi] Create event error:', err.status, err.message, err.errors)
@@ -305,6 +289,7 @@ export async function POST(req: Request) {
         text:      action.naturalResponse,
         action,
         freeSlots: slots,
+        suggestedAnswers: action?.suggestedAnswers || []
       })
     }
 
@@ -359,6 +344,7 @@ export async function POST(req: Request) {
         text:     action.naturalResponse,
         action,
         schedule: scheduled,
+        suggestedAnswers: action?.suggestedAnswers || []
       })
     }
 
@@ -372,7 +358,8 @@ export async function POST(req: Request) {
         text:     action.naturalResponse,
         action,
         schedule: plan,
-        budgetResult: budget
+        budgetResult: budget,
+        suggestedAnswers: action?.suggestedAnswers || []
       })
     }
 
@@ -453,7 +440,8 @@ export async function POST(req: Request) {
         type: 'chat',
         text: action.naturalResponse ?? `You've spent $${totalSpent} out of your $${data.monthlyLimit} budget. You have $${remaining} remaining.`,
         action,
-        budgetResult: data
+        budgetResult: data,
+        suggestedAnswers: action?.suggestedAnswers || []
       })
     }
 
@@ -492,18 +480,22 @@ CHAT: You have 3 unread emails. Here's what needs attention:
 ⏰ **Deadline reminder** from Prof. Garcia — Assignment due May 5th.`
 
       try {
-        const analysisResult = await chat.sendMessage(emailAnalysisPrompt)
-        let analysisText = analysisResult.response.text().trim()
-        // Strip CHAT: prefix if present
-        if (analysisText.startsWith('CHAT:')) {
-          analysisText = analysisText.substring(5).trim()
+        const analysisText = await getAIResponse([
+          { role: 'system', content: 'Analyze the following emails and provide a smart, professional summary.' },
+          { role: 'user', content: emailAnalysisPrompt }
+        ], { provider: 'groq' })
+
+        let finalAnalysis = analysisText.trim()
+        if (finalAnalysis.startsWith('CHAT:')) {
+          finalAnalysis = finalAnalysis.substring(5).trim()
         }
 
         return NextResponse.json({
           type: 'chat',
           text: analysisText,
           action,
-          emails
+          emails,
+          suggestedAnswers: action?.suggestedAnswers || []
         })
       } catch {
         // Fallback to basic summary if AI analysis fails
@@ -559,7 +551,8 @@ CHAT: You have 3 unread emails. Here's what needs attention:
       return NextResponse.json({
         type: 'chat',
         text: action.naturalResponse ?? `Email sent to ${action.emailTo}.`,
-        action
+        action,
+        suggestedAnswers: action?.suggestedAnswers || []
       })
     }
 
@@ -595,16 +588,27 @@ Analyze these events and generate a highly professional, concise breakdown of th
 3. Give one actionable piece of advice for next week.
 Keep the formatting clean using markdown bolding. No code blocks.
 `
-      // For heavy analysis, we can use the fallback model (2.5 pro) if preferred, but standard 3.1 flash is fast
-      const result = await getGeminiModel().generateContent(analysisPrompt)
-      const analysisText = result.response.text().trim()
+      const analysisText = await getAIResponse([
+        { role: 'system', content: 'You are ExecutiveVAi, a time-management analyst. Provide a professional markdown breakdown.' },
+        { role: 'user', content: analysisPrompt }
+      ], { provider: 'groq' })
 
       return NextResponse.json({
         type: 'chat',
         text: (action.naturalResponse ? action.naturalResponse + '\n\n---\n\n' : '') + analysisText,
-        action
+        action,
+        suggestedAnswers: action?.suggestedAnswers || []
       })
     }
+
+      // ── Show Week Modal ──────────────────────────────────────────────────
+      case 'show_week_modal':
+        return NextResponse.json({
+          type: 'chat',
+          text: action.naturalResponse ?? "I've opened your weekly schedule so you can find the best slot.",
+          action,
+          suggestedAnswers: action?.suggestedAnswers || []
+        })
 
       // ── Clarification needed ──────────────────────────────────────────────
       case 'clarify':
@@ -615,7 +619,12 @@ Keep the formatting clean using markdown bolding. No code blocks.
 
       // ── All other intents — return natural response ───────────────────────
       default:
-        return NextResponse.json({ type: 'chat', text: action.naturalResponse, action })
+        return NextResponse.json({ 
+          type: 'chat', 
+          text: action.naturalResponse, 
+          action,
+          suggestedAnswers: action?.suggestedAnswers || []
+        })
     }
   } catch (err: any) {
     console.error('[ExecutiveVAi] Intent Execution Error:', err)
