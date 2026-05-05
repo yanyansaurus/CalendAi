@@ -161,80 +161,95 @@ export default function WeekScheduleModal({ onClose, onSelectSlot, onSelectEvent
                     </div>
                     
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                      {getSlots().map(hour => {
-                        const timeStr = formatTime(hour)
-                        
-                        // Calculate selected duration in hours
-                        let durHours = 1
-                        if (durationMode === '15m') durHours = 0.25
-                        if (durationMode === '30m') durHours = 0.5
-                        if (durationMode === '2hr') durHours = 2
-                        if (durationMode === 'custom') durHours = parseInt(customMins) / 60
-                        
-                        const endHour = hour + durHours
+                      {(() => {
+                        const slots: JSX.Element[] = []
+                        let currentH = START_HOUR
+                        const step = durationMode === '15m' ? 0.25 : 0.5
 
-                        // Check if ANY event overlaps with this proposed [hour, endHour] window
-                        const conflictingEvent = dayEvents.find(e => {
-                          const start = new Date(e.start)
-                          const end = new Date(e.end)
-                          const eStart = start.getHours() + (start.getMinutes() / 60)
-                          const eEnd = end.getHours() + (end.getMinutes() / 60)
+                        // Sort events for the day to handle them sequentially
+                        const sortedEvents = [...dayEvents].sort((a, b) => new Date(a.start).getTime() - new Date(b.start).getTime())
+
+                        while (currentH < END_HOUR) {
+                          const timeStr = formatTime(currentH)
                           
-                          // Overlap logic: (StartA < EndB) AND (EndA > StartB)
-                          return (hour < eEnd) && (endHour > eStart)
-                        })
+                          // Is there an event starting at or covering this currentH?
+                          const event = sortedEvents.find(e => {
+                            const start = new Date(e.start)
+                            const eStart = start.getHours() + (start.getMinutes() / 60)
+                            const eEnd = new Date(e.end).getHours() + (new Date(e.end).getMinutes() / 60)
+                            return currentH >= eStart && currentH < eEnd
+                          })
 
-                        if (conflictingEvent) {
-                          if (isRescheduleMode && onSelectEvent) {
-                            return (
+                          if (event) {
+                            const eStart = new Date(event.start).getHours() + (new Date(event.start).getMinutes() / 60)
+                            const eEnd = new Date(event.end).getHours() + (new Date(event.end).getMinutes() / 60)
+                            const durationHrs = eEnd - eStart
+                            
+                            if (isRescheduleMode && onSelectEvent) {
+                              slots.push(
+                                <button
+                                  key={event.id + currentH}
+                                  onClick={() => onSelectEvent(event)}
+                                  className="animate-pulse"
+                                  style={{ 
+                                    fontSize: 11, padding: '10px', background: 'rgba(99, 102, 241, 0.1)', 
+                                    color: 'var(--brand-light)', borderRadius: 12, border: '1px solid var(--brand)',
+                                    textAlign: 'left', cursor: 'pointer', transition: 'all 0.2s',
+                                    marginBottom: 4
+                                  }}
+                                >
+                                  <strong style={{ display: 'block', fontSize: 12 }}>{formatTime(eStart)} – {formatTime(eEnd)}</strong>
+                                  <span style={{ fontSize: 11, fontWeight: 600 }}>{event.title}</span>
+                                </button>
+                              )
+                            } else {
+                              slots.push(
+                                <div key={event.id + currentH} style={{ fontSize: 11, padding: '10px', background: 'rgba(239, 68, 68, 0.05)', color: 'rgba(239, 68, 68, 0.6)', borderRadius: 12, borderLeft: '3px solid rgba(239, 68, 68, 0.3)', marginBottom: 4 }}>
+                                  <strong style={{ display: 'block' }}>{formatTime(eStart)} – {formatTime(eEnd)}</strong>
+                                  <span>{event.title}</span>
+                                </div>
+                              )
+                            }
+                            // Advance currentH to the end of this event
+                            currentH = eEnd
+                            continue
+                          }
+
+                          // If no event, render an empty slot
+                          if (!isRescheduleMode) {
+                            let durHours = 1
+                            if (durationMode === '15m') durHours = 0.25
+                            if (durationMode === '30m') durHours = 0.5
+                            if (durationMode === '2hr') durHours = 2
+                            if (durationMode === 'custom') durHours = parseInt(customMins) / 60
+                            const endH = currentH + durHours
+
+                            slots.push(
                               <button
-                                key={hour}
-                                onClick={() => onSelectEvent(conflictingEvent)}
-                                className="animate-pulse"
-                                style={{ 
-                                  fontSize: 11, padding: '8px 10px', background: 'rgba(99, 102, 241, 0.1)', 
-                                  color: 'var(--brand-light)', borderRadius: 8, border: '1px solid var(--brand)',
-                                  textAlign: 'left', cursor: 'pointer', transition: 'all 0.2s'
+                                key={currentH}
+                                onClick={() => {
+                                  let durStr = '1 hour'
+                                  if (durationMode === '15m') durStr = '15 minutes'
+                                  if (durationMode === '30m') durStr = '30 minutes'
+                                  if (durationMode === '2hr') durStr = '2 hours'
+                                  if (durationMode === 'custom') durStr = `${customMins} minutes`
+                                  onSelectSlot(day.toLocaleDateString('en-US', { weekday: 'long' }), timeStr, title, description, durStr, recurrence)
                                 }}
+                                style={{ 
+                                  fontSize: 12, padding: '8px 12px', background: 'var(--surface-3)', border: '1px dashed var(--border)', 
+                                  color: 'var(--text)', borderRadius: 8, textAlign: 'left', cursor: 'pointer', transition: 'all 0.2s'
+                                }}
+                                onMouseEnter={e => e.currentTarget.style.borderColor = 'var(--brand)'}
+                                onMouseLeave={e => e.currentTarget.style.borderColor = 'var(--border)'}
                               >
-                                <strong style={{ display: 'block' }}>{timeStr}</strong>
-                                <span style={{ fontSize: 10, opacity: 0.8 }}>{conflictingEvent.title}</span>
+                                <span style={{ fontWeight: 600, color: 'var(--text-muted)' }}>{timeStr}</span>
                               </button>
                             )
                           }
-                          return (
-                            <div key={hour} style={{ fontSize: 11, padding: '6px 10px', background: 'rgba(239, 68, 68, 0.05)', color: 'rgba(239, 68, 68, 0.6)', borderRadius: 8, borderLeft: '2px solid rgba(239, 68, 68, 0.3)' }}>
-                              <strong style={{ opacity: 0.8 }}>{timeStr}</strong>
-                              <span style={{ fontSize: 10, marginLeft: 4 }}>{conflictingEvent.title}</span>
-                            </div>
-                          )
+                          currentH += step
                         }
-
-                        if (isRescheduleMode) return null // Only show events in reschedule mode
-
-                        return (
-                          <button
-                            key={hour}
-                            onClick={() => {
-                              let durStr = '1 hour'
-                              if (durationMode === '15m') durStr = '15 minutes'
-                              if (durationMode === '30m') durStr = '30 minutes'
-                              if (durationMode === '2hr') durStr = '2 hours'
-                              if (durationMode === 'custom') durStr = `${customMins} minutes`
-                              
-                              onSelectSlot(day.toLocaleDateString('en-US', { weekday: 'long' }), timeStr, title, description, durStr, recurrence)
-                            }}
-                            style={{ 
-                              fontSize: 12, padding: '8px 12px', background: 'var(--surface-3)', border: '1px dashed var(--border)', 
-                              color: 'var(--text)', borderRadius: 8, textAlign: 'left', cursor: 'pointer', transition: 'all 0.2s'
-                            }}
-                            onMouseEnter={e => e.currentTarget.style.borderColor = 'var(--brand)'}
-                            onMouseLeave={e => e.currentTarget.style.borderColor = 'var(--border)'}
-                          >
-                            <span style={{ fontWeight: 600, color: 'var(--text-muted)' }}>{timeStr}</span> – {formatTime(endHour)}
-                          </button>
-                        )
-                      })}
+                        return slots
+                      })()}
                     </div>
                   </div>
                 )
