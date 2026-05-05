@@ -241,13 +241,18 @@ const WELCOME_MSG: ChatMessage = {
   timestamp: new Date().toISOString(),
 }
 
-export default function ChatPanel() {
+interface ChatPanelProps {
+  reminders: any[]
+  setReminders: (val: any[] | ((prev: any[]) => any[])) => void
+  suggestions: any[]
+  setSuggestions: (val: any[] | ((prev: any[]) => any[])) => void
+}
+
+export default function ChatPanel({ reminders, setReminders, suggestions, setSuggestions }: ChatPanelProps) {
   const [messages, setMessages]       = useState<ChatMessage[]>([WELCOME_MSG])
   const [input, setInput]             = useState('')
   const [isTyping, setIsTyping]       = useState(false)
   const [isListening, setIsListening] = useState(false)
-  const [reminders, setReminders]     = useState<Reminder[]>([])
-  const [suggestions, setSuggestions] = useState<any[]>([])
   const [historyLoaded, setHistoryLoaded] = useState(false)
   const [showCommands, setShowCommands] = useState(false)
   const [showPalette, setShowPalette] = useState(false)
@@ -349,51 +354,13 @@ export default function ChatPanel() {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages, isTyping])
 
-  // Poll for reminders every 60 seconds
-  useEffect(() => {
-    const poll = async () => {
-      try {
-        const res  = await fetch('/api/schedule/reminder')
-        if (!res.ok) return // silently skip if not authenticated
-        const data = await res.json()
-        if (data.reminders?.length) {
-          setReminders((prev) => [...prev, ...data.reminders])
-          // Feature: Browser Push Notifications 🔔
-          if ('Notification' in window && Notification.permission === 'granted') {
-            data.reminders.forEach((r: any) => {
-              new Notification('ExecutiveVAi Reminder', { 
-                body: r.message || r.taskName || 'Upcoming Task',
-                icon: 'https://cdn-icons-png.flaticon.com/512/825/825590.png'
-              })
-            })
-          }
-        }
-        if (data.emailSuggestions?.length) {
-          // Add unique IDs to incoming suggestions if they don't have them
-          const newSuggestions = data.emailSuggestions.map((s: any) => ({
-            ...s,
-            id: s.id || s.threadId || Date.now().toString() + Math.random()
-          }))
-          setSuggestions((prev) => [...prev, ...newSuggestions])
-          if ('Notification' in window && Notification.permission === 'granted') {
-            data.emailSuggestions.forEach((s: any) => {
-              new Notification('ExecutiveVAi Insight', { 
-                body: s.actionText || s.subject || 'New Action Item',
-                icon: 'https://cdn-icons-png.flaticon.com/512/732/732200.png'
-              })
-            })
-          }
-        }
-      } catch { /* ignore */ }
-    }
-    poll()
-    const interval = setInterval(poll, 60000)
-    return () => clearInterval(interval)
-  }, [])
-
   const dismissReminder = useCallback((id: string) => {
     setReminders((prev) => prev.filter((r) => r.id !== id))
-  }, [])
+  }, [setReminders])
+
+  const dismissSuggestion = useCallback((id: string) => {
+    setSuggestions((prev) => prev.filter((s) => s.id !== id))
+  }, [setSuggestions])
 
   const clearHistory = useCallback(async () => {
     setMessages([WELCOME_MSG])

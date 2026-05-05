@@ -67,7 +67,7 @@ async function callGroq(messages: AIMessage[], options: AIOptions) {
   
   // Use the requested model first, then the rotation list
   const modelsToTry = options.model ? [options.model, ...GROQ_MODELS] : GROQ_MODELS;
-  const filteredModels = hasImages ? ["llama-3.2-11b-vision-preview"] : [...new Set(modelsToTry)];
+  const filteredModels = hasImages ? ["llama-3.2-11b-vision-preview"] : Array.from(new Set(modelsToTry));
 
   let lastError: any = null;
 

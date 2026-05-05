@@ -21,7 +21,59 @@ type TabId = 'home' | 'chat' | 'briefing' | 'planner' | 'emails' | 'finances' | 
 export default function Dashboard({ session }: DashboardProps) {
   const [activeTab, setActiveTab] = useState<TabId>('home')
   const [plannerView, setPlannerView] = useState<'tasks' | 'calendar'>('tasks')
+  const [reminders, setReminders] = useState<any[]>([])
+  const [suggestions, setSuggestions] = useState<any[]>([])
   const { theme, toggleTheme } = useTheme()
+  
+  // Global Poller for Reminders and Insights
+  useEffect(() => {
+    const poll = async () => {
+      try {
+        const res = await fetch('/api/schedule/reminder')
+        if (!res.ok) return
+        const data = await res.json()
+        
+        if (data.reminders?.length) {
+          setReminders(prev => {
+            const existingIds = new Set(prev.map(r => r.id))
+            const newOnes = data.reminders.filter((r: any) => !existingIds.has(r.id))
+            
+            // Trigger Browser Notifications for truly new items
+            if (newOnes.length && 'Notification' in window && Notification.permission === 'granted') {
+              newOnes.forEach((r: any) => {
+                new Notification('ExecutiveVAi Reminder', { 
+                  body: r.message || r.taskName || 'Upcoming Task',
+                  icon: 'https://cdn-icons-png.flaticon.com/512/825/825590.png'
+                })
+              })
+            }
+            return [...prev, ...newOnes]
+          })
+        }
+
+        if (data.emailSuggestions?.length) {
+          setSuggestions(prev => {
+            const existingIds = new Set(prev.map(s => s.id || s.threadId))
+            const newOnes = data.emailSuggestions.filter((s: any) => !existingIds.has(s.id || s.threadId))
+            
+            if (newOnes.length && 'Notification' in window && Notification.permission === 'granted') {
+              newOnes.forEach((s: any) => {
+                new Notification('ExecutiveVAi Insight', { 
+                  body: s.actionText || s.subject || 'New Action Item',
+                  icon: 'https://cdn-icons-png.flaticon.com/512/732/732200.png'
+                })
+              })
+            }
+            return [...prev, ...newOnes]
+          })
+        }
+      } catch { /* ignore */ }
+    }
+
+    poll()
+    const interval = setInterval(poll, 60000)
+    return () => clearInterval(interval)
+  }, [])
   
   // Listen for tab switch events from child components
   useEffect(() => {
@@ -230,7 +282,12 @@ export default function Dashboard({ session }: DashboardProps) {
         <div style={{ flex: 1, overflow: 'hidden', marginBottom: 64 /* space for mobile nav */ }} className="content-area">
           {activeTab === 'home' && <HomePanel />}
           <div style={{ display: activeTab === 'chat' ? 'block' : 'none', height: '100%' }}>
-            <ChatPanel />
+            <ChatPanel 
+              reminders={reminders} 
+              setReminders={setReminders} 
+              suggestions={suggestions} 
+              setSuggestions={setSuggestions} 
+            />
           </div>
           {activeTab === 'briefing' && <BriefingPanel />}
           {activeTab === 'planner' && plannerView === 'tasks' && <TaskBoard />}
