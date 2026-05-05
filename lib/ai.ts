@@ -64,7 +64,7 @@ async function callGroq(messages: AIMessage[], options: AIOptions) {
   if (!client) return callGemini(messages, options);
 
   const hasImages = messages.some(m => Array.isArray(m.content) && m.content.some(p => p.type === "image_url"));
-  
+
   // Use the requested model first, then the rotation list
   const modelsToTry = options.model ? [options.model, ...GROQ_MODELS] : GROQ_MODELS;
   const filteredModels = hasImages ? ["llama-3.2-11b-vision-preview"] : Array.from(new Set(modelsToTry));
@@ -99,51 +99,62 @@ async function callGroq(messages: AIMessage[], options: AIOptions) {
 async function callGemini(messages: AIMessage[], options: AIOptions) {
   if (!genAI) throw new Error("Gemini API key is missing.");
 
-  let modelName = "gemini-1.5-flash"; 
-  if (options.model && options.model.startsWith("gemini-")) modelName = options.model;
+  const geminiModels = ["gemini-2.5-flash", "gemini-3.0-pro-preview", "gemini-pro"];
+  let lastError: any = null;
 
-  const model = genAI.getGenerativeModel({ model: modelName });
-  let systemMessage = messages.find(m => m.role === "system")?.content;
-  
-  let extraContext = "";
-  if (typeof systemMessage === "string" && systemMessage.length > 8000) {
-    extraContext = `\n\n### ADDITIONAL CONTEXT & RULES:\n${systemMessage}`;
-    systemMessage = "You are ExecutiveVAi. Follow the JSON rules provided. Respond ONLY as the assistant.";
+  for (const currentModelName of geminiModels) {
+    try {
+      const model = genAI.getGenerativeModel({ model: currentModelName });
+      let systemMessage = messages.find(m => m.role === "system")?.content;
+      
+      let extraContext = "";
+      if (typeof systemMessage === "string" && systemMessage.length > 8000) {
+        extraContext = `\n\n### ADDITIONAL CONTEXT & RULES:\n${systemMessage}`;
+        systemMessage = "You are ExecutiveVAi. Follow the JSON rules provided. Respond ONLY as the assistant.";
+      }
+
+      const history = messages
+        .filter(m => m.role !== "system")
+        .map((m, idx) => {
+          let content = m.content;
+          if (idx === 0 && extraContext && typeof content === "string") content = content + extraContext;
+
+          if (typeof content === "string") {
+            return { role: m.role === "user" ? "user" : "model", parts: [{ text: content }] };
+          } else {
+            return {
+              role: m.role === "user" ? "user" : "model",
+              parts: content.map(part => {
+                if (part.type === "text") return { text: part.text };
+                const dataUrl = part.image_url?.url || "";
+                const [mimeType, base64] = dataUrl.replace("data:", "").split(";base64,");
+                return { inlineData: { mimeType, data: base64 } };
+              })
+            };
+          }
+        });
+
+      while (history.length > 0 && history[0].role !== 'user') history.shift();
+      const userContent = history.pop()?.parts || [];
+
+      const chat = model.startChat({
+        history: history as any,
+        systemInstruction: typeof systemMessage === "string" ? {
+          parts: [{ text: systemMessage }]
+        } : undefined,
+      });
+
+      const result = await chat.sendMessage(userContent as any);
+      return result.response.text();
+    } catch (error: any) {
+      lastError = error;
+      if (error.message?.includes("404") || error.message?.includes("not found") || error.message?.includes("400")) {
+        console.warn(`[Gemini] Model ${currentModelName} failed. Rotating...`);
+        continue;
+      }
+      break;
+    }
   }
 
-  const history = messages
-    .filter(m => m.role !== "system")
-    .map((m, idx) => {
-      let content = m.content;
-      if (idx === 0 && extraContext && typeof content === "string") content = content + extraContext;
-
-      if (typeof content === "string") {
-        return { role: m.role === "user" ? "user" : "model", parts: [{ text: content }] };
-      } else {
-        return {
-          role: m.role === "user" ? "user" : "model",
-          parts: content.map(part => {
-            if (part.type === "text") return { text: part.text };
-            const dataUrl = part.image_url?.url || "";
-            const [mimeType, base64] = dataUrl.replace("data:", "").split(";base64,");
-            return { inlineData: { mimeType, data: base64 } };
-          })
-        };
-      }
-    });
-
-  while (history.length > 0 && history[0].role !== 'user') history.shift();
-  const userContent = history.pop()?.parts || [];
-
-  const chat = model.startChat({
-    history: history as any,
-    // RE-FIXED: System instruction MUST be a Content object in this SDK version
-    systemInstruction: typeof systemMessage === "string" ? {
-      role: 'system',
-      parts: [{ text: systemMessage }]
-    } : undefined,
-  });
-
-  const result = await chat.sendMessage(userContent as any);
-  return result.response.text();
+  throw lastError || new Error("All Gemini models failed.");
 }
