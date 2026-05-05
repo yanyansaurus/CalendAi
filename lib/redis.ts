@@ -20,11 +20,9 @@ export function getRedisClient() {
     })
 
     redisClient.on('error', (err) => {
+      // Suppress 'Socket closed unexpectedly' noise as it's handled by reconnection logic
+      if (err.message.includes('Socket closed unexpectedly')) return
       console.error('[Redis] Client Error:', err.message)
-    })
-
-    redisClient.on('connect', () => {
-      console.log('[Redis] Connected successfully')
     })
   }
   return redisClient
