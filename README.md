@@ -7,16 +7,15 @@ ExecutiveVAi is your comprehensive AI-powered executive assistant designed to ha
 ## 🌟 Key Features
 
 ### 1. Smart Calendar & Scheduling
-- **Interactive Booking**: AI clarifies durations, cross-references your availability, and confirms times. Generates working Zoom or Google Meet links on the fly.
+- **Interactive Booking (Draft-First)**: Every scheduling request triggers an interactive UI card. Review, edit, and confirm titles or times before they hit your calendar.
 - **Smart Conflict Resolution**: If you try to double-book, the AI halts the action, warns you of the conflict, and scans your calendar to suggest the nearest vacant time slot.
-- **Post-Meeting Quick Actions**: Instantly offers contextual follow-ups after booking (e.g., *🗓️ Add to Calendar*, *📝 Draft Agenda*, *📧 Draft Email with Link*).
-- **Time-Blocking**: Automatically carves out "deep work" time or travel buffers between back-to-back appointments.
+- **Timezone Precision**: Anchored to your specific local time (e.g., Asia/Manila). Daily briefings and free-slot calculations are accurate to your local 12 AM - 11:59 PM window.
+- **Platform Choice**: Automatically asks "Zoom or Google Meet?" for every meeting request and provides one-tap selection buttons.
 
 ### 2. Intelligent Communication (Gatekeeping)
 - **Inbox Triage**: AI-driven filter that sorts emails into categories like "Needs Immediate Action," "Read Later," and "Spam/Delegable."
 - **Interactive Email Drafting**: Auto-drafts replies based on your personal tone and email context. Renders an interactive UI card where you can freely edit the *To*, *Subject*, and *Body* before sending.
-- **Meeting Detection**: Automatically extracts meeting requests from emails and presents a single-click "Schedule Meeting" button.
-- **Executive Summaries**: Distills long email threads into actionable bullet points.
+- **Resilient Analysis**: Uses a multi-model failover system (Groq/Gemini) to ensure email summaries are always available, even under heavy API load.
 
 ### 3. Finance Engine (Track Finances)
 - **Intelligent Receipt Scanning**: Uses Gemini Vision to extract structured data from receipts and invoices.
@@ -28,7 +27,9 @@ ExecutiveVAi is your comprehensive AI-powered executive assistant designed to ha
 ## 🛠️ Tech Stack
 - **Framework:** Next.js 14 (App Router)
 - **Authentication:** NextAuth.js
-- **AI Integration:** Google Gemini 3.1 Flash Lite / 2.0 Flash (Vision + Chat)
+- **AI Intelligence:** 
+  - **Primary:** Groq (Llama 3.3 70B, GPT-OSS 120B)
+  - **Failover:** Google Gemini 3.1 Pro / Flash / Lite
 - **Database:** Redis Labs (Persistent KV)
 - **APIs:** Google Calendar, Gmail, Zoom
 - **Styling:** Vanilla CSS & Tailwind CSS
@@ -150,9 +151,11 @@ Fill in the following in your `.env.local`:
 - `ZOOM_CLIENT_SECRET`
 - `ZOOM_ACCOUNT_ID`
 
-### 3. Gemini AI
-- Get your key from [Google AI Studio](https://aistudio.google.com/app/apikey).
+### 3. Gemini & Groq AI
+- Get your Gemini key from [Google AI Studio](https://aistudio.google.com/app/apikey).
+- Get your Groq key from [console.groq.com](https://console.groq.com/keys).
 - `GEMINI_API_KEY`
+- `GROQ_API_KEY`
 
 ### 4. Database (Redis Labs)
 - `calend_ai_kv_REDIS_URL`: Your Redis connection string.
