@@ -5,7 +5,6 @@ import ChatPanel from '@/components/ChatPanel'
 import WeekSchedule from '@/components/WeekSchedule'
 import FinanceDashboard from '@/components/FinanceDashboard'
 import BriefingPanel from '@/components/BriefingPanel'
-import TaskBoard from '@/components/TaskBoard'
 import EmailSummaryPanel from '@/components/EmailSummaryPanel'
 import SettingsPanel from '@/components/SettingsPanel'
 import { useTheme } from '@/components/ThemeProvider'
@@ -20,7 +19,6 @@ type TabId = 'home' | 'chat' | 'briefing' | 'planner' | 'emails' | 'finances' | 
 
 export default function Dashboard({ session }: DashboardProps) {
   const [activeTab, setActiveTab] = useState<TabId>('home')
-  const [plannerView, setPlannerView] = useState<'tasks' | 'calendar'>('tasks')
   const [reminders, setReminders] = useState<any[]>([])
   const [suggestions, setSuggestions] = useState<any[]>([])
   const { theme, toggleTheme } = useTheme()
@@ -235,42 +233,13 @@ export default function Dashboard({ session }: DashboardProps) {
             </h1>
           </div>
           <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-            {/* Planner view toggle */}
-            {activeTab === 'planner' && (
-              <div style={{ display: 'flex', gap: 2, background: 'var(--surface-2)', borderRadius: 8, padding: 2 }}>
-                <button
-                  onClick={() => setPlannerView('tasks')}
-                  style={{
-                    padding: '5px 12px', borderRadius: 6, fontSize: 11, fontWeight: 600,
-                    border: 'none', cursor: 'pointer',
-                    background: plannerView === 'tasks' ? 'var(--brand)' : 'transparent',
-                    color: plannerView === 'tasks' ? '#fff' : 'var(--text-muted)',
-                    transition: 'all 0.15s',
-                  }}
-                >
-                  ✅ Tasks
-                </button>
-                <button
-                  onClick={() => setPlannerView('calendar')}
-                  style={{
-                    padding: '5px 12px', borderRadius: 6, fontSize: 11, fontWeight: 600,
-                    border: 'none', cursor: 'pointer',
-                    background: plannerView === 'calendar' ? 'var(--brand)' : 'transparent',
-                    color: plannerView === 'calendar' ? '#fff' : 'var(--text-muted)',
-                    transition: 'all 0.15s',
-                  }}
-                >
-                  📅 Calendar
-                </button>
-              </div>
-            )}
              {/* Connection Indicators */}
              {[
                { label: 'G', active: hasGoogle },
                { label: 'Z', active: hasZoom }
              ].map(ind => (
                <div key={ind.label} style={{ display: 'flex', alignItems: 'center', gap: 4, opacity: ind.active ? 1 : 0.4 }}>
-                 <span style={{ width: 5, height: 5, borderRadius: '50%', background: ind.active ? 'var(--meeting-color)' : '#94a3b8' }} />
+                 <span style={{ width: 5, height: 5, borderRadius: '50%', background: ind.active ? '#10b981' : '#94a3b8' }} />
                  <span style={{ fontSize: 10, fontWeight: 600, color: ind.active ? 'var(--text)' : 'var(--text-muted)' }}>{ind.label}</span>
                </div>
              ))}
@@ -288,8 +257,7 @@ export default function Dashboard({ session }: DashboardProps) {
             />
           </div>
           {activeTab === 'briefing' && <BriefingPanel />}
-          {activeTab === 'planner' && plannerView === 'tasks' && <TaskBoard />}
-          {activeTab === 'planner' && plannerView === 'calendar' && <WeekSchedule />}
+          {activeTab === 'planner' && <WeekSchedule />}
           {activeTab === 'emails' && <EmailSummaryPanel />}
           {activeTab === 'finances' && <FinanceDashboard />}
 

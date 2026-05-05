@@ -162,9 +162,9 @@ SCHEDULING RULES (follow these exactly):
 - If user says "now" or "asap", set startTime to current time + 5 minutes.
 - If user says "today", infer the date from {currentTime}.
 - If user says "tomorrow", add 1 day to {currentTime}.
-- If the user asks to schedule a meeting without specifying a platform, default to {meetingPreference}.
+- EVENT VS MEETING: "Scheduling an event", "Block time", or "Add to calendar" means a PLAIN event. DO NOT add a video call link. Use intent "draft_event".
+- MEETING PLATFORM: If the user wants a "meeting", "call", or "sync", ALWAYS ask "Would you like to use Google Meet or Zoom?" unless they specified one. Include both as 'suggestedAnswers'.
 - If user doesn't specify a duration for a MEETING or EVENT, use intent "clarify" and ask how long it will take.
-- If the user wants to block time, add an event, or schedule something that isn't a meeting, use "draft_event" (no platform needed).
 - If user doesn't specify a time, find a free slot and suggest it—don't ask vaguely.
 - CONFLICT CHECK: Before confirming any event, check {busySlots} for overlaps.
   If the requested time conflicts with an existing event, DO NOT schedule it yet.

@@ -37,14 +37,12 @@ export interface AIOptions {
  */
 // Prioritized list of models (Highest quality to lowest)
 const GROQ_MODELS = [
-  "llama-3.3-70b-versatile",
-  "qwen/qwen3-32b",
   "meta-llama/llama-4-scout-17b-16e-instruct",
   "openai/gpt-oss-120b",
-  "llama-3.1-8b-instant",
-  "allam-2-7b",
-  "groq/compound",
-  "groq/compound-mini"
+  "meta-llama/llama-3.3-70b-versatile",
+  "openai/gpt-oss-20b",
+  "qwen/qwen3-32b",
+  "meta-llama/llama-3.1-8b-instant"
 ];
 
 /**
@@ -52,11 +50,20 @@ const GROQ_MODELS = [
  */
 export async function getAIResponse(messages: AIMessage[], options: AIOptions = {}) {
   const provider = options.provider || (process.env.GROQ_API_KEY ? "groq" : "gemini");
+  let text = "";
   if (provider === "groq") {
-    return callGroq(messages, options);
+    text = await callGroq(messages, options);
   } else {
-    return callGemini(messages, options);
+    text = await callGemini(messages, options);
   }
+
+  if (options.jsonMode) {
+    // Robust JSON cleaning: Strip markdown backticks and whitespace
+    const cleaned = text.replace(/```json/g, "").replace(/```/g, "").trim();
+    return cleaned;
+  }
+
+  return text;
 }
 
 async function callGroq(messages: AIMessage[], options: AIOptions) {
@@ -99,14 +106,20 @@ async function callGroq(messages: AIMessage[], options: AIOptions) {
 async function callGemini(messages: AIMessage[], options: AIOptions) {
   if (!genAI) throw new Error("Gemini API key is missing.");
 
-  const geminiModels = ["gemini-2.5-flash", "gemini-3.0-pro-preview", "gemini-pro"];
+  const geminiModels = [
+    "gemini-3.1-pro",
+    "gemini-3-flash",
+    "gemini-3.1-flash-lite",
+    "gemini-2.5-pro",
+    "gemini-2.5-flash"
+  ];
   let lastError: any = null;
 
   for (const currentModelName of geminiModels) {
     try {
       const model = genAI.getGenerativeModel({ model: currentModelName });
       let systemMessage = messages.find(m => m.role === "system")?.content;
-      
+
       let extraContext = "";
       if (typeof systemMessage === "string" && systemMessage.length > 8000) {
         extraContext = `\n\n### ADDITIONAL CONTEXT & RULES:\n${systemMessage}`;
@@ -140,6 +153,7 @@ async function callGemini(messages: AIMessage[], options: AIOptions) {
       const chat = model.startChat({
         history: history as any,
         systemInstruction: typeof systemMessage === "string" ? {
+          role: 'system',
           parts: [{ text: systemMessage }]
         } : undefined,
       });
@@ -148,8 +162,11 @@ async function callGemini(messages: AIMessage[], options: AIOptions) {
       return result.response.text();
     } catch (error: any) {
       lastError = error;
-      if (error.message?.includes("404") || error.message?.includes("not found") || error.message?.includes("400")) {
-        console.warn(`[Gemini] Model ${currentModelName} failed. Rotating...`);
+      const errorMsg = error.message?.toLowerCase() || "";
+      const isRetryable = errorMsg.includes("429") || errorMsg.includes("rate_limit") || errorMsg.includes("quota") || errorMsg.includes("404") || errorMsg.includes("not found") || errorMsg.includes("400");
+      
+      if (isRetryable) {
+        console.warn(`[Gemini] Model ${currentModelName} failed or throttled. Rotating...`);
         continue;
       }
       break;

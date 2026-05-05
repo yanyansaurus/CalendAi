@@ -29,7 +29,7 @@ export async function POST(req: Request) {
   if (googleToken) {
     try { 
       // Fetch 7 days of context
-      weekBusySlots = await getFreeBusy(googleToken, 'this_week') 
+      weekBusySlots = await getFreeBusy(googleToken, 'this_week', timezone) 
       weekEvents = await getWeekEvents(googleToken)
     } catch { /* ignore */ }
   }
@@ -118,19 +118,34 @@ export async function POST(req: Request) {
   try {
     switch (action.intent) {
 
-    // ── Draft a meeting or event ──────────────────────────────────────────
     case 'draft_meeting':
     case 'draft_event': {
       return NextResponse.json({
         type: 'draft_event',
         text: action.naturalResponse ?? "I've drafted the details for you. Ready to confirm?",
         action,
-        suggestedAnswers: action?.suggestedAnswers || []
+        suggestedAnswers: action?.suggestedAnswers || ['Confirm & Sync', 'Change time', 'Cancel']
       })
     }
 
     // ── Create a meeting ──────────────────────────────────────────────────
     case 'create_meeting': {
+      // DRAFT-FIRST SAFETY CATCH:
+      const isConfirmation = message.toLowerCase().includes('confirm') || 
+                             message.toLowerCase().includes('yes') || 
+                             message.toLowerCase().includes('looks good') ||
+                             message.toLowerCase().includes('schedule it');
+      
+      if (!isConfirmation && !action.eventId) {
+        console.log(`[ExecutiveVAi] Intercepted 'create_meeting' -> forcing 'draft_meeting' for safety.`);
+        return NextResponse.json({
+          type: 'draft_event',
+          text: "I've drafted a meeting link for you. Ready to send the invites?",
+          action: { ...action, intent: 'draft_meeting' },
+          suggestedAnswers: ['Confirm & Sync', 'Change time', 'Cancel']
+        })
+      }
+
       let startTime = new Date(Date.now() + 5 * 60000).toISOString()
       if (action.startTime) {
         // Ensure AI's floating timestamp is converted to a proper UTC ISO string based on server timezone
@@ -185,8 +200,25 @@ export async function POST(req: Request) {
       })
     }
 
-    // ── Create a plain calendar event ─────────────────────────────────────
     case 'create_event': {
+      // DRAFT-FIRST SAFETY CATCH:
+      // If the intent is 'create_event' but the user message doesn't contain confirmation keywords,
+      // and it's not a direct continuation of a draft, we force it to 'draft_event'.
+      const isConfirmation = message.toLowerCase().includes('confirm') || 
+                             message.toLowerCase().includes('yes') || 
+                             message.toLowerCase().includes('looks good') ||
+                             message.toLowerCase().includes('add it now');
+      
+      if (!isConfirmation && !action.eventId) {
+        console.log(`[ExecutiveVAi] Intercepted 'create_event' -> forcing 'draft_event' for safety.`);
+        return NextResponse.json({
+          type: 'draft_event',
+          text: "I've drafted that for you. Would you like me to add it to your calendar?",
+          action: { ...action, intent: 'draft_event' },
+          suggestedAnswers: ['Confirm & Sync', 'Change time', 'Cancel']
+        })
+      }
+
       if (!googleToken) {
         return NextResponse.json({ type: 'chat', text: '⚠️ Google Calendar is not connected. Please sign out and sign back in to reconnect.' })
       }
@@ -280,7 +312,7 @@ export async function POST(req: Request) {
       const now     = new Date()
       const weekEnd = new Date(now)
       weekEnd.setDate(now.getDate() + 7)
-      const allBusy = await getFreeBusy(googleToken, { start: now.toISOString(), end: weekEnd.toISOString() })
+      const allBusy = await getFreeBusy(googleToken, { start: now.toISOString(), end: weekEnd.toISOString() }, timezone)
       const slots: FreeSlot[] = computeFreeSlots(allBusy, now, weekEnd, action.duration ?? 60)
         .slice(0, 3)
 
@@ -299,7 +331,7 @@ export async function POST(req: Request) {
         return NextResponse.json({ type: 'chat', text: action.naturalResponse })
       }
 
-      const todayBusy = await getFreeBusy(googleToken, 'today')
+      const todayBusy = await getFreeBusy(googleToken, 'today', timezone)
       const todayFree = computeFreeSlots(todayBusy, new Date(), (() => {
         const d = new Date(); d.setHours(20, 0, 0, 0); return d
       })(), 15)
@@ -483,7 +515,7 @@ CHAT: You have 3 unread emails. Here's what needs attention:
         const analysisText = await getAIResponse([
           { role: 'system', content: 'Analyze the following emails and provide a smart, professional summary.' },
           { role: 'user', content: emailAnalysisPrompt }
-        ], { provider: 'groq' })
+        ], { jsonMode: false })
 
         let finalAnalysis = analysisText.trim()
         if (finalAnalysis.startsWith('CHAT:')) {
@@ -525,14 +557,7 @@ CHAT: You have 3 unread emails. Here's what needs attention:
       })
     }
 
-    case 'draft_meeting':
-    case 'draft_event': {
-      return NextResponse.json({
-        type: 'chat',
-        text: action.naturalResponse ?? `Here is the draft for your ${action.intent === 'draft_meeting' ? 'meeting' : 'event'}.`,
-        action
-      })
-    }
+    // (Duplicate draft cases removed)
 
     case 'send_email': {
       if (!googleToken) {
@@ -591,7 +616,7 @@ Keep the formatting clean using markdown bolding. No code blocks.
       const analysisText = await getAIResponse([
         { role: 'system', content: 'You are ExecutiveVAi, a time-management analyst. Provide a professional markdown breakdown.' },
         { role: 'user', content: analysisPrompt }
-      ], { provider: 'groq' })
+      ], { jsonMode: false })
 
       return NextResponse.json({
         type: 'chat',

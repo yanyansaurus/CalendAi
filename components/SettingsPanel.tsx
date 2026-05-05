@@ -345,6 +345,23 @@ export default function SettingsPanel() {
     localStorage.setItem('executive_vai_timezone', e.target.value)
   }
 
+  const handleResetCache = () => {
+    if (confirm('This will clear your local briefing cache and reset all onboarding flags (v1-v7). Your account data remains safe on the server. Proceed?')) {
+      // Find all keys starting with executive_vai_
+      const keys = []
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i)
+        if (key?.startsWith('executive_vai_')) {
+          keys.push(key)
+        }
+      }
+      // Remove them
+      keys.forEach(k => localStorage.removeItem(k))
+      // Force reload to apply reset state
+      window.location.reload()
+    }
+  }
+
   return (
     <div style={{ maxWidth: 800, margin: '0 auto' }} className="container-padding">
       <header style={{ marginBottom: 32 }}>
@@ -442,8 +459,22 @@ export default function SettingsPanel() {
         {/* Danger Zone */}
         <section>
           <h3 style={{ fontSize: 18, fontWeight: 600, marginBottom: 16, color: '#f87171' }}>Danger Zone</h3>
-          <div className="glass" style={{ padding: 24, border: '1px solid rgba(248, 113, 113, 0.2)' }}>
-            <button className="btn-ghost" style={{ color: '#f87171' }}>Clear All History and Redis State</button>
+          <div className="glass" style={{ padding: 24, border: '1px solid rgba(248, 113, 113, 0.2)', display: 'flex', flexDirection: 'column', gap: 16 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div>
+                <p style={{ fontWeight: 600, color: 'var(--text)' }}>Reset Application State</p>
+                <p style={{ fontSize: 13, color: 'var(--text-muted)' }}>Clear local cache, onboarding flags, and temporary preferences.</p>
+              </div>
+              <button 
+                onClick={handleResetCache}
+                className="btn-ghost" 
+                style={{ color: '#f87171', border: '1px solid rgba(248, 113, 113, 0.3)', padding: '8px 16px', borderRadius: 10 }}
+              >
+                Reset Local Cache
+              </button>
+            </div>
+            <div style={{ height: 1, background: 'var(--border)', opacity: 0.5 }} />
+            <button className="btn-ghost" style={{ color: '#f87171', alignSelf: 'flex-start' }}>Clear All History and Redis State</button>
           </div>
         </section>
 

@@ -23,7 +23,7 @@ export async function GET(req: Request) {
 
   if (googleToken) {
     try { emails = await getUnreadEmails(googleToken, 10) } catch { /* ignore */ }
-    try { busySlots = await getTodayEvents(googleToken) } catch { /* ignore */ }
+    try { busySlots = await getTodayEvents(googleToken, timezone) } catch { /* ignore */ }
     try { 
       // Fetch last 7 days for the weekly summary
       const lastWeek = new Date()
@@ -31,7 +31,7 @@ export async function GET(req: Request) {
       lastWeekSlots = await getFreeBusy(googleToken, { 
         start: lastWeek.toISOString(), 
         end: new Date().toISOString() 
-      })
+      }, timezone)
     } catch { /* ignore */ }
   }
 
@@ -55,7 +55,7 @@ export async function GET(req: Request) {
         { "title": "Critical item starting soon", "timeLeft": "X mins", "urgency": "high" }
       ],
       "todayReminders": [
-        { "time": "HH:MM", "title": "Task/Meeting name", "description": "1 sentence context", "duration": "X mins/hrs", "type": "calendar|task|email", "urgency": "high|medium|low" }
+        { "time": "HH:MM", "endTime": "HH:MM", "title": "Task/Meeting name", "description": "1 sentence context", "duration": "X mins/hrs", "type": "calendar|task|email", "urgency": "high|medium|low" }
       ],
       "emailInsights": [
         { "from": "Sender", "subject": "Subject", "action": "Recommendation", "priority": "high|medium|low" }
@@ -79,9 +79,7 @@ export async function GET(req: Request) {
       { role: "system", content: "You are a specialized JSON generator for executive briefings. Output ONLY valid JSON." },
       { role: "user", content: briefingPrompt }
     ], { 
-      jsonMode: true, 
-      provider: "groq", 
-      model: "llama-3.3-70b-versatile" 
+      jsonMode: true
     });
     
     briefing = JSON.parse(text)
@@ -95,6 +93,7 @@ export async function GET(req: Request) {
         const durMins = Math.round(durMs / 60000);
         return {
           time: new Date(s.start).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }),
+          endTime: new Date(s.end).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }),
           title: s.title || 'Calendar event',
           description: s.description || 'No description provided.',
           duration: durMins >= 60 ? `${Math.floor(durMins/60)}h ${durMins%60}m` : `${durMins}m`,

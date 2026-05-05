@@ -60,6 +60,7 @@ export interface AgentAction {
   }
   naturalResponse: string
   suggestedAnswers?: string[] // Proactive quick-reply options
+  eventId?: string            // Existing event ID for reschedules/confirmations
 }
 
 // ─── Schedule / Day Plan ──────────────────────────────────────────────────────

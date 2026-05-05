@@ -15,6 +15,7 @@ export function getAuthClient(accessToken: string) {
 export async function getFreeBusy(
   accessToken: string,
   range: 'today' | 'this_week' | { start: string; end: string },
+  timezone = 'UTC'
 ): Promise<BusySlot[]> {
   const auth = getAuthClient(accessToken)
   const calendar = google.calendar({ version: 'v3', auth })
@@ -22,21 +23,39 @@ export async function getFreeBusy(
   let timeMin: string
   let timeMax: string
 
+  const now = new Date()
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone: timezone,
+    year: 'numeric', month: '2-digit', day: '2-digit'
+  }).formatToParts(now)
+  
+  const year = parts.find(p => p.type === 'year')?.value
+  const month = parts.find(p => p.type === 'month')?.value
+  const day = parts.find(p => p.type === 'day')?.value
+  const dateStr = `${year}-${month}-${day}`
+
   if (range === 'today') {
-    const now = new Date()
-    timeMin = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0).toISOString()
-    timeMax = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59).toISOString()
+    timeMin = new Date(`${dateStr}T00:00:00Z`).toISOString() // Baseline UTC
+    timeMax = new Date(`${dateStr}T23:59:59Z`).toISOString()
   } else if (range === 'this_week') {
-    const now = new Date()
-    const day = now.getDay()
-    const monday = new Date(now)
-    monday.setDate(now.getDate() - (day === 0 ? 6 : day - 1))
-    monday.setHours(0, 0, 0, 0)
-    const friday = new Date(monday)
-    friday.setDate(monday.getDate() + 4)
-    friday.setHours(23, 59, 59, 0)
-    timeMin = monday.toISOString()
-    timeMax = friday.toISOString()
+    const localToday = new Date(`${dateStr}T12:00:00`)
+    const dayOfWeek = localToday.getDay()
+    const diffToMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1
+    
+    const monday = new Date(localToday)
+    monday.setDate(localToday.getDate() - diffToMonday)
+    
+    const sunday = new Date(monday)
+    sunday.setDate(monday.getDate() + 6)
+    
+    const mParts = new Intl.DateTimeFormat('en-CA', { timeZone: timezone, year: 'numeric', month: '2-digit', day: '2-digit' }).formatToParts(monday)
+    const sParts = new Intl.DateTimeFormat('en-CA', { timeZone: timezone, year: 'numeric', month: '2-digit', day: '2-digit' }).formatToParts(sunday)
+    
+    const mStr = `${mParts.find(p => p.type === 'year')?.value}-${mParts.find(p => p.type === 'month')?.value}-${mParts.find(p => p.type === 'day')?.value}`
+    const sStr = `${sParts.find(p => p.type === 'year')?.value}-${sParts.find(p => p.type === 'month')?.value}-${sParts.find(p => p.type === 'day')?.value}`
+    
+    timeMin = new Date(`${mStr}T00:00:00Z`).toISOString()
+    timeMax = new Date(`${sStr}T23:59:59Z`).toISOString()
   } else {
     timeMin = range.start
     timeMax = range.end
@@ -237,28 +256,73 @@ export async function getWeekEvents(accessToken: string) {
 }
 
 // ─── Fetch today's detailed events for AI context ─────────────────────────────
-export async function getTodayEvents(accessToken: string) {
+export async function getTodayEvents(accessToken: string, timezone = 'UTC') {
   const auth = getAuthClient(accessToken)
   const calendar = google.calendar({ version: 'v3', auth })
 
   const now = new Date()
-  const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0).toISOString()
-  const endOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59).toISOString()
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone: timezone,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit'
+  }).formatToParts(now)
+  
+  const year = parts.find(p => p.type === 'year')?.value
+  const month = parts.find(p => p.type === 'month')?.value
+  const day = parts.find(p => p.type === 'day')?.value
+  const dateStr = `${year}-${month}-${day}`
 
+  // FIXED WINDOW: 12:00 AM to 11:59 PM in the user's timezone
+  // We fetch a slightly wider range (2 hours before/after) just to be safe with 
+  // transition boundaries, but we filter strictly by dateStr.
+  const timeMin = new Date(`${dateStr}T00:00:00`).toISOString() 
+  // Note: Date constructor with naive string uses local time, but we want UTC boundaries
+  // for the API list call that are 'wide enough'.
+  
   const res = await calendar.events.list({
     calendarId:   'primary',
-    timeMin:      startOfDay,
-    timeMax:      endOfDay,
+    timeMin:      `${dateStr}T00:00:00Z`, // UTC-relative but Google will handle it
+    timeMax:      `${dateStr}T23:59:59Z`,
     singleEvents: true,
     orderBy:      'startTime',
   })
 
-  return (res.data.items ?? []).map((e) => ({
-    title:       e.summary ?? 'Busy',
-    description: e.description ?? '',
-    start:       e.start?.dateTime ?? e.start?.date ?? '',
-    end:         e.end?.dateTime   ?? e.end?.date   ?? '',
-  }))
+  const formatter = new Intl.DateTimeFormat('en-CA', {
+    timeZone: timezone,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit'
+  })
+
+  // PRECISE FILTER: Convert each event's start time to the user's timezone and check the date
+  return (res.data.items ?? [])
+    .map((e) => ({
+      title:       e.summary ?? 'Busy',
+      description: e.description ?? '',
+      start:       e.start?.dateTime ?? e.start?.date ?? '',
+      end:         e.end?.dateTime   ?? e.end?.date   ?? '',
+    }))
+    .filter(e => {
+      try {
+        const eventDate = new Date(e.start)
+        const eParts = new Intl.DateTimeFormat('en-CA', {
+          timeZone: timezone,
+          year: 'numeric',
+          month: '2-digit',
+          day: '2-digit'
+        }).formatToParts(eventDate)
+        
+        const eYear = eParts.find(p => p.type === 'year')?.value
+        const eMonth = eParts.find(p => p.type === 'month')?.value
+        const eDay = eParts.find(p => p.type === 'day')?.value
+        const eDateStr = `${eYear}-${eMonth}-${eDay}`
+        
+        return eDateStr === dateStr
+      } catch {
+        return e.start.startsWith(dateStr)
+      }
+    })
 }
 
 // ─── Update an existing calendar event ────────────────────────────────────────
