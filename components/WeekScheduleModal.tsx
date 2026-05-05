@@ -221,30 +221,47 @@ export default function WeekScheduleModal({ onClose, onSelectSlot, onSelectEvent
                             if (durationMode === '15m') durHours = 0.25
                             if (durationMode === '30m') durHours = 0.5
                             if (durationMode === '2hr') durHours = 2
-                            if (durationMode === 'custom') durHours = parseInt(customMins) / 60
+                            if (durationMode === 'custom') durHours = Math.max(0.25, parseInt(customMins) / 60)
+                            
                             const endH = currentH + durHours
+                            const endTimeStr = formatTime(endH)
 
-                            slots.push(
-                              <button
-                                key={currentH}
-                                onClick={() => {
-                                  let durStr = '1 hour'
-                                  if (durationMode === '15m') durStr = '15 minutes'
-                                  if (durationMode === '30m') durStr = '30 minutes'
-                                  if (durationMode === '2hr') durStr = '2 hours'
-                                  if (durationMode === 'custom') durStr = `${customMins} minutes`
-                                  onSelectSlot(day.toLocaleDateString('en-US', { weekday: 'long' }), timeStr, title, description, durStr, recurrence)
-                                }}
-                                style={{ 
-                                  fontSize: 12, padding: '8px 12px', background: 'var(--surface-3)', border: '1px dashed var(--border)', 
-                                  color: 'var(--text)', borderRadius: 8, textAlign: 'left', cursor: 'pointer', transition: 'all 0.2s'
-                                }}
-                                onMouseEnter={e => e.currentTarget.style.borderColor = 'var(--brand)'}
-                                onMouseLeave={e => e.currentTarget.style.borderColor = 'var(--border)'}
-                              >
-                                <span style={{ fontWeight: 600, color: 'var(--text-muted)' }}>{timeStr}</span>
-                              </button>
-                            )
+                            // Don't render if it goes past the end hour
+                            if (endH <= END_HOUR) {
+                              slots.push(
+                                <button
+                                  key={currentH}
+                                  onClick={() => {
+                                    let durStr = '1 hour'
+                                    if (durationMode === '15m') durStr = '15 minutes'
+                                    if (durationMode === '30m') durStr = '30 minutes'
+                                    if (durationMode === '2hr') durStr = '2 hours'
+                                    if (durationMode === 'custom') durStr = `${customMins} minutes`
+                                    onSelectSlot(day.toLocaleDateString('en-US', { weekday: 'long' }), timeStr, title, description, durStr, recurrence)
+                                  }}
+                                  style={{ 
+                                    fontSize: 12, padding: '10px 12px', background: 'var(--surface-3)', border: '1px dashed var(--border)', 
+                                    color: 'var(--text)', borderRadius: 12, textAlign: 'left', cursor: 'pointer', transition: 'all 0.2s',
+                                    display: 'flex', flexDirection: 'column', gap: 2, marginBottom: 4
+                                  }}
+                                  onMouseEnter={e => {
+                                    e.currentTarget.style.borderColor = 'var(--brand)'
+                                    e.currentTarget.style.background = 'rgba(99, 102, 241, 0.05)'
+                                  }}
+                                  onMouseLeave={e => {
+                                    e.currentTarget.style.borderColor = 'var(--border)'
+                                    e.currentTarget.style.background = 'var(--surface-3)'
+                                  }}
+                                >
+                                  <span style={{ fontWeight: 700, color: 'var(--brand-light)', fontSize: 11 }}>{timeStr} – {endTimeStr}</span>
+                                  <span style={{ fontSize: 10, color: 'var(--text-muted)' }}>Available Slot</span>
+                                </button>
+                              )
+                            }
+                            
+                            // Advance currentH by the duration of the slot we just rendered
+                            currentH = endH
+                            continue
                           }
                           currentH += step
                         }
