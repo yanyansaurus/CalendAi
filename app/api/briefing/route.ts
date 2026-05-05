@@ -88,7 +88,7 @@ Rules:
   try {
     const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!)
     // If it's the end of the day, use the massive 2M context window model for deep analysis
-    const model = isEndOfDay ? genAI.getGenerativeModel({ model: 'gemini-2.5-pro' }) : getGeminiModel()
+    const model = getGeminiModel()
     const result = await model.generateContent(briefingPrompt)
     let text = result.response.text().trim()
     // Strip code fences if present
