@@ -71,8 +71,6 @@ export default function Dashboard({ session }: DashboardProps) {
     }
 
     poll()
-    const interval = setInterval(poll, 60000)
-    return () => clearInterval(interval)
   }, [])
   
   // Listen for tab switch events from child components
