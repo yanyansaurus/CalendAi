@@ -11,6 +11,7 @@ interface HomeStat {
 interface TimelineEvent {
   time: string
   title: string
+  description?: string
   duration: string
   type: 'meeting' | 'task' | 'focus'
 }
@@ -53,7 +54,8 @@ export default function HomePanel() {
         const newTimeline: TimelineEvent[] = b.todayReminders?.map((r: any) => ({
           time: r.time,
           title: r.title,
-          duration: r.type === 'calendar' ? '45m' : 'Task',
+          description: r.description,
+          duration: r.duration || (r.type === 'calendar' ? '30m' : 'Task'),
           type: r.type === 'calendar' ? 'meeting' : 'task'
         })) || []
 
@@ -160,7 +162,12 @@ export default function HomePanel() {
                       <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-subtle)' }}>{ev.time}</span>
                       <span style={{ fontSize: 10, padding: '2px 6px', borderRadius: 4, background: 'var(--surface-3)', color: 'var(--text-muted)' }}>{ev.duration}</span>
                     </div>
-                    <p style={{ fontSize: 14, fontWeight: 600 }}>{ev.title}</p>
+                    <p style={{ fontSize: 14, fontWeight: 700, marginBottom: ev.description ? 6 : 0, color: 'var(--text)' }}>{ev.title}</p>
+                    {ev.description && (
+                      <p style={{ fontSize: 12, color: 'var(--text-muted)', lineHeight: 1.5 }}>
+                        {ev.description}
+                      </p>
+                    )}
                   </div>
                 </div>
               ))}

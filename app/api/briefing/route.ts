@@ -1,7 +1,7 @@
 import { auth } from '@/lib/auth'
 import { getAIResponse } from '@/lib/ai'
 import { getUnreadEmails } from '@/lib/gmail'
-import { getFreeBusy } from '@/lib/googleCalendar'
+import { getFreeBusy, getTodayEvents } from '@/lib/googleCalendar'
 import { getTasks } from '@/lib/taskEngine'
 import { NextResponse } from 'next/server'
 
@@ -23,7 +23,7 @@ export async function GET(req: Request) {
 
   if (googleToken) {
     try { emails = await getUnreadEmails(googleToken, 10) } catch { /* ignore */ }
-    try { busySlots = await getFreeBusy(googleToken, 'today') } catch { /* ignore */ }
+    try { busySlots = await getTodayEvents(googleToken) } catch { /* ignore */ }
     try { 
       // Fetch last 7 days for the weekly summary
       const lastWeek = new Date()
@@ -55,7 +55,7 @@ export async function GET(req: Request) {
         { "title": "Critical item starting soon", "timeLeft": "X mins", "urgency": "high" }
       ],
       "todayReminders": [
-        { "time": "HH:MM", "title": "Task/Meeting name", "type": "calendar|task|email", "urgency": "high|medium|low" }
+        { "time": "HH:MM", "title": "Task/Meeting name", "description": "1 sentence context", "duration": "X mins/hrs", "type": "calendar|task|email", "urgency": "high|medium|low" }
       ],
       "emailInsights": [
         { "from": "Sender", "subject": "Subject", "action": "Recommendation", "priority": "high|medium|low" }
@@ -90,12 +90,18 @@ export async function GET(req: Request) {
     briefing = {
       greeting: `Good ${new Date().getHours() < 12 ? 'morning' : 'afternoon'}!`,
       urgentAlerts: [],
-      todayReminders: busySlots.map(s => ({
-        time: new Date(s.start).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }),
-        title: 'Calendar event',
-        type: 'calendar',
-        urgency: 'medium'
-      })),
+      todayReminders: busySlots.map(s => {
+        const durMs = new Date(s.end).getTime() - new Date(s.start).getTime();
+        const durMins = Math.round(durMs / 60000);
+        return {
+          time: new Date(s.start).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }),
+          title: s.title || 'Calendar event',
+          description: s.description || 'No description provided.',
+          duration: durMins >= 60 ? `${Math.floor(durMins/60)}h ${durMins%60}m` : `${durMins}m`,
+          type: 'calendar',
+          urgency: 'medium'
+        }
+      }),
       emailInsights: emails.slice(0, 3).map(e => ({
         from: e.from?.split('<')[0]?.trim() ?? 'Unknown',
         subject: e.subject,
