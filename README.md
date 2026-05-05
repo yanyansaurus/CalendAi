@@ -6,18 +6,28 @@ ExecutiveVAi is your comprehensive AI-powered executive assistant designed to ha
 
 ## 🌟 Key Features
 
-### 1. Smart Calendar & Scheduling
+### 1. Executive AI Chatbot (The Command Center)
+- **Context-Aware Conversations**: A high-performance assistant that remembers your schedule, recent emails, and financial goals.
+- **Natural Language Execution**: "Schedule a sync," "Check my budget," or "Draft a reply to John"—the AI parses intent and executes across multiple APIs.
+- **Proactive Suggestions**: Offers "Suggested Answers" and quick-actions based on the current context of the conversation.
+
+### 2. Routine Architect (AI Analyzer)
+- **Weekly Time Analysis**: Analyzes your entire week's calendar to determine productivity scores and identify time-wasters.
+- **Smart Routine Suggestions**: Scans for gaps in your schedule and suggests "Focus Blocks," "Deep Work," or "Administrative Time" to balance your routine.
+- **Habit-Forming Guidance**: Identifies if you're missing lunch breaks or working too many back-to-back meetings and offers corrections.
+
+### 3. Smart Calendar & Scheduling
 - **Interactive Booking (Draft-First)**: Every scheduling request triggers an interactive UI card. Review, edit, and confirm titles or times before they hit your calendar.
 - **Smart Conflict Resolution**: If you try to double-book, the AI halts the action, warns you of the conflict, and scans your calendar to suggest the nearest vacant time slot.
 - **Timezone Precision**: Anchored to your specific local time (e.g., Asia/Manila). Daily briefings and free-slot calculations are accurate to your local 12 AM - 11:59 PM window.
 - **Platform Choice**: Automatically asks "Zoom or Google Meet?" for every meeting request and provides one-tap selection buttons.
 
-### 2. Intelligent Communication (Gatekeeping)
+### 4. Intelligent Communication (Gatekeeping)
 - **Inbox Triage**: AI-driven filter that sorts emails into categories like "Needs Immediate Action," "Read Later," and "Spam/Delegable."
 - **Interactive Email Drafting**: Auto-drafts replies based on your personal tone and email context. Renders an interactive UI card where you can freely edit the *To*, *Subject*, and *Body* before sending.
 - **Resilient Analysis**: Uses a multi-model failover system (Groq/Gemini) to ensure email summaries are always available, even under heavy API load.
 
-### 3. Finance Engine (Track Finances)
+### 5. Finance Engine (Track Finances)
 - **Intelligent Receipt Scanning**: Uses Gemini Vision to extract structured data from receipts and invoices.
 - **Human-in-the-Loop Verification**: Review, edit, and confirm extracted data before it persists to your budget.
 - **Comprehensive Dashboard**: Track income, expenses, and savings with real-time budget limit alerts and category breakdowns.
