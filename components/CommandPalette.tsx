@@ -9,21 +9,26 @@ interface Command {
 }
 
 const COMMANDS: Command[] = [
-  { icon: '📅', name: 'Schedule Meeting', description: 'Book a Zoom or Google Meet call', text: 'Schedule a meeting with ' },
-  { icon: '🔍', name: 'Find Free Time', description: 'Scan calendar for vacant slots', text: 'Find me time for a 1-hour session this week' },
+  { icon: '📅', name: 'Create Event', description: 'Add a new event to calendar', text: 'Add an event called "Project Planning" tomorrow at 2 PM for 1 hour' },
+  { icon: '🤝', name: 'Schedule Meeting', description: 'Book a Zoom or Google Meet call', text: 'Schedule a Zoom meeting with sarah@example.com next Friday at 10 AM' },
+  { icon: '🔍', name: 'Find Free Time', description: 'Scan calendar for vacant slots', text: 'Find me time for a 1.5-hour deep work session this Wednesday' },
+  { icon: '📋', name: 'Plan My Day', description: 'Optimize your daily schedule', text: 'I need to plan my day. I have a dentist appointment at 3 PM and need to review code.' },
   { icon: '☀️', name: 'Daily Briefing', description: 'Get your schedule and budget summary', text: 'Good morning! What\'s on my plate today?' },
-  { icon: '📨', name: 'Check Inbox', description: 'Triage and summarize unread emails', text: 'Check my unread emails' },
-  { icon: '💰', name: 'View Budget', description: 'Show spending charts and limits', text: 'Show my budget dashboard' },
-  { icon: '📎', name: 'Log Expense', description: 'Parse a receipt or log cost', text: 'Log an expense for ' },
-  { icon: '🌍', name: 'Travel Mode', description: 'Shift meetings to a new timezone', text: 'I am traveling to ' },
-  { icon: '🔄', name: 'Reschedule', description: 'Move an existing meeting', text: 'Reschedule my ' },
-  { icon: '❌', name: 'Cancel Event', description: 'Remove something from calendar', text: 'Cancel my ' },
+  { icon: '🔄', name: 'Reschedule', description: 'Move an existing meeting', text: 'Reschedule my "Budget Review" meeting to Thursday at 1 PM' },
+  { icon: '❌', name: 'Cancel Event', description: 'Remove something from calendar', text: 'Cancel my afternoon sync today' },
+  { icon: '📨', name: 'Check Inbox', description: 'Triage and summarize unread emails', text: 'Check my unread emails and tell me if anything is urgent' },
+  { icon: '✉️', name: 'Send Email', description: 'Draft and send a new email', text: 'Send an email to john@example.com letting him know I am running 5 minutes late' },
+  { icon: '✍️', name: 'Draft Reply', description: 'Reply to recent emails', text: 'Draft a polite decline reply to the latest investor email' },
+  { icon: '💸', name: 'Log Expense', description: 'Parse a receipt or log cost', text: 'Log expense: $14.50 for airport coffee on a business trip' },
+  { icon: '📊', name: 'Check Budget', description: 'Show spending charts and limits', text: 'How much have I spent on Food this month?' },
+  { icon: '⏱️', name: 'Time Analysis', description: 'Review how you spent your week', text: 'Analyse how I spent my time this week. How many hours were in meetings?' },
+  { icon: '🧠', name: 'Check Routine', description: 'Analyze your weekly habits', text: 'Analyze my weekly routine, assume my calendar is empty' },
 ]
 
 interface Props {
   isOpen: boolean
   onClose: () => void
-  onSelect: (text: string) => void
+  onSelect: (text: string, name?: string) => void
 }
 
 export default function CommandPalette({ isOpen, onClose, onSelect }: Props) {
@@ -59,7 +64,7 @@ export default function CommandPalette({ isOpen, onClose, onSelect }: Props) {
       }
       if (e.key === 'Enter' && filteredCommands[selectedIndex]) {
         e.preventDefault()
-        onSelect(filteredCommands[selectedIndex].text)
+        onSelect(filteredCommands[selectedIndex].text, filteredCommands[selectedIndex].name)
         onClose()
       }
     }
@@ -115,7 +120,7 @@ export default function CommandPalette({ isOpen, onClose, onSelect }: Props) {
             filteredCommands.map((cmd, i) => (
               <div 
                 key={cmd.name}
-                onClick={() => { onSelect(cmd.text); onClose(); }}
+                onClick={() => { onSelect(cmd.text, cmd.name); onClose(); }}
                 onMouseEnter={() => setSelectedIndex(i)}
                 style={{
                   display: 'flex', alignItems: 'center', gap: 14,

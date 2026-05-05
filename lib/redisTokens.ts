@@ -51,8 +51,8 @@ export async function pushEmailNotification(userId: string, suggestion: any) {
 
 export async function popEmailNotifications(userId: string): Promise<any[]> {
   const redis = getRedis()
-  await redis.connect()
   try {
+    await redis.connect()
     const notifications: any[] = []
     while (true) {
       const item = await redis.rPop(`notifications:${userId}`)
@@ -61,8 +61,10 @@ export async function popEmailNotifications(userId: string): Promise<any[]> {
         notifications.push(JSON.parse(item))
       } catch { /* ignore bad json */ }
     }
-    return notifications
-  } finally {
     await redis.disconnect()
+    return notifications
+  } catch (err) {
+    console.error('Redis connection failed in popEmailNotifications:', err)
+    return []
   }
 }

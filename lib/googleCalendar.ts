@@ -2,7 +2,7 @@ import { google } from 'googleapis'
 import type { BusySlot, FreeSlot } from '@/types'
 
 // ─── Build an authenticated Google OAuth2 client from an access token ─────────
-function getAuthClient(accessToken: string) {
+export function getAuthClient(accessToken: string) {
   const auth = new google.auth.OAuth2(
     process.env.GOOGLE_CLIENT_ID,
     process.env.GOOGLE_CLIENT_SECRET,

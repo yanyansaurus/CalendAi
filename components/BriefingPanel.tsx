@@ -141,12 +141,14 @@ export default function BriefingPanel() {
         </div>
       </div>
 
-      {/* Today's Reminders */}
+      {/* Today's Reminders / End of Day Tasks */}
       {briefing.todayReminders?.length > 0 && (
         <section style={{ marginBottom: 28 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
             <span style={{ fontSize: 18 }}>⏰</span>
-            <h3 style={{ fontSize: 16, fontWeight: 700 }}>Today&apos;s Reminders</h3>
+            <h3 style={{ fontSize: 16, fontWeight: 700 }}>
+              {new Date().getHours() >= 17 ? 'Move to Tomorrow' : "Today's Reminders"}
+            </h3>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             {briefing.todayReminders.map((r, i) => (
@@ -201,7 +203,9 @@ export default function BriefingPanel() {
         <section style={{ marginBottom: 28 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
             <span style={{ fontSize: 18 }}>📋</span>
-            <h3 style={{ fontSize: 16, fontWeight: 700 }}>AI Recommended Schedule</h3>
+            <h3 style={{ fontSize: 16, fontWeight: 700 }}>
+              {new Date().getHours() >= 17 ? "Tomorrow's AI Preview" : "AI Recommended Schedule"}
+            </h3>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             {briefing.recommendedSchedule.map((s, i) => (

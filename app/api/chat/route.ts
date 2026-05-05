@@ -1,7 +1,7 @@
 import { auth } from '@/lib/auth'
 import { getGeminiModel, getFallbackGeminiModel, SYSTEM_PROMPT } from '@/lib/gemini'
 import { parseIntent } from '@/lib/intentParser'
-import { getFreeBusy, createGoogleMeet, createCalendarEvent, updateCalendarEvent, deleteCalendarEvent, getTodayEvents } from '@/lib/googleCalendar'
+import { getFreeBusy, createGoogleMeet, createCalendarEvent, updateCalendarEvent, deleteCalendarEvent, getTodayEvents, getWeekEvents } from '@/lib/googleCalendar'
 import { getUnreadEmails, sendEmail } from '@/lib/gmail'
 import { createZoomMeeting, getZoomAccessToken, isZoomConfigured } from '@/lib/zoom'
 import { getSchedule, saveSchedule, scheduleRemindersForPlan } from '@/lib/reminderEngine'
@@ -23,34 +23,34 @@ export async function POST(req: Request) {
   const zoomConfigured = isZoomConfigured()
   const timezone       = req.headers.get('x-timezone') ?? 'UTC'
 
-  let busySlots: Array<{ start: string; end: string }> = []
-  let todayEvents: Array<any> = []
+  let weekBusySlots: Array<{ start: string; end: string }> = []
+  let weekEvents: Array<any> = []
   if (googleToken) {
     try { 
-      busySlots = await getFreeBusy(googleToken, 'today') 
-      todayEvents = await getTodayEvents(googleToken)
+      // Fetch 7 days of context
+      weekBusySlots = await getFreeBusy(googleToken, 'this_week') 
+      weekEvents = await getWeekEvents(googleToken)
     } catch { /* ignore */ }
   }
   const todaySchedule = await getSchedule(userId)
 
   // ── Format context to prevent AI timezone hallucinations ───────────────────
   const localTime = new Date().toLocaleString('en-US', { timeZone: timezone })
-  const formattedBusySlots = busySlots.map(slot => ({
-    start: new Date(slot.start).toLocaleString('en-US', { timeZone: timezone, hour: 'numeric', minute: '2-digit', hour12: true }),
-    end: new Date(slot.end).toLocaleString('en-US', { timeZone: timezone, hour: 'numeric', minute: '2-digit', hour12: true })
+  const formattedBusySlots = weekBusySlots.map(slot => ({
+    start: new Date(slot.start).toLocaleString('en-US', { timeZone: timezone, hour: 'numeric', minute: '2-digit', hour12: true, month: 'short', day: 'numeric' }),
+    end: new Date(slot.end).toLocaleString('en-US', { timeZone: timezone, hour: 'numeric', minute: '2-digit', hour12: true, month: 'short', day: 'numeric' })
   }))
-  const formattedTodayEvents = todayEvents.map(ev => ({
+  const formattedWeekEvents = weekEvents.map(ev => ({
     title: ev.title,
-    description: ev.description?.substring(0, 200), // Truncate description to save tokens
-    start: new Date(ev.start).toLocaleString('en-US', { timeZone: timezone, hour: 'numeric', minute: '2-digit', hour12: true }),
-    end: new Date(ev.end).toLocaleString('en-US', { timeZone: timezone, hour: 'numeric', minute: '2-digit', hour12: true })
+    start: new Date(ev.start).toLocaleString('en-US', { timeZone: timezone, hour: 'numeric', minute: '2-digit', hour12: true, month: 'short', day: 'numeric' }),
+    end: new Date(ev.end).toLocaleString('en-US', { timeZone: timezone, hour: 'numeric', minute: '2-digit', hour12: true, month: 'short', day: 'numeric' })
   }))
 
   const systemPrompt = SYSTEM_PROMPT
     .replace('{currentTime}',    localTime)
     .replace('{userTimezone}',   timezone)
     .replace('{busySlots}',      JSON.stringify(formattedBusySlots))
-    .replace('{todayEvents}',    JSON.stringify(formattedTodayEvents))
+    .replace('{todayEvents}',    JSON.stringify(formattedWeekEvents))
     .replace('{todaySchedule}',  JSON.stringify(todaySchedule))
     .replace('{meetingPreference}', meetingPreference)
 
@@ -155,6 +155,16 @@ export async function POST(req: Request) {
   // ── Execute the intent ────────────────────────────────────────────────────
   try {
     switch (action.intent) {
+
+    // ── Draft a meeting or event ──────────────────────────────────────────
+    case 'draft_meeting':
+    case 'draft_event': {
+      return NextResponse.json({
+        type: 'draft_event',
+        text: action.naturalResponse ?? "I've drafted the details for you. Ready to confirm?",
+        action
+      })
+    }
 
     // ── Create a meeting ──────────────────────────────────────────────────
     case 'create_meeting': {
@@ -264,15 +274,48 @@ export async function POST(req: Request) {
       }
     }
 
+    // ── Analyze Weekly Routine ────────────────────────────────────────────
+    case 'analyze_routine': {
+      try {
+        const { analyzeWeeklyRoutine } = await import('@/app/actions/routine.action')
+        // Pass the user's latest message as details if they are responding to a prompt
+        const details = history.length > 0 ? history[history.length - 1].content : undefined
+        const result = await analyzeWeeklyRoutine(details)
+        
+        if (result.hasRoutine === false) {
+          return NextResponse.json({
+            type: 'chat',
+            text: result.messageToUser,
+            action: { intent: 'show_routine_modal' }
+          })
+        } else if (result.suggestedRoutine && result.suggestedRoutine.length > 0) {
+          return NextResponse.json({
+            type: 'schedule',
+            text: result.messageToUser,
+            schedule: result.suggestedRoutine,
+            action: { intent: 'analyze_routine', tasks: result.suggestedRoutine }
+          })
+        } else {
+          return NextResponse.json({
+            type: 'chat',
+            text: result.messageToUser,
+          })
+        }
+      } catch (err: any) {
+        console.error('Routine analysis error:', err)
+        return NextResponse.json({ type: 'chat', text: '⚠️ Error analyzing routine: ' + err.message })
+      }
+    }
+
     // ── Find free slots ───────────────────────────────────────────────────
     case 'find_slots': {
       if (!googleToken) {
         return NextResponse.json({ type: 'chat', text: 'Please connect your Google Calendar first.' })
       }
-      const allBusy = await getFreeBusy(googleToken, 'this_week')
       const now     = new Date()
       const weekEnd = new Date(now)
-      weekEnd.setDate(now.getDate() + (5 - now.getDay()))
+      weekEnd.setDate(now.getDate() + 7)
+      const allBusy = await getFreeBusy(googleToken, { start: now.toISOString(), end: weekEnd.toISOString() })
       const slots: FreeSlot[] = computeFreeSlots(allBusy, now, weekEnd, action.duration ?? 60)
         .slice(0, 3)
 
@@ -544,6 +587,40 @@ CHAT: You have 3 unread emails. Here's what needs attention:
       return NextResponse.json({
         type: 'chat',
         text: action.naturalResponse || `Safe travels to ${action.targetCity}! I've noted the timezone change. Would you like me to shift your existing meetings to align with local time?`,
+        action
+      })
+    }
+
+    // ── Time Analysis ─────────────────────────────────────────────────────
+    case 'time_analysis': {
+      if (!googleToken) {
+        return NextResponse.json({ type: 'chat', text: 'Please connect your Google Calendar to analyze your time.' })
+      }
+      
+      const { getWeekEvents } = await import('@/lib/googleCalendar')
+      const events = await getWeekEvents(googleToken)
+      
+      if (!events || events.length === 0) {
+        return NextResponse.json({ type: 'chat', text: 'Your calendar has been empty this week, so there is no time data to analyze.' })
+      }
+      
+      const analysisPrompt = `
+You are ExecutiveVAi. The user wants to analyze how they spent their time this past week.
+Here are the raw events from their calendar: ${JSON.stringify(events.map((e: any) => ({ title: e.summary, start: e.start?.dateTime, end: e.end?.dateTime })))}
+
+Analyze these events and generate a highly professional, concise breakdown of their week.
+1. Start with a 1-sentence summary of the week's theme (e.g. meeting-heavy, focused, etc).
+2. Group the time into estimated buckets (Meetings, Deep Work, Admin, etc).
+3. Give one actionable piece of advice for next week.
+Keep the formatting clean using markdown bolding. No code blocks.
+`
+      // For heavy analysis, we can use the fallback model (2.5 pro) if preferred, but standard 3.1 flash is fast
+      const result = await getGeminiModel().generateContent(analysisPrompt)
+      const analysisText = result.response.text().trim()
+
+      return NextResponse.json({
+        type: 'chat',
+        text: (action.naturalResponse ? action.naturalResponse + '\n\n---\n\n' : '') + analysisText,
         action
       })
     }

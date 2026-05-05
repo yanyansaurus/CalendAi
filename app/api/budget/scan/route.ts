@@ -1,6 +1,7 @@
 import { auth } from '@/lib/auth'
 import { NextResponse } from 'next/server'
 import { GoogleGenerativeAI } from '@google/generative-ai'
+import { getGeminiModel } from '@/lib/gemini'
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!)
 
@@ -24,7 +25,7 @@ export async function POST(req: Request) {
     const mimeType = file.type || 'image/jpeg'
 
     // Use Gemini vision to extract expense data
-    const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' })
+    const model = getGeminiModel()
 
     const result = await model.generateContent([
       {

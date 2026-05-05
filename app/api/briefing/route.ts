@@ -1,5 +1,6 @@
 import { auth } from '@/lib/auth'
 import { getGeminiModel, getFallbackGeminiModel } from '@/lib/gemini'
+import { GoogleGenerativeAI } from '@google/generative-ai'
 import { getUnreadEmails } from '@/lib/gmail'
 import { getFreeBusy } from '@/lib/googleCalendar'
 import { getTasks } from '@/lib/taskEngine'
@@ -26,7 +27,33 @@ export async function GET(req: Request) {
   }
 
   // Build AI prompt for briefing
-  const briefingPrompt = `
+  const isEndOfDay = new Date().getHours() >= 17
+
+  const briefingPrompt = isEndOfDay 
+    ? `
+You are ExecutiveVAi generating a comprehensive End-of-Day Digest. Current time: ${new Date().toISOString()}, timezone: ${timezone}.
+
+Here is the user's massive context for the day:
+- Today's busy calendar slots (what they did): ${JSON.stringify(busySlots)}
+- Active and pending tasks: ${JSON.stringify(tasks.map(t => ({ title: t.title, priority: t.priority, status: t.status, dueDate: t.dueDate })))}
+- Recent unread emails: ${JSON.stringify(emails.map(e => ({ from: e.from, subject: e.subject, snippet: e.body?.substring(0, 500) })))}
+
+Since this is the end of the day, ingest all this data and generate a digest in this EXACT JSON format (no markdown, no code fences):
+{
+  "greeting": "A reflective evening greeting summarizing the day's theme",
+  "todayReminders": [
+    { "time": "HH:MM AM/PM", "title": "Missed or incomplete task to move to tomorrow", "type": "task|deadline", "urgency": "high|medium|low" }
+  ],
+  "emailInsights": [
+    { "from": "Sender name", "subject": "Email subject", "action": "Action to take tomorrow", "suggestedTime": "Tomorrow AM", "priority": "high|medium|low" }
+  ],
+  "recommendedSchedule": [
+    { "time": "Tomorrow Morning", "activity": "Suggested priority block", "reason": "Based on today's left-overs", "duration": "X min" }
+  ],
+  "motivationalNote": "A relaxing wrap-up note to help them disconnect and rest."
+}
+`
+    : `
 You are ExecutiveVAi generating a daily briefing. Current time: ${new Date().toISOString()}, timezone: ${timezone}.
 
 Here is the user's context:
@@ -59,7 +86,9 @@ Rules:
   let briefing: any = null
 
   try {
-    const model = getGeminiModel()
+    const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!)
+    // If it's the end of the day, use the massive 2M context window model for deep analysis
+    const model = isEndOfDay ? genAI.getGenerativeModel({ model: 'gemini-2.5-pro' }) : getGeminiModel()
     const result = await model.generateContent(briefingPrompt)
     let text = result.response.text().trim()
     // Strip code fences if present

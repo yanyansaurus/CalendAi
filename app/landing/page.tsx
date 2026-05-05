@@ -136,8 +136,8 @@ export default function LandingPage() {
                   ))}
                 </div>
                 <div style={{ fontSize: 13, color: 'var(--text-subtle)', fontWeight: 600, lineHeight: 1.4 }}>
-                  Join <span style={{ color: 'var(--text)', fontWeight: 800 }}>2,000+</span> high-performers who use<br/>
-                  ExecutiveVAi to automate their daily grind.
+                  Built for the <span style={{ color: 'var(--brand)', fontWeight: 800 }}>AI Hackathon</span> to<br/>
+                  automate the modern executive's daily grind.
                 </div>
               </div>
             </div>

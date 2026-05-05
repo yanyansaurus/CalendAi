@@ -3,12 +3,11 @@ import { GoogleGenerativeAI } from '@google/generative-ai'
 // ─── Gemini client ────────────────────────────────────────────────────────────
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!)
 
-// Models in priority order — falls back if the primary is unavailable
 const MODEL_PRIORITY = [
-  'gemini-3.1-flash-lite-preview',
-  'gemini-2.0-flash',
-  'gemini-1.5-flash',
-  'gemini-1.5-pro',
+  'gemini-3.1-flash',
+  'gemini-2.5-flash',
+  'gemini-3.1-pro',
+  'gemini-2.5-pro',
 ]
 
 export function getGeminiModel(systemInstruction?: string) {
@@ -28,6 +27,48 @@ export function getFallbackGeminiModel(systemInstruction?: string) {
     systemInstruction: systemInstruction ? { role: 'system', parts: [{ text: systemInstruction }] } : undefined
   })
 }
+
+export const WEEKLY_ROUTINE_PROMPT = `
+You are an AI executive assistant analyzing a user's Google Calendar for the upcoming week (next 7 days).
+
+### Input:
+- List of calendar events (title, start time, end time, duration)
+- User's timezone
+
+### Task:
+1. Determine if the week has a healthy routine or is lacking structure.
+   - "No routine" means: 
+     * Most days have 3+ hours of completely empty slots during typical working hours (9am‑5pm).
+     * No recurring or regular blocks for deep work, learning, exercise, or planning.
+     * Meetings are sparse or randomly scattered.
+   - "Has routine" means there are regular blocks (e.g., daily focus time, weekly team sync, scheduled breaks).
+
+2. If routine is missing:
+   - Ask the user for details about their daily life and work/study habits.
+   - Use a friendly, concise question (e.g., "I don't see a clear routine this week. Could you tell me your typical work hours, three main recurring tasks, and when you prefer to focus or rest?")
+   - Wait for user input before suggesting a routine.
+
+3. If routine exists:
+   - Briefly summarise the observed pattern (e.g., "You have 1‑on‑1s every Tuesday, focus blocks each morning, and Friday afternoons free.").
+   - Do not ask for details.
+
+### Output format:
+Return a JSON object with:
+{
+  "hasRoutine": boolean,
+  "messageToUser": string,   // the exact question or summary to show in chat
+  "suggestedRoutine": [      // array of structured blocks if user provided details, otherwise null
+    {
+      "title": "Block Title",
+      "startTime": "ISO 8601 string",
+      "endTime": "ISO 8601 string",
+      "type": "focus | admin | meeting | break"
+    }
+  ] | null
+}
+
+Only output valid JSON.
+`;
 
 // ─── Unified system prompt (injected with dynamic context at runtime) ─────────
 export const SYSTEM_PROMPT = `
@@ -119,6 +160,7 @@ Valid intents:
   send_email      – automatically send an email immediately. ONLY use if user explicitly says "send it directly" or "send now".
   travel_mode     – handle user traveling to a new city. Requires "targetCity". Calculate timezone difference and ask to shift meetings.
   clarify         – ask the user for missing information
+  analyze_routine – evaluate the user's upcoming week calendar to determine if they have a healthy routine. Use the WEEKLY_ROUTINE_PROMPT logic to generate your response. If the user provided details about their habits, construct a "suggestedRoutine" array inside "tasks" to present to the user.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 2. PLAIN TEXT — when no action is needed

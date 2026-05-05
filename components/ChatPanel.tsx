@@ -3,42 +3,47 @@ import { useEffect, useRef, useState, useCallback } from 'react'
 import type { ChatMessage, FreeSlot, MeetingResult, Reminder } from '@/types'
 import MeetingLinkCard from '@/components/MeetingLinkCard'
 import DayPlanCard from '@/components/DayPlanCard'
+import DraftEventCard from '@/components/DraftEventCard'
 import ReminderBubble from '@/components/ReminderBubble'
 import BudgetChart from '@/components/BudgetChart'
 import CommandPalette from '@/components/CommandPalette'
+import RoutineModal from '@/components/RoutineModal'
+import WeekScheduleModal from '@/components/WeekScheduleModal'
+import { saveTasksToCalendar } from '@/app/actions/saveTasks.action'
 
 const COMMAND_CATEGORIES = [
   {
     label: '📅 Calendar',
     commands: [
-      { icon: '📅', name: 'Create event', text: 'Add an event called ' },
-      { icon: '🤝', name: 'Schedule meeting', text: 'Schedule a meeting with ' },
-      { icon: '🔍', name: 'Find free time', text: 'Find me time for a 1-hour session this week' },
-      { icon: '📋', name: 'Plan my day', text: 'I need to plan my day. I have ' },
+      { icon: '📅', name: 'Create event', text: 'Add an event called "Project Planning" tomorrow at 2 PM for 1 hour' },
+      { icon: '🤝', name: 'Schedule meeting', text: 'Schedule a Zoom meeting with sarah@example.com next Friday at 10 AM' },
+      { icon: '🔍', name: 'Find free time', text: 'Find me time for a 1.5-hour deep work session this Wednesday' },
+      { icon: '📋', name: 'Plan my day', text: 'I need to plan my day. I have a dentist appointment at 3 PM and need to review code.' },
       { icon: '☀️', name: 'Daily briefing', text: 'Good morning! What\'s on my plate today?' },
-      { icon: '🔄', name: 'Reschedule', text: 'Reschedule my ' },
-      { icon: '❌', name: 'Cancel event', text: 'Cancel my ' },
+      { icon: '🔄', name: 'Reschedule', text: 'Reschedule my "Budget Review" meeting to Thursday at 1 PM' },
+      { icon: '❌', name: 'Cancel event', text: 'Cancel my afternoon sync today' },
     ],
   },
   {
     label: '📧 Email',
     commands: [
-      { icon: '📨', name: 'Check inbox', text: 'Check my unread emails' },
-      { icon: '✉️', name: 'Send email', text: 'Send an email to ' },
-      { icon: '✍️', name: 'Draft reply', text: 'Draft a reply to ' },
+      { icon: '📨', name: 'Check inbox', text: 'Check my unread emails and tell me if anything is urgent' },
+      { icon: '✉️', name: 'Send email', text: 'Send an email to john@example.com letting him know I am running 5 minutes late' },
+      { icon: '✍️', name: 'Draft reply', text: 'Draft a polite decline reply to the latest investor email' },
     ],
   },
   {
     label: '💰 Finance',
     commands: [
-      { icon: '💸', name: 'Log expense', text: 'Log expense: ' },
-      { icon: '📊', name: 'Check budget', text: 'How much have I spent this month?' },
+      { icon: '💸', name: 'Log expense', text: 'Log expense: $14.50 for airport coffee on a business trip' },
+      { icon: '📊', name: 'Check budget', text: 'How much have I spent on Food this month?' },
     ],
   },
   {
     label: '📊 Analysis',
     commands: [
-      { icon: '⏱️', name: 'Time analysis', text: 'Analyse how I spent my time this week' },
+      { icon: '⏱️', name: 'Time analysis', text: 'Analyse how I spent my time this week. How many hours were in meetings?' },
+      { icon: '🧠', name: 'Check routine', text: 'Analyze my weekly routine, assume my calendar is empty' },
     ],
   },
 ]
@@ -246,6 +251,8 @@ export default function ChatPanel() {
   const [historyLoaded, setHistoryLoaded] = useState(false)
   const [showCommands, setShowCommands] = useState(false)
   const [showPalette, setShowPalette] = useState(false)
+  const [showRoutineModal, setShowRoutineModal] = useState(false)
+  const [showWeekModal, setShowWeekModal] = useState(false)
   const [imageBase64, setImageBase64] = useState<string | null>(null)
   const [isVoiceMode, setIsVoiceMode] = useState(false)
   const bottomRef                     = useRef<HTMLDivElement>(null)
@@ -360,6 +367,22 @@ export default function ChatPanel() {
             })
           }
         }
+        if (data.emailSuggestions?.length) {
+          // Add unique IDs to incoming suggestions if they don't have them
+          const newSuggestions = data.emailSuggestions.map((s: any) => ({
+            ...s,
+            id: s.id || s.threadId || Date.now().toString() + Math.random()
+          }))
+          setSuggestions((prev) => [...prev, ...newSuggestions])
+          if ('Notification' in window && Notification.permission === 'granted') {
+            data.emailSuggestions.forEach((s: any) => {
+              new Notification('ExecutiveVAi Insight', { 
+                body: s.actionText || s.subject || 'New Action Item',
+                icon: 'https://cdn-icons-png.flaticon.com/512/732/732200.png'
+              })
+            })
+          }
+        }
       } catch { /* ignore */ }
     }
     poll()
@@ -380,6 +403,12 @@ export default function ChatPanel() {
 
   const sendMessage = useCallback(async (text: string) => {
     if (!text.trim() && !imageBase64) return
+    
+    // Feature: Instantly clear chat history when requested
+    if (text.trim().toLowerCase() === 'clear chat history') {
+      clearHistory()
+      return
+    }
 
     const userMsg: ChatMessage = {
       id:        crypto.randomUUID(),
@@ -413,12 +442,17 @@ export default function ChatPanel() {
         content:       data.text ?? '',
         timestamp:     new Date().toISOString(),
         action:        data.action,
+        type:          data.type,
         meetingResult: data.meetingResult,
         schedule:      data.schedule,
         freeSlots:     data.freeSlots,
       }
 
       setMessages((prev) => [...prev, aiMsg])
+
+      if (data.action?.intent === 'show_routine_modal') {
+        setShowRoutineModal(true)
+      }
 
       // Text-To-Speech if in voice mode
       if (isVoiceMode && 'speechSynthesis' in window && data.text) {
@@ -499,6 +533,18 @@ export default function ChatPanel() {
                 {msg.content}
               </div>
             </div>
+
+            {/* Draft Event Card */}
+            {msg.type === 'draft_event' && msg.action && (
+              <DraftEventCard 
+                action={msg.action}
+                onConfirm={() => {
+                  const intent = msg.action?.intent === 'draft_meeting' ? 'meeting' : 'event'
+                  sendMessage(`Yes, confirm and create this ${intent}`)
+                }}
+                onCancel={() => sendMessage("Nevermind, cancel this draft")}
+              />
+            )}
 
             {/* Meeting link card & Follow-up Actions */}
             {msg.meetingResult && (
@@ -661,9 +707,15 @@ export default function ChatPanel() {
                 <button
                   key={cmd.name}
                   onClick={() => {
-                    if (cmd.text.endsWith(' ')) { setInput(cmd.text) }
-                    else { sendMessage(cmd.text) }
+                    if (cmd.name === 'Create event' || cmd.name === 'Schedule meeting' || cmd.name === 'Plan my day') {
+                      setShowWeekModal(true)
+                      setShowCommands(false)
+                      return
+                    }
+                    setInput(cmd.text)
                     setShowCommands(false)
+                    // Focus the input to let them edit
+                    document.getElementById('chat-input')?.focus()
                   }}
                   style={{
                     display: 'flex', alignItems: 'center', gap: 10, width: '100%',
@@ -831,16 +883,56 @@ export default function ChatPanel() {
           Press <kbd style={{ background: 'var(--surface-3)', padding: '1px 5px', borderRadius: 4, fontSize: 10 }}>Enter</kbd> to send · <kbd style={{ background: 'var(--surface-3)', padding: '1px 5px', borderRadius: 4, fontSize: 10 }}>Shift+Enter</kbd> for new line
         </p>
       </div>
-      {/* Command Palette (Cmd+K) */}
-      <CommandPalette 
-        isOpen={showPalette} 
-        onClose={() => setShowPalette(false)} 
-        onSelect={(text) => {
-          setInput(text)
-          // focus input after a small delay
-          setTimeout(() => document.getElementById('chat-input')?.focus(), 50)
-        }} 
-      />
+      {showPalette && (
+        <CommandPalette 
+          isOpen={showPalette} 
+          onClose={() => setShowPalette(false)} 
+          onSelect={(text, name) => {
+            setShowPalette(false)
+            if (name === 'Create Event' || name === 'Schedule Meeting' || name === 'Plan My Day') {
+              setShowWeekModal(true)
+              return
+            }
+            setInput(text)
+            setTimeout(() => document.getElementById('chat-input')?.focus(), 50)
+          }} 
+        />
+      )}
+
+      {showRoutineModal && (
+        <RoutineModal 
+          onClose={() => setShowRoutineModal(false)}
+          onSave={async (tasks) => {
+            setShowRoutineModal(false)
+            try {
+              await saveTasksToCalendar(tasks)
+              sendMessage("I've saved my new routine to my calendar!")
+            } catch (err) {
+              sendMessage("Failed to save the routine to my calendar.")
+            }
+          }}
+        />
+      )}
+
+      {showWeekModal && (
+        <WeekScheduleModal 
+          onClose={() => setShowWeekModal(false)}
+          onSelectSlot={(dateStr, timeStr, title, description, durationStr, recurrence) => {
+            setShowWeekModal(false)
+            
+            let prompt = `Add an event called "${title}" on ${dateStr} at ${timeStr} for ${durationStr}`
+            if (description.trim()) {
+              prompt = `Add an event called "${title}" with description "${description.trim()}" on ${dateStr} at ${timeStr} for ${durationStr}`
+            }
+            if (recurrence !== 'One-time') {
+              prompt += `, repeating ${recurrence.toLowerCase()}`
+            }
+
+            setInput(prompt)
+            setTimeout(() => document.getElementById('chat-input')?.focus(), 50)
+          }}
+        />
+      )}
     </div>
   )
 }

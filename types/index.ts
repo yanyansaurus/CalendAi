@@ -26,6 +26,8 @@ export type AgentIntent =
   | 'draft_event'
   | 'clarify'
   | 'travel_mode'
+  | 'analyze_routine'
+  | 'show_routine_modal'
 
 // ─── Gemini JSON response shape ───────────────────────────────────────────────
 export interface AgentAction {
@@ -117,6 +119,7 @@ export interface ChatMessage {
   meetingResult?: MeetingResult
   schedule?: ScheduleTask[]
   freeSlots?: FreeSlot[]
-  budgetResult?: any // We'll type this as any for now to avoid circular or complex imports, or just import it
+  type?: string               // e.g. 'draft_event'
+  budgetResult?: any
   emails?: any[]
 }
