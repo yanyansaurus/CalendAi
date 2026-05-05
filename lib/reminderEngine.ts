@@ -2,42 +2,20 @@ import { randomUUID } from 'crypto'
 import type { Reminder, ScheduleTask } from '@/types'
 import { localKV } from '@/lib/localKV'
 
-let redisClient: any = null
+import { connectRedis } from './redis'
 
-// ─── Use Redis Labs in production, local in-memory store in dev ───────────────
 async function getKV() {
-  if (process.env.calend_ai_kv_REDIS_URL) {
-    try {
-      if (!redisClient) {
-        const { createClient } = await import('redis')
-        redisClient = createClient({ 
-          url: process.env.calend_ai_kv_REDIS_URL,
-          socket: {
-            reconnectStrategy: (retries) => Math.min(retries * 50, 2000)
-          }
-        })
-        redisClient.on('error', (err: any) => {
-          if (err.message !== 'Socket closed unexpectedly') {
-            console.error('Redis Client Error', err)
-          }
-        })
-        await redisClient.connect()
-      } else if (!redisClient.isOpen) {
-        try {
-          await redisClient.connect()
-        } catch (e) {
-          console.error('Failed to reconnect Redis', e)
-        }
-      }
-      
+  try {
+    const redis = await connectRedis()
+    if (redis && redis.isOpen) {
       return {
         async get<T = string>(key: string): Promise<T | null> {
           try {
-            const val = await redisClient.get(key)
+            const val = await redis.get(key)
             if (!val) return null
             try { return JSON.parse(val) as T } catch { return val as unknown as T }
           } catch (e) {
-            console.error('Redis GET error', e)
+            console.error('[Redis] GET error:', e)
             return null
           }
         },
@@ -45,26 +23,25 @@ async function getKV() {
           try {
             const val = typeof value === 'string' ? value : JSON.stringify(value)
             if (opts?.ex) {
-              await redisClient.set(key, val, { EX: opts.ex })
+              await redis.set(key, val, { EX: opts.ex })
             } else {
-              await redisClient.set(key, val)
+              await redis.set(key, val)
             }
           } catch (e) {
-            console.error('Redis SET error', e)
+            console.error('[Redis] SET error:', e)
           }
         },
         async keys(pattern: string): Promise<string[]> {
           try {
-            return await redisClient.keys(pattern)
+            return await redis.keys(pattern)
           } catch {
             return []
           }
         }
       }
-    } catch (err) {
-      console.error('Failed to connect to Redis', err)
-      return localKV
     }
+  } catch (err) {
+    console.warn('[Reminders] Redis failed, falling back to localKV')
   }
   return localKV
 }

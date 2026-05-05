@@ -1,4 +1,4 @@
-import { createClient } from 'redis'
+import { connectRedis } from './redis'
 
 export interface Task {
   id: string
@@ -10,33 +10,29 @@ export interface Task {
   createdAt: string
 }
 
-function getRedis() {
-  return createClient({ url: process.env.REDIS_URL ?? process.env.calend_ai_kv_REDIS_URL })
-}
-
 function taskKey(userId: string) {
   return `tasks:${userId}`
 }
 
 export async function getTasks(userId: string): Promise<Task[]> {
-  const redis = getRedis()
-  await redis.connect()
   try {
+    const redis = await connectRedis()
     const raw = await redis.get(taskKey(userId))
     return raw ? JSON.parse(raw) : []
-  } finally {
-    await redis.disconnect()
+  } catch (err) {
+    console.error('[Redis] getTasks failed:', err)
+    return []
   }
 }
 
 export async function saveTasks(userId: string, tasks: Task[]): Promise<Task[]> {
-  const redis = getRedis()
-  await redis.connect()
   try {
+    const redis = await connectRedis()
     await redis.set(taskKey(userId), JSON.stringify(tasks))
     return tasks
-  } finally {
-    await redis.disconnect()
+  } catch (err) {
+    console.error('[Redis] saveTasks failed:', err)
+    return tasks
   }
 }
 
@@ -48,15 +44,14 @@ export async function addTask(userId: string, task: Omit<Task, 'id' | 'createdAt
     status: 'todo',
     createdAt: new Date().toISOString(),
   }
-  // Re-connect since getTasks disconnected
-  const redis = getRedis()
-  await redis.connect()
   try {
+    const redis = await connectRedis()
     tasks.push(newTask)
     await redis.set(taskKey(userId), JSON.stringify(tasks))
     return tasks
-  } finally {
-    await redis.disconnect()
+  } catch (err) {
+    console.error('[Redis] addTask failed:', err)
+    return tasks
   }
 }
 
@@ -65,25 +60,25 @@ export async function updateTask(userId: string, taskId: string, updates: Partia
   const idx = tasks.findIndex(t => t.id === taskId)
   if (idx === -1) return tasks
   tasks[idx] = { ...tasks[idx], ...updates }
-  const redis = getRedis()
-  await redis.connect()
   try {
+    const redis = await connectRedis()
     await redis.set(taskKey(userId), JSON.stringify(tasks))
     return tasks
-  } finally {
-    await redis.disconnect()
+  } catch (err) {
+    console.error('[Redis] updateTask failed:', err)
+    return tasks
   }
 }
 
 export async function deleteTask(userId: string, taskId: string): Promise<Task[]> {
   let tasks = await getTasks(userId)
   tasks = tasks.filter(t => t.id !== taskId)
-  const redis = getRedis()
-  await redis.connect()
   try {
+    const redis = await connectRedis()
     await redis.set(taskKey(userId), JSON.stringify(tasks))
     return tasks
-  } finally {
-    await redis.disconnect()
+  } catch (err) {
+    console.error('[Redis] deleteTask failed:', err)
+    return tasks
   }
 }

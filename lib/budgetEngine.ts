@@ -16,29 +16,14 @@ export interface BudgetData {
   expenses: Expense[]
 }
 
-let redisClient: any = null
+import { connectRedis } from './redis'
 
 async function getKV() {
-  if (process.env.calend_ai_kv_REDIS_URL) {
-    try {
-      if (!redisClient) {
-        const { createClient } = await import('redis')
-        redisClient = createClient({ 
-          url: process.env.calend_ai_kv_REDIS_URL,
-          socket: { reconnectStrategy: (retries) => Math.min(retries * 50, 2000) }
-        })
-        redisClient.on('error', (err: any) => {
-          if (err.message !== 'Socket closed unexpectedly') console.error('Redis Client Error', err)
-        })
-        await redisClient.connect()
-      } else if (!redisClient.isOpen) {
-        await redisClient.connect().catch(() => {})
-      }
-      return redisClient
-    } catch (e) {
-      console.warn('Redis failed, falling back to localKV')
-      return localKV
-    }
+  try {
+    const redis = await connectRedis()
+    if (redis && redis.isOpen) return redis
+  } catch (err) {
+    console.warn('[Budget] Redis failed, falling back to localKV')
   }
   return localKV
 }

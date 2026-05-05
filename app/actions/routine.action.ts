@@ -31,9 +31,9 @@ export async function analyzeWeeklyRoutine(userDetails?: string) {
   const events = await getUserCalendarEvents(session.googleAccessToken, now, weekLater);
 
   const model = getGeminiModel();
-  
+
   let promptText = `${WEEKLY_ROUTINE_PROMPT}\n\nUser timezone: ${Intl.DateTimeFormat().resolvedOptions().timeZone}\nCalendar events:\n${JSON.stringify(events, null, 2)}`;
-  
+
   if (userDetails) {
     promptText += `\n\nUSER DETAILS PROVIDED: ${userDetails}\nGenerate the suggestedRoutine array of tasks based on these details.`;
   }
@@ -42,7 +42,7 @@ export async function analyzeWeeklyRoutine(userDetails?: string) {
     contents: [{ role: "user", parts: [{ text: promptText }] }],
     generationConfig: { responseMimeType: "application/json" },
   });
-  
+
   const response = JSON.parse(result.response.text());
   return response;
 }

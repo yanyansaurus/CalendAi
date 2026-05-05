@@ -1,26 +1,20 @@
-import { createClient } from 'redis'
-
-function getRedis() {
-  return createClient({ url: process.env.REDIS_URL ?? process.env.calend_ai_kv_REDIS_URL })
-}
+import { connectRedis } from './redis'
 
 export async function saveGoogleToken(userId: string, accessToken: string) {
-  const redis = getRedis()
-  await redis.connect()
+  const redis = await connectRedis()
   try {
     // Store token. We set an expiration of 1 hour since Google access tokens expire then.
     await redis.set(`token:google:${userId}`, accessToken, { EX: 3600 })
     // Also add to a set of active users for the cron job to iterate over
     await redis.sAdd('users:active_google', userId)
-  } finally {
-    await redis.disconnect()
+  } catch (err) {
+    console.error('[Redis] saveGoogleToken failed:', err)
   }
 }
 
 export async function getActiveUsersWithTokens(): Promise<{ userId: string; token: string }[]> {
-  const redis = getRedis()
-  await redis.connect()
   try {
+    const redis = await connectRedis()
     const users = await redis.sMembers('users:active_google')
     const results: { userId: string; token: string }[] = []
     
@@ -34,37 +28,10 @@ export async function getActiveUsersWithTokens(): Promise<{ userId: string; toke
       }
     }
     return results
-  } finally {
-    await redis.disconnect()
-  }
-}
-
-export async function pushEmailNotification(userId: string, suggestion: any) {
-  const redis = getRedis()
-  await redis.connect()
-  try {
-    await redis.lPush(`notifications:${userId}`, JSON.stringify(suggestion))
-  } finally {
-    await redis.disconnect()
-  }
-}
-
-export async function popEmailNotifications(userId: string): Promise<any[]> {
-  const redis = getRedis()
-  try {
-    await redis.connect()
-    const notifications: any[] = []
-    while (true) {
-      const item = await redis.rPop(`notifications:${userId}`)
-      if (!item) break
-      try {
-        notifications.push(JSON.parse(item))
-      } catch { /* ignore bad json */ }
-    }
-    await redis.disconnect()
-    return notifications
   } catch (err) {
-    console.error('Redis connection failed in popEmailNotifications:', err)
+    console.error('[Redis] getActiveUsersWithTokens failed:', err)
     return []
   }
 }
+
+// Notification logic removed to reduce Redis load and Gemini quota usage.

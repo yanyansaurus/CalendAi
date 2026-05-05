@@ -1,6 +1,6 @@
 import { auth } from '@/lib/auth'
 import { getDueReminders } from '@/lib/reminderEngine'
-import { popEmailNotifications, saveGoogleToken } from '@/lib/redisTokens'
+import { saveGoogleToken } from '@/lib/redisTokens'
 import { NextResponse } from 'next/server'
 
 // Polled every 60 seconds by the frontend
@@ -15,7 +15,6 @@ export async function GET() {
   }
 
   const reminders = await getDueReminders(session.user.email)
-  const emailSuggestions = await popEmailNotifications(session.user.email)
   
-  return NextResponse.json({ reminders, emailSuggestions })
+  return NextResponse.json({ reminders, emailSuggestions: [] })
 }

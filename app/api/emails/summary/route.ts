@@ -1,5 +1,5 @@
 import { auth } from '@/lib/auth'
-import { getGeminiModel, getFallbackGeminiModel } from '@/lib/gemini'
+import { getGeminiModel } from '@/lib/gemini'
 import { getUnreadEmails } from '@/lib/gmail'
 import { NextResponse } from 'next/server'
 
@@ -92,33 +92,26 @@ Rules:
     let text = result.response.text().trim()
     text = text.replace(/^```json?\s*/i, '').replace(/```\s*$/i, '').trim()
     summary = JSON.parse(text)
-  } catch {
-    try {
-      const fallback = getFallbackGeminiModel()
-      const result = await fallback.generateContent(summaryPrompt)
-      let text = result.response.text().trim()
-      text = text.replace(/^```json?\s*/i, '').replace(/```\s*$/i, '').trim()
-      summary = JSON.parse(text)
-    } catch {
-      summary = {
-        overview: `You have ${emails.length} unread emails.`,
-        totalEmails: emails.length,
-        categories: [],
-        actionItems: emails.slice(0, 5).map(e => ({
-          from: e.from?.split('<')[0]?.trim() ?? 'Unknown',
-          emailAddress: e.from?.match(/<([^>]+)>/)?.[1] ?? e.from,
-          subject: e.subject,
-          summary: 'Review this email',
-          suggestedAction: 'Read and respond',
-          priority: 'medium',
-          timeEstimate: '2 min',
-        })),
-        lowPriority: emails.slice(5).map(e => ({
-          from: e.from?.split('<')[0]?.trim() ?? 'Unknown',
-          subject: e.subject,
-          reason: 'Lower priority',
-        })),
-      }
+  } catch (err) {
+    console.error('[EmailSummary] Gemini failed:', err)
+    summary = {
+      overview: `You have ${emails.length} unread emails.`,
+      totalEmails: emails.length,
+      categories: [],
+      actionItems: emails.slice(0, 5).map(e => ({
+        from: e.from?.split('<')[0]?.trim() ?? 'Unknown',
+        emailAddress: e.from?.match(/<([^>]+)>/)?.[1] ?? e.from,
+        subject: e.subject,
+        summary: 'Review this email',
+        suggestedAction: 'Read and respond',
+        priority: 'medium',
+        timeEstimate: '2 min',
+      })),
+      lowPriority: emails.slice(5).map(e => ({
+        from: e.from?.split('<')[0]?.trim() ?? 'Unknown',
+        subject: e.subject,
+        reason: 'Lower priority',
+      })),
     }
   }
 

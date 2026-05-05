@@ -1,5 +1,5 @@
 import { auth } from '@/lib/auth'
-import { getGeminiModel, getFallbackGeminiModel } from '@/lib/gemini'
+import { getGeminiModel } from '@/lib/gemini'
 import { GoogleGenerativeAI } from '@google/generative-ai'
 import { getUnreadEmails } from '@/lib/gmail'
 import { getFreeBusy } from '@/lib/googleCalendar'
@@ -29,7 +29,7 @@ export async function GET(req: Request) {
   // Build AI prompt for briefing
   const isEndOfDay = new Date().getHours() >= 17
 
-  const briefingPrompt = isEndOfDay 
+  const briefingPrompt = isEndOfDay
     ? `
 You are ExecutiveVAi generating a comprehensive End-of-Day Digest. Current time: ${new Date().toISOString()}, timezone: ${timezone}.
 
@@ -95,34 +95,25 @@ Rules:
     text = text.replace(/^```json?\s*/i, '').replace(/```\s*$/i, '').trim()
     briefing = JSON.parse(text)
   } catch (err) {
-    console.error('[Briefing] Primary model failed:', err)
-    try {
-      const fallback = getFallbackGeminiModel()
-      const result = await fallback.generateContent(briefingPrompt)
-      let text = result.response.text().trim()
-      text = text.replace(/^```json?\s*/i, '').replace(/```\s*$/i, '').trim()
-      briefing = JSON.parse(text)
-    } catch (fallbackErr) {
-      console.error('[Briefing] Fallback failed:', fallbackErr)
-      // Return a basic briefing without AI
-      briefing = {
-        greeting: `Good ${new Date().getHours() < 12 ? 'morning' : 'afternoon'}!`,
-        todayReminders: busySlots.map(s => ({
-          time: new Date(s.start).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }),
-          title: 'Calendar event',
-          type: 'calendar',
-          urgency: 'medium'
-        })),
-        emailInsights: emails.slice(0, 3).map(e => ({
-          from: e.from?.split('<')[0]?.trim() ?? 'Unknown',
-          subject: e.subject,
-          action: 'Review and respond',
-          suggestedTime: 'When available',
-          priority: 'medium'
-        })),
-        recommendedSchedule: [],
-        motivationalNote: 'Stay focused and take it one task at a time! 💪'
-      }
+    console.error('[Briefing] Gemini failed:', err)
+    // Return a basic briefing without AI
+    briefing = {
+      greeting: `Good ${new Date().getHours() < 12 ? 'morning' : 'afternoon'}!`,
+      todayReminders: busySlots.map(s => ({
+        time: new Date(s.start).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }),
+        title: 'Calendar event',
+        type: 'calendar',
+        urgency: 'medium'
+      })),
+      emailInsights: emails.slice(0, 3).map(e => ({
+        from: e.from?.split('<')[0]?.trim() ?? 'Unknown',
+        subject: e.subject,
+        action: 'Review and respond',
+        suggestedTime: 'When available',
+        priority: 'medium'
+      })),
+      recommendedSchedule: [],
+      motivationalNote: 'Stay focused and take it one task at a time! 💪'
     }
   }
 

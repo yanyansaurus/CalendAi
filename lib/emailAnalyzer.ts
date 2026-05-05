@@ -1,4 +1,4 @@
-import { getGeminiModel, getFallbackGeminiModel } from './gemini'
+import { getGeminiModel } from './gemini'
 
 export const EMAIL_ANALYZER_PROMPT = `
 You are an executive assistant analyzing a new email. Return a JSON object with:
@@ -20,7 +20,7 @@ export async function analyzeEmailWithGemini(email: { subject: string; body: str
     .replace('{{body}}', email.body.substring(0, 500))
     .replace('{{currentTime}}', new Date().toLocaleString())
 
-  let model = getGeminiModel(prompt)
+  const model = getGeminiModel(prompt)
   
   try {
     const response = await model.generateContent({
@@ -30,18 +30,7 @@ export async function analyzeEmailWithGemini(email: { subject: string; body: str
     
     return JSON.parse(response.response.text())
   } catch (error: any) {
-    console.warn('Primary model failed for email analysis, trying fallback:', error.message)
-    
-    try {
-      model = getFallbackGeminiModel(prompt)
-      const fallbackResponse = await model.generateContent({
-        contents: [{ role: "user", parts: [{ text: "Analyze this email and return only valid JSON." }] }],
-        generationConfig: { temperature: 0, responseMimeType: "application/json" },
-      })
-      return JSON.parse(fallbackResponse.response.text())
-    } catch (fallbackError) {
-      console.error('Error analyzing email with fallback Gemini:', fallbackError)
-      return { shouldSuggest: false }
-    }
+    console.error('Email analysis failed:', error.message)
+    return { shouldSuggest: false }
   }
 }

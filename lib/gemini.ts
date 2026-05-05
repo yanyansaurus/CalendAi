@@ -4,29 +4,19 @@ import { GoogleGenerativeAI } from '@google/generative-ai'
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!)
 
 const MODEL_PRIORITY = [
-  'gemini-3.1-flash',
   'gemini-2.5-flash',
-  'gemini-3.1-pro',
-  'gemini-2.5-pro',
 ]
 
 export function getGeminiModel(systemInstruction?: string) {
   const modelName = MODEL_PRIORITY[0]
   console.log(`[ExecutiveVAi] Initializing Gemini with model: ${modelName}`)
-  return genAI.getGenerativeModel({ 
+  return genAI.getGenerativeModel({
     model: modelName,
     systemInstruction: systemInstruction ? { role: 'system', parts: [{ text: systemInstruction }] } : undefined
   })
 }
 
-export function getFallbackGeminiModel(systemInstruction?: string) {
-  const modelName = MODEL_PRIORITY[1]
-  console.log(`[ExecutiveVAi] Falling back to model: ${modelName}`)
-  return genAI.getGenerativeModel({ 
-    model: modelName,
-    systemInstruction: systemInstruction ? { role: 'system', parts: [{ text: systemInstruction }] } : undefined
-  })
-}
+// Fallback logic removed to conserve quota on free tier.
 
 export const WEEKLY_ROUTINE_PROMPT = `
 You are an AI executive assistant analyzing a user's Google Calendar for the upcoming week (next 7 days).
@@ -95,7 +85,8 @@ CURRENT CONTEXT (injected dynamically):
 - Today's detailed calendar events: {todayEvents}
 - Today's scheduled task plan: {todaySchedule}
 
-You must respond in one of two ways ONLY:
+You must respond in one of two ways ONLY. 
+CRITICAL: For ANY scheduling, calendar, email drafting, or finance request, you MUST use STRUCTURED JSON. Never respond in plain text for these tasks. Even if it is a draft, you MUST use the corresponding draft_ intent.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 1. STRUCTURED JSON — when an action needs to be taken

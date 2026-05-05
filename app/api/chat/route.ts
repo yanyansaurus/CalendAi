@@ -1,5 +1,5 @@
 import { auth } from '@/lib/auth'
-import { getGeminiModel, getFallbackGeminiModel, SYSTEM_PROMPT } from '@/lib/gemini'
+import { getGeminiModel, SYSTEM_PROMPT } from '@/lib/gemini'
 import { parseIntent } from '@/lib/intentParser'
 import { getFreeBusy, createGoogleMeet, createCalendarEvent, updateCalendarEvent, deleteCalendarEvent, getTodayEvents, getWeekEvents } from '@/lib/googleCalendar'
 import { getUnreadEmails, sendEmail } from '@/lib/gmail'
@@ -97,41 +97,22 @@ export async function POST(req: Request) {
     const result = await chat.sendMessage(sendPayload)
     rawResponse  = result.response.text()
   } catch (err: any) {
-    console.error('Primary model error:', err.status, err.message)
-    // ── Auto-fallback to secondary model ──
-    try {
-      console.log('[ExecutiveVAi] Retrying with fallback model...')
-      const fallbackModel = getFallbackGeminiModel(systemPrompt)
-      const fallbackChat = fallbackModel.startChat({ history: cleanedHistory })
-      
-      let sendPayload: any = message
-      if (imageBase64) {
-        const match = imageBase64.match(/^data:(image\/\w+);base64,(.+)$/)
-        if (match) {
-          sendPayload = [
-            { text: message },
-            { inlineData: { mimeType: match[1], data: match[2] } }
-          ]
-        }
-      }
-      const fallbackResult = await fallbackChat.sendMessage(sendPayload)
-      rawResponse = fallbackResult.response.text()
-    } catch (fallbackErr: any) {
-      if (fallbackErr.status === 429) {
-        const retryMatch = fallbackErr.message?.match(/retry in ([\d.]+)s/i)
-        const retrySec   = retryMatch ? Math.ceil(parseFloat(retryMatch[1])) : 30
-        return NextResponse.json({
-          type: 'chat',
-          text: `⏳ I'm being rate-limited by the AI service. Please wait ~${retrySec} seconds and try again.`,
-        })
-      }
-      console.error('Fallback model error:', fallbackErr)
-      const specificError = fallbackErr.message || 'Unknown error'
+    console.error('[ExecutiveVAi] Gemini Error:', err.status, err.message)
+    
+    if (err.status === 429) {
+      const retryMatch = err.message?.match(/retry in ([\d.]+)s/i)
+      const retrySec   = retryMatch ? Math.ceil(parseFloat(retryMatch[1])) : 30
       return NextResponse.json({
         type: 'chat',
-        text: `⚠️ AI Service Error: ${specificError}. Please check your quota or try again in a moment.`,
+        text: `⏳ I'm being rate-limited by the AI service. Please wait ~${retrySec} seconds and try again.`,
       })
     }
+
+    const specificError = err.message || 'Unknown error'
+    return NextResponse.json({
+      type: 'chat',
+      text: `⚠️ AI Service Error: ${specificError}. Please check your quota or try again in a moment.`,
+    })
   }
 
   const parsed = parseIntent(rawResponse)

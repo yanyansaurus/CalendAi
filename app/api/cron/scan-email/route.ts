@@ -1,7 +1,5 @@
 import { NextResponse } from 'next/server'
-import { getActiveUsersWithTokens, pushEmailNotification } from '@/lib/redisTokens'
-import { getUnreadEmails } from '@/lib/gmail'
-import { analyzeEmailWithGemini } from '@/lib/emailAnalyzer'
+import { getActiveUsersWithTokens } from '@/lib/redisTokens'
 
 export const runtime = 'nodejs' // Use nodejs because 'redis' package might rely on node APIs
 export const dynamic = 'force-dynamic'
@@ -17,27 +15,21 @@ export async function GET(req: Request) {
   const activeUsers = await getActiveUsersWithTokens()
   
   for (const { userId, token } of activeUsers) {
+    // Background scanning disabled to conserve Gemini quota and Redis load
+    /*
     try {
-      // Fetch top 5 unread emails to prevent exceeding quota
       const emails = await getUnreadEmails(token, 5)
-      
       for (const email of emails) {
         const suggestion = await analyzeEmailWithGemini(email)
-        
         if (suggestion.shouldSuggest) {
-          // Add the original email details to the suggestion for UI context
-          const enhancedSuggestion = {
-            ...suggestion,
-            emailSubject: email.subject,
-            emailFrom: email.from,
-            timestamp: new Date().toISOString()
-          }
+          const enhancedSuggestion = { ...suggestion, ... }
           await pushEmailNotification(userId, enhancedSuggestion)
         }
       }
     } catch (e) {
       console.error(`Error scanning emails for user ${userId}:`, e)
     }
+    */
   }
 
   return NextResponse.json({ ok: true, usersScanned: activeUsers.length })

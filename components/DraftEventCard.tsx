@@ -1,14 +1,17 @@
 'use client'
 
+import { useState } from 'react'
 import type { AgentAction } from '@/types'
 
 interface DraftEventCardProps {
   action: AgentAction
-  onConfirm: () => void
+  onConfirm: (updatedTitle: string, updatedDescription: string) => void
   onCancel: () => void
 }
 
 export default function DraftEventCard({ action, onConfirm, onCancel }: DraftEventCardProps) {
+  const [title, setTitle] = useState(action.title || 'Untitled Event')
+  const [description, setDescription] = useState(action.agenda?.join('\n') || '')
   const date = action.startTime ? new Date(action.startTime) : new Date()
   const dateStr = date.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })
   const timeStr = date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })
@@ -33,7 +36,21 @@ export default function DraftEventCard({ action, onConfirm, onCancel }: DraftEve
         <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', opacity: 0.9, marginBottom: 4 }}>
           {isMeeting ? 'Draft Meeting' : 'Draft Event'}
         </div>
-        <h3 style={{ fontSize: 18, fontWeight: 800, margin: 0 }}>{action.title || 'Untitled Event'}</h3>
+        <input 
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          style={{ 
+            width: '100%',
+            background: 'rgba(255,255,255,0.1)',
+            border: 'none',
+            borderRadius: 8,
+            padding: '4px 8px',
+            fontSize: 18, 
+            fontWeight: 800, 
+            color: '#fff',
+            outline: 'none',
+          }}
+        />
       </div>
 
       {/* Details */}
@@ -75,17 +92,30 @@ export default function DraftEventCard({ action, onConfirm, onCancel }: DraftEve
           </div>
         )}
 
-        {action.agenda && action.agenda.length > 0 && (
-          <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
-            <div style={{ fontSize: 20 }}>📝</div>
-            <div>
-              <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-muted)', marginBottom: 4 }}>Agenda</div>
-              <ul style={{ margin: 0, paddingLeft: 16, fontSize: 13, color: 'var(--text-subtle)' }}>
-                {action.agenda.map((item, i) => <li key={i}>{item}</li>)}
-              </ul>
-            </div>
+        <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
+          <div style={{ fontSize: 20 }}>📝</div>
+          <div style={{ flex: 1 }}>
+            <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-muted)', marginBottom: 4 }}>Description / Agenda</div>
+            <textarea 
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              rows={3}
+              style={{
+                width: '100%',
+                background: 'rgba(255,255,255,0.03)',
+                border: '1px solid var(--border)',
+                borderRadius: 10,
+                padding: '8px 12px',
+                fontSize: 13,
+                color: 'var(--text-subtle)',
+                outline: 'none',
+                resize: 'none',
+                fontFamily: 'inherit',
+              }}
+              placeholder="Add details or agenda..."
+            />
           </div>
-        )}
+        </div>
       </div>
 
       {/* Actions */}
@@ -95,7 +125,7 @@ export default function DraftEventCard({ action, onConfirm, onCancel }: DraftEve
         borderTop: '1px solid rgba(255,255,255,0.05)'
       }}>
         <button 
-          onClick={onConfirm}
+          onClick={() => onConfirm(title, description)}
           className="btn-brand" 
           style={{ flex: 1, height: 40, fontSize: 13, borderRadius: 12 }}
         >
