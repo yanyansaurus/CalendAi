@@ -64,8 +64,8 @@ export function computeFreeSlots(
   rangeEnd: Date,
   minMinutes = 30,
 ): FreeSlot[] {
-  const workStart = 9  // 9 AM
-  const workEnd   = 18 // 6 PM
+  const workStart = 0  // Midnight
+  const workEnd   = 24 // Next Midnight
 
   const free: FreeSlot[] = []
   const current = new Date(rangeStart)

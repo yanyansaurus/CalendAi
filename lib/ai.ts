@@ -35,10 +35,23 @@ export interface AIOptions {
 /**
  * The Universal AI Adapter
  */
+// Prioritized list of models (Highest quality to lowest)
+const GROQ_MODELS = [
+  "llama-3.3-70b-versatile",
+  "qwen/qwen3-32b",
+  "meta-llama/llama-4-scout-17b-16e-instruct",
+  "openai/gpt-oss-120b",
+  "llama-3.1-8b-instant",
+  "allam-2-7b",
+  "groq/compound",
+  "groq/compound-mini"
+];
+
+/**
+ * The Universal AI Adapter
+ */
 export async function getAIResponse(messages: AIMessage[], options: AIOptions = {}) {
-  // Default to groq if key is present, otherwise gemini
   const provider = options.provider || (process.env.GROQ_API_KEY ? "groq" : "gemini");
-  
   if (provider === "groq") {
     return callGroq(messages, options);
   } else {
@@ -48,67 +61,64 @@ export async function getAIResponse(messages: AIMessage[], options: AIOptions = 
 
 async function callGroq(messages: AIMessage[], options: AIOptions) {
   const client = getGroqClient();
-  if (!client) {
-    console.warn("[AI Bridge] Groq API key is missing. Falling back to Gemini.");
-    return callGemini(messages, options);
+  if (!client) return callGemini(messages, options);
+
+  const hasImages = messages.some(m => Array.isArray(m.content) && m.content.some(p => p.type === "image_url"));
+  
+  // Use the requested model first, then the rotation list
+  const modelsToTry = options.model ? [options.model, ...GROQ_MODELS] : GROQ_MODELS;
+  const filteredModels = hasImages ? ["llama-3.2-11b-vision-preview"] : [...new Set(modelsToTry)];
+
+  let lastError: any = null;
+
+  for (const modelName of filteredModels) {
+    try {
+      const response = await client.chat.completions.create({
+        messages: messages as any,
+        model: modelName,
+        temperature: options.temperature ?? 0.2,
+        response_format: options.jsonMode ? { type: "json_object" } : undefined,
+      });
+      return response.choices[0]?.message?.content || "";
+    } catch (error: any) {
+      lastError = error;
+      const isRateLimit = error.message?.includes("429") || error.message?.includes("rate_limit") || error.message?.includes("quota");
+      if (isRateLimit) {
+        console.warn(`[Groq] Model ${modelName} hit limit. Rotating to next model...`);
+        continue; // Try the next model
+      }
+      // If it's a different error, stop and failover to Gemini
+      break;
+    }
   }
 
-  // Updated model names for Groq
-  const hasImages = messages.some(m => Array.isArray(m.content) && m.content.some(p => p.type === "image_url"));
-  const model = options.model || (hasImages ? "llama-3.2-11b-vision-preview" : "llama-3.3-70b-versatile");
-  
-  try {
-    const response = await client.chat.completions.create({
-      messages: messages as any,
-      model,
-      temperature: options.temperature ?? 0.2,
-      response_format: options.jsonMode ? { type: "json_object" } : undefined,
-    });
-    return response.choices[0]?.message?.content || "";
-  } catch (error: any) {
-    console.error("[Groq] Error:", error.message);
-    return callGemini(messages, options);
-  }
+  console.error("[Groq] All models failed or exhausted. Failing over to Gemini.");
+  return callGemini(messages, options);
 }
 
 async function callGemini(messages: AIMessage[], options: AIOptions) {
-  if (!genAI) {
-    throw new Error("Gemini API key is missing.");
-  }
+  if (!genAI) throw new Error("Gemini API key is missing.");
 
-  const hasImages = messages.some(m => Array.isArray(m.content) && m.content.some(p => p.type === "image_url"));
-  let modelName = "gemini-2.5-flash"; 
-  
-  if (options.model && options.model.startsWith("gemini-")) {
-    modelName = options.model;
-  }
+  let modelName = "gemini-1.5-flash"; 
+  if (options.model && options.model.startsWith("gemini-")) modelName = options.model;
 
   const model = genAI.getGenerativeModel({ model: modelName });
-
   let systemMessage = messages.find(m => m.role === "system")?.content;
   
-  // ── Gemini Prompt Optimization ──────────────────────────────────────────
-  // If system message is too long, move context to the first user message
   let extraContext = "";
   if (typeof systemMessage === "string" && systemMessage.length > 8000) {
     extraContext = `\n\n### ADDITIONAL CONTEXT & RULES:\n${systemMessage}`;
-    systemMessage = "You are ExecutiveVAi. You must follow the structured JSON output rules provided in the context. Respond ONLY as the assistant.";
+    systemMessage = "You are ExecutiveVAi. Follow the JSON rules provided. Respond ONLY as the assistant.";
   }
 
   const history = messages
     .filter(m => m.role !== "system")
     .map((m, idx) => {
       let content = m.content;
-      // Inject extra context into the first user message if needed
-      if (idx === 0 && extraContext && typeof content === "string") {
-        content = content + extraContext;
-      }
+      if (idx === 0 && extraContext && typeof content === "string") content = content + extraContext;
 
       if (typeof content === "string") {
-        return {
-          role: m.role === "user" ? "user" : "model",
-          parts: [{ text: content }],
-        };
+        return { role: m.role === "user" ? "user" : "model", parts: [{ text: content }] };
       } else {
         return {
           role: m.role === "user" ? "user" : "model",
@@ -116,24 +126,22 @@ async function callGemini(messages: AIMessage[], options: AIOptions) {
             if (part.type === "text") return { text: part.text };
             const dataUrl = part.image_url?.url || "";
             const [mimeType, base64] = dataUrl.replace("data:", "").split(";base64,");
-            return {
-              inlineData: { mimeType, data: base64 }
-            };
+            return { inlineData: { mimeType, data: base64 } };
           })
         };
       }
     });
 
-  // Ensure history starts with 'user' role
-  while (history.length > 0 && history[0].role !== 'user') {
-    history.shift();
-  }
-
+  while (history.length > 0 && history[0].role !== 'user') history.shift();
   const userContent = history.pop()?.parts || [];
 
   const chat = model.startChat({
     history: history as any,
-    systemInstruction: typeof systemMessage === "string" ? systemMessage : undefined,
+    // RE-FIXED: System instruction MUST be a Content object in this SDK version
+    systemInstruction: typeof systemMessage === "string" ? {
+      role: 'system',
+      parts: [{ text: systemMessage }]
+    } : undefined,
   });
 
   const result = await chat.sendMessage(userContent as any);

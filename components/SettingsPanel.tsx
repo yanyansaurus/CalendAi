@@ -420,17 +420,6 @@ export default function SettingsPanel() {
               </select>
             </div>
 
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <div>
-                <p style={{ fontWeight: 500 }}>Working Hours</p>
-                <p style={{ fontSize: 13, color: 'var(--text-muted)' }}>ExecutiveVAi won&apos;t schedule anything outside these hours.</p>
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <input type="time" defaultValue="09:00" className="glass" style={{ padding: '6px 10px', borderRadius: 6, border: '1px solid var(--border)' }} />
-                <span>to</span>
-                <input type="time" defaultValue="18:00" className="glass" style={{ padding: '6px 10px', borderRadius: 6, border: '1px solid var(--border)' }} />
-              </div>
-            </div>
           </div>
         </section>
 

@@ -1,5 +1,6 @@
 'use client'
 import { useState, useEffect } from 'react'
+import HomePanel from '@/components/HomePanel'
 import ChatPanel from '@/components/ChatPanel'
 import WeekSchedule from '@/components/WeekSchedule'
 import FinanceDashboard from '@/components/FinanceDashboard'
@@ -15,10 +16,10 @@ interface DashboardProps {
   session: any
 }
 
-type TabId = 'chat' | 'briefing' | 'planner' | 'emails' | 'finances' | 'settings'
+type TabId = 'home' | 'chat' | 'briefing' | 'planner' | 'emails' | 'finances' | 'settings'
 
 export default function Dashboard({ session }: DashboardProps) {
-  const [activeTab, setActiveTab] = useState<TabId>('chat')
+  const [activeTab, setActiveTab] = useState<TabId>('home')
   const [plannerView, setPlannerView] = useState<'tasks' | 'calendar'>('tasks')
   const { theme, toggleTheme } = useTheme()
   
@@ -35,6 +36,7 @@ export default function Dashboard({ session }: DashboardProps) {
   const hasZoom   = true  // Zoom uses Server-to-Server OAuth — always available if configured
 
   const navItems: { id: TabId; icon: string; label: string }[] = [
+    { id: 'home',     icon: '🏠', label: 'Home' },
     { id: 'chat',     icon: '💬', label: 'Chat' },
     { id: 'briefing', icon: '🧠', label: 'AI Briefing' },
     { id: 'planner',  icon: '📋', label: 'Planner' },
@@ -226,6 +228,7 @@ export default function Dashboard({ session }: DashboardProps) {
         </header>
 
         <div style={{ flex: 1, overflow: 'hidden', marginBottom: 64 /* space for mobile nav */ }} className="content-area">
+          {activeTab === 'home' && <HomePanel />}
           <div style={{ display: activeTab === 'chat' ? 'block' : 'none', height: '100%' }}>
             <ChatPanel />
           </div>
