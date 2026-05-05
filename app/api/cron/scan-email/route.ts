@@ -14,22 +14,9 @@ export async function GET(req: Request) {
 
   const activeUsers = await getActiveUsersWithTokens()
   
-  for (const { userId, token } of activeUsers) {
+  for (const { userId } of activeUsers) {
     // Background scanning disabled to conserve Gemini quota and Redis load
-    /*
-    try {
-      const emails = await getUnreadEmails(token, 5)
-      for (const email of emails) {
-        const suggestion = await analyzeEmailWithGemini(email)
-        if (suggestion.shouldSuggest) {
-          const enhancedSuggestion = { ...suggestion, ... }
-          await pushEmailNotification(userId, enhancedSuggestion)
-        }
-      }
-    } catch (e) {
-      console.error(`Error scanning emails for user ${userId}:`, e)
-    }
-    */
+    console.log(`[Cron] Skipping scan for user: ${userId}`)
   }
 
   return NextResponse.json({ ok: true, usersScanned: activeUsers.length })
