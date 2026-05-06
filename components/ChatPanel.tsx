@@ -514,11 +514,12 @@ export default function ChatPanel({ reminders, setReminders, suggestions, setSug
             {msg.type === 'draft_event' && msg.action && (
               <DraftEventCard
                 action={msg.action}
-                onConfirm={() => {
-                  const intent = msg.action?.intent === 'draft_meeting' ? 'meeting' : 'event'
-                  sendMessage(`Yes, confirm and create this ${intent}`)
+                onConfirm={(title, desc, attendees) => {
+                  const type = msg.action?.intent === 'draft_meeting' ? 'meeting' : 'event'
+                  sendMessage(`Confirm: Create this ${type} titled "${title}" with description "${desc}" and attendees: ${attendees.join(', ')}`)
                 }}
                 onCancel={() => sendMessage("Nevermind, cancel this draft")}
+                onShuffle={() => sendMessage("Find another time for this meeting")}
               />
             )}
 
@@ -707,7 +708,7 @@ export default function ChatPanel({ reminders, setReminders, suggestions, setSug
                 <button
                   key={cmd.name}
                   onClick={() => {
-                    if (cmd.name === 'Create event' || cmd.name === 'Schedule meeting' || cmd.name === 'Add tasks for the day' || cmd.name === 'Reschedule') {
+                    if (cmd.name === 'Create event' || cmd.name === 'Create Online Meeting' || cmd.name === 'Add tasks for the day' || cmd.name === 'Reschedule') {
                       if (cmd.name === 'Reschedule') setIsRescheduling(true)
                       setModalMode(cmd.name === 'Add tasks for the day' ? 'task' : 'event')
                       setShowWeekModal(true)
@@ -893,7 +894,7 @@ export default function ChatPanel({ reminders, setReminders, suggestions, setSug
           onClose={() => setShowPalette(false)}
           onSelect={(text, name) => {
             setShowPalette(false)
-            if (name === 'Create Event' || name === 'Schedule Meeting' || name === 'Plan My Day') {
+            if (name === 'Create Event' || name === 'Create Online Meeting' || name === 'Plan My Day') {
               setShowWeekModal(true)
               return
             }
@@ -919,13 +920,12 @@ export default function ChatPanel({ reminders, setReminders, suggestions, setSug
       )}
 
       {showWeekModal && (
-        <WeekScheduleModal 
+        <WeekScheduleModal
           onClose={() => {
             setShowWeekModal(false)
             setIsRescheduling(false)
           }}
           isRescheduleMode={isRescheduling}
-          mode={modalMode}
           onSelectEvent={(ev) => {
             setIsRescheduling(false)
             setShowWeekModal(false)
@@ -935,13 +935,18 @@ export default function ChatPanel({ reminders, setReminders, suggestions, setSug
           onSelectSlot={(dateStr, timeStr, title, description, durationStr, recurrence) => {
             setShowWeekModal(false)
             setIsRescheduling(false)
-            
-            const actionVerb = modalMode === 'task' ? 'Add a Google Task called' : 'Add an event called'
-            let prompt = `${actionVerb} "${title}" on ${dateStr} at ${timeStr} for ${durationStr}`
-            if (description.trim()) {
-              prompt = `${actionVerb} "${title}" with description "${description.trim()}" on ${dateStr} at ${timeStr} for ${durationStr}`
+
+            const isReschedule = description.startsWith('Reschedule "')
+            const actionVerb = isReschedule ? '' : (modalMode === 'task' ? 'Add a Google Task called ' : 'Add an event called ')
+
+            let prompt = `${actionVerb}"${title}" on ${dateStr} at ${timeStr} for ${durationStr}`
+            if (isReschedule) {
+              prompt = `${description} to ${dateStr} at ${timeStr}`
+            } else if (description.trim()) {
+              prompt = `${actionVerb}"${title}" with description "${description.trim()}" on ${dateStr} at ${timeStr} for ${durationStr}`
             }
-            if (recurrence !== 'One-time') {
+
+            if (recurrence !== 'One-time' && !isReschedule) {
               prompt += `, repeating ${recurrence.toLowerCase()}`
             }
 

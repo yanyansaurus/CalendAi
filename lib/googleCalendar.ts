@@ -247,6 +247,7 @@ export async function getWeekEvents(accessToken: string) {
   })
 
   return (res.data.items ?? []).map((e) => ({
+    id: e.id,
     title: e.summary ?? 'Untitled',
     start: e.start?.dateTime ?? e.start?.date ?? '',
     end: e.end?.dateTime ?? e.end?.date ?? '',
@@ -361,4 +362,19 @@ export async function deleteCalendarEvent(accessToken: string, eventId: string) 
     calendarId: 'primary',
     eventId,
   })
+}
+export async function createGoogleTask(accessToken: string, task: { title: string, notes?: string, due?: string }) {
+  const auth = new google.auth.OAuth2()
+  auth.setCredentials({ access_token: accessToken })
+  const tasks = google.tasks({ version: 'v1', auth })
+
+  const res = await tasks.tasks.insert({
+    tasklist: '@default',
+    requestBody: {
+      title: task.title,
+      notes: task.notes,
+      due: task.due ? new Date(task.due).toISOString() : undefined,
+    }
+  })
+  return res.data
 }

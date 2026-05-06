@@ -35,9 +35,9 @@ export const authConfig: NextAuthConfig = {
         if (account.provider === 'google') {
           return {
             ...token,
-            googleAccessToken:  account.access_token,
+            googleAccessToken: account.access_token,
             googleRefreshToken: account.refresh_token,
-            googleExpiry:       (account.expires_at ?? 0) * 1000, // store in ms
+            googleExpiry: (account.expires_at ?? 0) * 1000, // store in ms
           }
         }
       }
@@ -50,7 +50,7 @@ export const authConfig: NextAuthConfig = {
       return token
     },
     async session({ session, token }) {
-      session.googleAccessToken  = token.googleAccessToken  as string | undefined
+      session.googleAccessToken = token.googleAccessToken as string | undefined
       session.googleRefreshToken = token.googleRefreshToken as string | undefined
       return session
     },
@@ -64,9 +64,9 @@ async function refreshGoogleToken(token: any) {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
       body: new URLSearchParams({
-        client_id:     process.env.GOOGLE_CLIENT_ID!,
+        client_id: process.env.GOOGLE_CLIENT_ID!,
         client_secret: process.env.GOOGLE_CLIENT_SECRET!,
-        grant_type:    'refresh_token',
+        grant_type: 'refresh_token',
         refresh_token: token.googleRefreshToken,
       }),
     })
@@ -77,7 +77,7 @@ async function refreshGoogleToken(token: any) {
     return {
       ...token,
       googleAccessToken: refreshedTokens.access_token,
-      googleExpiry:      Date.now() + (refreshedTokens.expires_in * 1000),
+      googleExpiry: Date.now() + (refreshedTokens.expires_in * 1000),
       googleRefreshToken: refreshedTokens.refresh_token ?? token.googleRefreshToken,
     }
   } catch (error) {

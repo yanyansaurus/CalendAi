@@ -43,25 +43,25 @@ export async function GET(req: Request) {
 
   if (googleToken) {
     try { emails = await getUnreadEmails(googleToken, 10) } catch { /* ignore */ }
-    try { 
-      const rawSlots = await getTodayEvents(googleToken, timezone) 
+    try {
+      const rawSlots = await getTodayEvents(googleToken, timezone)
       // Deduplicate slots (same title and start time)
       busySlots = rawSlots.filter((slot, index, self) =>
         index === self.findIndex((t) => (
           t.title === slot.title && t.start === slot.start
         ))
       )
-      
+
       // Ensure Wake/Sleep are always present as defaults if missing
       const hasWake = busySlots.some(s => s.title.toLowerCase().includes('wake'))
       const hasSleep = busySlots.some(s => s.title.toLowerCase().includes('sleep'))
-      
+
       if (!hasWake || !hasSleep) {
         const { getPreferences } = await import('@/lib/reminderEngine')
         const prefs = await getPreferences(session.user.email!)
         const wakeTime = prefs?.wakeTime ?? '07:00'
         const sleepTime = prefs?.sleepTime ?? '22:30'
-        
+
         const todayStr = new Date().toISOString().split('T')[0]
         if (!hasWake) busySlots.unshift({ title: '🌅 Wake Up', start: `${todayStr}T${wakeTime}:00Z`, end: `${todayStr}T${wakeTime}:15Z` })
         if (!hasSleep) busySlots.push({ title: '🌙 Sleep', start: `${todayStr}T${sleepTime}:00Z`, end: `${todayStr}T23:59:59Z` })
@@ -69,7 +69,7 @@ export async function GET(req: Request) {
 
       console.log('[Briefing Debug] Today Slots (Unique):', busySlots.map(s => s.title))
     } catch { /* ignore */ }
-    
+
     try {
       // Fetch Tomorrow for better context
       const tomorrow = new Date()
@@ -79,10 +79,10 @@ export async function GET(req: Request) {
         year: 'numeric', month: '2-digit', day: '2-digit'
       }).formatToParts(tomorrow)
       const tDateStr = `${tParts.find(p => p.type === 'year')?.value}-${tParts.find(p => p.type === 'month')?.value}-${tParts.find(p => p.type === 'day')?.value}`
-      
-      const rawTomorrow = await getFreeBusy(googleToken, { 
-        start: `${tDateStr}T00:00:00Z`, 
-        end: `${tDateStr}T23:59:59Z` 
+
+      const rawTomorrow = await getFreeBusy(googleToken, {
+        start: `${tDateStr}T00:00:00Z`,
+        end: `${tDateStr}T23:59:59Z`
       }, timezone)
 
       tomorrowSlots = rawTomorrow.filter((slot, index, self) =>
@@ -104,26 +104,33 @@ export async function GET(req: Request) {
     } catch { /* ignore */ }
   }
 
-  // Build AI prompt for briefing
-  const isEndOfDay = new Date().getHours() >= 17
+  // Build AI prompt for briefing with EXPLICIT local times to prevent hallucinations
+  const now = new Date()
+  const localTimeStr = now.toLocaleString('en-US', { timeZone: timezone, hour: 'numeric', minute: '2-digit', hour12: true, month: 'short', day: 'numeric' })
+  const isEndOfDay = now.getHours() >= 17
+
+  const formatLocal = (slots: any[]) => slots.map(s => ({
+    title: s.title || 'Busy',
+    start: new Date(s.start).toLocaleString('en-US', { timeZone: timezone, hour: 'numeric', minute: '2-digit', hour12: true }),
+    end: new Date(s.end).toLocaleString('en-US', { timeZone: timezone, hour: 'numeric', minute: '2-digit', hour12: true }),
+    rawStart: s.start
+  }))
 
   const briefingPrompt = `
     You are ExecutiveVAi, generating a ${isEndOfDay ? 'reflective End-of-Day Digest' : 'Morning Daily Briefing'}.
-    Current time: ${new Date().toISOString()}, timezone: ${timezone}.
+    Current user local time: ${localTimeStr} (${timezone}).
+    
+    CRITICAL: Compare all events against the Current User Local Time above.
 
-    CONTEXT DATA:
-    - Busy calendar slots (Today): ${JSON.stringify(busySlots)}
-    - Busy calendar slots (Tomorrow): ${JSON.stringify(tomorrowSlots)}
-    - Busy calendar slots (Last 7 Days): ${JSON.stringify(lastWeekSlots.length > 20 ? 'Too many to list, but summarize the volume' : lastWeekSlots)}
+    CONTEXT DATA (All times are LOCAL to the user):
+    - Busy calendar slots (Today): ${JSON.stringify(formatLocal(busySlots))}
+    - Busy calendar slots (Tomorrow): ${JSON.stringify(formatLocal(tomorrowSlots))}
     - Active and pending tasks: ${JSON.stringify(tasks.map(t => ({ title: t.title, priority: t.priority, status: t.status, dueDate: t.dueDate })))}
     - Recent unread emails: ${JSON.stringify(emails.map(e => ({ from: e.from, subject: e.subject, snippet: e.body?.substring(0, 300) })))}
 
     GENERATE A BRIEFING IN THIS EXACT JSON FORMAT:
     {
       "greeting": "A warm, personalized greeting",
-      "urgentAlerts": [
-        { "title": "Critical item starting soon", "timeLeft": "X mins", "urgency": "high" }
-      ],
       "todayReminders": [
         { "time": "HH:MM", "endTime": "HH:MM", "title": "Task/Meeting name", "description": "1 sentence context", "duration": "X mins/hrs", "type": "calendar|task|email", "urgency": "high|medium|low" }
       ],
@@ -142,6 +149,7 @@ export async function GET(req: Request) {
     }
 
     IMPORTANT INSTRUCTIONS:
+    - ALL times (time, endTime) MUST be in 12-hour AM/PM format (e.g., "9:30 AM", "2:00 PM").
     - You MUST include "Wake Up" and "Sleep" times in 'todayReminders' if they exist in the context. They are non-negotiable anchors.
     - Focus on 'todayReminders' for the current day only.
     - Acknowledge any recently added schedule or routine updates for today or tomorrow.

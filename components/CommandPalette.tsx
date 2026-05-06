@@ -10,7 +10,7 @@ interface Command {
 
 const COMMANDS: Command[] = [
   { icon: '📅', name: 'Create Event', description: 'Add a new event to calendar', text: 'Add an event called "Project Planning" tomorrow at 2 PM for 1 hour' },
-  { icon: '🤝', name: 'Schedule Meeting', description: 'Book a Zoom or Google Meet call', text: 'Schedule a Zoom meeting with sarah@example.com next Friday at 10 AM' },
+  { icon: '🤝', name: 'Create Online Meeting', description: 'Book a Zoom or Google Meet call', text: 'Schedule a Zoom meeting with sarah@example.com next Friday at 10 AM' },
   { icon: '🔍', name: 'Find Free Time', description: 'Scan calendar for vacant slots', text: 'Find me time for a 1.5-hour deep work session this Wednesday' },
   { icon: '📋', name: 'Plan My Day', description: 'Optimize your daily schedule', text: 'I need to plan my day. I have a dentist appointment at 3 PM and need to review code.' },
   { icon: '☀️', name: 'Daily Briefing', description: 'Get your schedule and budget summary', text: 'Good morning! What\'s on my plate today?' },
@@ -36,7 +36,7 @@ export default function CommandPalette({ isOpen, onClose, onSelect }: Props) {
   const [selectedIndex, setSelectedIndex] = useState(0)
   const inputRef = useRef<HTMLInputElement>(null)
 
-  const filteredCommands = COMMANDS.filter(cmd => 
+  const filteredCommands = COMMANDS.filter(cmd =>
     cmd.name.toLowerCase().includes(search.toLowerCase()) ||
     cmd.description.toLowerCase().includes(search.toLowerCase())
   )
@@ -76,7 +76,7 @@ export default function CommandPalette({ isOpen, onClose, onSelect }: Props) {
   if (!isOpen) return null
 
   return (
-    <div 
+    <div
       style={{
         position: 'fixed', inset: 0, zIndex: 1000,
         display: 'flex', alignItems: 'flex-start', justifyContent: 'center',
@@ -85,10 +85,10 @@ export default function CommandPalette({ isOpen, onClose, onSelect }: Props) {
       }}
       onClick={(e) => e.target === e.currentTarget && onClose()}
     >
-      <div 
+      <div
         className="glass"
         style={{
-          width: '100%', maxWidth: 600, 
+          width: '100%', maxWidth: 600,
           background: 'var(--surface-1)', borderRadius: 16,
           boxShadow: '0 20px 50px rgba(0,0,0,0.3)',
           overflow: 'hidden', border: '1px solid var(--border)'
@@ -96,7 +96,7 @@ export default function CommandPalette({ isOpen, onClose, onSelect }: Props) {
       >
         <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', gap: 12 }}>
           <span style={{ fontSize: 18, opacity: 0.5 }}>🔍</span>
-          <input 
+          <input
             ref={inputRef}
             value={search}
             onChange={e => setSearch(e.target.value)}
@@ -118,7 +118,7 @@ export default function CommandPalette({ isOpen, onClose, onSelect }: Props) {
             </div>
           ) : (
             filteredCommands.map((cmd, i) => (
-              <div 
+              <div
                 key={cmd.name}
                 onClick={() => { onSelect(cmd.text, cmd.name); onClose(); }}
                 onMouseEnter={() => setSelectedIndex(i)}
@@ -129,7 +129,7 @@ export default function CommandPalette({ isOpen, onClose, onSelect }: Props) {
                   transition: 'background 0.1s'
                 }}
               >
-                <div style={{ 
+                <div style={{
                   width: 32, height: 32, borderRadius: 8, background: i === selectedIndex ? 'var(--brand)' : 'var(--surface-2)',
                   display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16,
                   transition: 'all 0.2s'
@@ -153,7 +153,7 @@ export default function CommandPalette({ isOpen, onClose, onSelect }: Props) {
             ))
           )}
         </div>
-        
+
         <div style={{ padding: '12px 20px', background: 'var(--surface-2)', borderTop: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div style={{ display: 'flex', gap: 16, alignItems: 'center' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>

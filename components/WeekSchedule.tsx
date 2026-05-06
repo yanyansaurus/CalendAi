@@ -259,7 +259,7 @@ export default function WeekSchedule() {
                 justifyContent: 'flex-end', fontSize: 10, color: 'var(--text-subtle)',
                 borderBottom: '1px solid var(--border)',
               }}>
-                {h === 0 ? '12 AM' : h <= 12 ? `${h} AM` : `${h - 12} PM`}
+                {h === 0 ? '12 AM' : h === 12 ? '12 PM' : h < 12 ? `${h} AM` : `${h - 12} PM`}
               </div>
             ))}
           </div>

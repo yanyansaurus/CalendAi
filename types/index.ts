@@ -61,6 +61,7 @@ export interface AgentAction {
   naturalResponse: string
   suggestedAnswers?: string[] // Proactive quick-reply options
   eventId?: string            // Existing event ID for reschedules/confirmations
+  busySlots?: { start: string, end: string }[] // For UI timeline previews
 }
 
 // ─── Schedule / Day Plan ──────────────────────────────────────────────────────
@@ -72,6 +73,7 @@ export interface ScheduleTask {
   startTime?: string          // ISO 8601, filled after scheduling
   endTime?: string
   eventId?: string            // Google Calendar event ID
+  taskId?: string             // Google Task ID
   meetLink?: string           // if meeting type
   zoomLink?: string
 }

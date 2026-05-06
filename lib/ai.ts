@@ -107,11 +107,9 @@ async function callGemini(messages: AIMessage[], options: AIOptions) {
   if (!genAI) throw new Error("Gemini API key is missing.");
 
   const geminiModels = [
-    "gemini-3.1-pro",
-    "gemini-3-flash",
+    "gemini-2.5-flash",
     "gemini-3.1-flash-lite",
-    "gemini-2.5-pro",
-    "gemini-2.5-flash"
+    "gemini-2.5-pro"
   ];
   let lastError: any = null;
 
@@ -164,7 +162,7 @@ async function callGemini(messages: AIMessage[], options: AIOptions) {
       lastError = error;
       const errorMsg = error.message?.toLowerCase() || "";
       const isRetryable = errorMsg.includes("429") || errorMsg.includes("rate_limit") || errorMsg.includes("quota") || errorMsg.includes("404") || errorMsg.includes("not found") || errorMsg.includes("400");
-      
+
       if (isRetryable) {
         console.warn(`[Gemini] Model ${currentModelName} failed or throttled. Rotating...`);
         continue;

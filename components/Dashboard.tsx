@@ -7,6 +7,7 @@ import FinanceDashboard from '@/components/FinanceDashboard'
 import BriefingPanel from '@/components/BriefingPanel'
 import EmailSummaryPanel from '@/components/EmailSummaryPanel'
 import SettingsPanel from '@/components/SettingsPanel'
+import TaskBoard from '@/components/TaskBoard'
 import { useTheme } from '@/components/ThemeProvider'
 import OnboardingModal from '@/components/OnboardingModal'
 import { signOut } from 'next-auth/react'
@@ -22,7 +23,7 @@ export default function Dashboard({ session }: DashboardProps) {
   const [reminders, setReminders] = useState<any[]>([])
   const [suggestions, setSuggestions] = useState<any[]>([])
   const { theme, toggleTheme } = useTheme()
-  
+
   // Global Poller for Reminders and Insights
   useEffect(() => {
     const poll = async () => {
@@ -30,16 +31,16 @@ export default function Dashboard({ session }: DashboardProps) {
         const res = await fetch('/api/schedule/reminder')
         if (!res.ok) return
         const data = await res.json()
-        
+
         if (data.reminders?.length) {
           setReminders(prev => {
             const existingIds = new Set(prev.map(r => r.id))
             const newOnes = data.reminders.filter((r: any) => !existingIds.has(r.id))
-            
+
             // Trigger Browser Notifications for truly new items
             if (newOnes.length && 'Notification' in window && Notification.permission === 'granted') {
               newOnes.forEach((r: any) => {
-                new Notification('ExecutiveVAi Reminder', { 
+                new Notification('ExecutiveVAi Reminder', {
                   body: r.message || r.taskName || 'Upcoming Task',
                   icon: 'https://cdn-icons-png.flaticon.com/512/825/825590.png'
                 })
@@ -53,10 +54,10 @@ export default function Dashboard({ session }: DashboardProps) {
           setSuggestions(prev => {
             const existingIds = new Set(prev.map(s => s.id || s.threadId))
             const newOnes = data.emailSuggestions.filter((s: any) => !existingIds.has(s.id || s.threadId))
-            
+
             if (newOnes.length && 'Notification' in window && Notification.permission === 'granted') {
               newOnes.forEach((s: any) => {
-                new Notification('ExecutiveVAi Insight', { 
+                new Notification('ExecutiveVAi Insight', {
                   body: s.actionText || s.subject || 'New Action Item',
                   icon: 'https://cdn-icons-png.flaticon.com/512/732/732200.png'
                 })
@@ -70,7 +71,7 @@ export default function Dashboard({ session }: DashboardProps) {
 
     poll()
   }, [])
-  
+
   // Listen for tab switch events from child components
   useEffect(() => {
     const handleSwitch = (e: any) => {
@@ -79,16 +80,16 @@ export default function Dashboard({ session }: DashboardProps) {
     window.addEventListener('switch-tab', handleSwitch)
     return () => window.removeEventListener('switch-tab', handleSwitch)
   }, [])
-  
+
   const hasGoogle = !!session?.googleAccessToken
-  const hasZoom   = true  // Zoom uses Server-to-Server OAuth — always available if configured
+  const hasZoom = true  // Zoom uses Server-to-Server OAuth — always available if configured
 
   const navItems: { id: TabId; icon: string; label: string }[] = [
-    { id: 'home',     icon: '🏠', label: 'Home' },
-    { id: 'chat',     icon: '💬', label: 'Chat' },
+    { id: 'home', icon: '🏠', label: 'Home' },
+    { id: 'chat', icon: '💬', label: 'Chat' },
     { id: 'briefing', icon: '🧠', label: 'AI Briefing' },
-    { id: 'planner',  icon: '📋', label: 'Planner' },
-    { id: 'emails',   icon: '📧', label: 'Emails' },
+    { id: 'planner', icon: '📋', label: 'Planner' },
+    { id: 'emails', icon: '📧', label: 'Emails' },
     { id: 'finances', icon: '💰', label: 'Finances' },
     { id: 'settings', icon: '⚙️', label: 'Settings' },
   ]
@@ -121,19 +122,19 @@ export default function Dashboard({ session }: DashboardProps) {
         </div>
 
         {/* Nav links */}
-        <nav style={{ 
-          display: 'flex', flexDirection: 'column', gap: 6, flex: 1, 
-          overflowY: 'auto', minHeight: 0, paddingRight: 4, marginBottom: 16 
+        <nav style={{
+          display: 'flex', flexDirection: 'column', gap: 6, flex: 1,
+          overflowY: 'auto', minHeight: 0, paddingRight: 4, marginBottom: 16
         }}>
           {navItems.map((item) => (
-            <div 
-              key={item.id} 
+            <div
+              key={item.id}
               onClick={() => setActiveTab(item.id)}
               style={{
                 display: 'flex', alignItems: 'center', gap: 12,
                 padding: '10px 14px', borderRadius: 10, cursor: 'pointer',
                 background: activeTab === item.id ? 'var(--brand-glow)' : 'transparent',
-                color:      activeTab === item.id ? 'var(--brand-light)' : 'var(--text-muted)',
+                color: activeTab === item.id ? 'var(--brand-light)' : 'var(--text-muted)',
                 fontSize: 14, fontWeight: activeTab === item.id ? 600 : 500,
                 border: activeTab === item.id ? '1px solid rgba(99,102,241,0.3)' : '1px solid transparent',
                 transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
@@ -185,9 +186,9 @@ export default function Dashboard({ session }: DashboardProps) {
         </button>
 
         {/* Sign Out */}
-        <button 
+        <button
           onClick={() => signOut({ callbackUrl: '/landing' })}
-          className="btn-ghost" 
+          className="btn-ghost"
           style={{ width: '100%', justifyContent: 'center', fontSize: 13, marginBottom: 12 }}
         >
           Sign Out
@@ -202,8 +203,8 @@ export default function Dashboard({ session }: DashboardProps) {
       }}>
         <div style={{ display: 'flex', height: '100%', alignItems: 'center', justifyContent: 'space-around' }}>
           {mobileNavItems.map((item) => (
-            <div 
-              key={item.id} 
+            <div
+              key={item.id}
               onClick={() => setActiveTab(item.id)}
               style={{
                 display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3,
@@ -233,31 +234,40 @@ export default function Dashboard({ session }: DashboardProps) {
             </h1>
           </div>
           <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-             {/* Connection Indicators */}
-             {[
-               { label: 'G', active: hasGoogle },
-               { label: 'Z', active: hasZoom }
-             ].map(ind => (
-               <div key={ind.label} style={{ display: 'flex', alignItems: 'center', gap: 4, opacity: ind.active ? 1 : 0.4 }}>
-                 <span style={{ width: 5, height: 5, borderRadius: '50%', background: ind.active ? '#10b981' : '#94a3b8' }} />
-                 <span style={{ fontSize: 10, fontWeight: 600, color: ind.active ? 'var(--text)' : 'var(--text-muted)' }}>{ind.label}</span>
-               </div>
-             ))}
+            {/* Connection Indicators */}
+            {[
+              { label: 'G', active: hasGoogle },
+              { label: 'Z', active: hasZoom }
+            ].map(ind => (
+              <div key={ind.label} style={{ display: 'flex', alignItems: 'center', gap: 4, opacity: ind.active ? 1 : 0.4 }}>
+                <span style={{ width: 5, height: 5, borderRadius: '50%', background: ind.active ? '#10b981' : '#94a3b8' }} />
+                <span style={{ fontSize: 10, fontWeight: 600, color: ind.active ? 'var(--text)' : 'var(--text-muted)' }}>{ind.label}</span>
+              </div>
+            ))}
           </div>
         </header>
 
         <div style={{ flex: 1, overflow: 'hidden', marginBottom: 64 /* space for mobile nav */ }} className="content-area">
           {activeTab === 'home' && <HomePanel />}
           <div style={{ display: activeTab === 'chat' ? 'block' : 'none', height: '100%' }}>
-            <ChatPanel 
-              reminders={reminders} 
-              setReminders={setReminders} 
-              suggestions={suggestions} 
-              setSuggestions={setSuggestions} 
+            <ChatPanel
+              reminders={reminders}
+              setReminders={setReminders}
+              suggestions={suggestions}
+              setSuggestions={setSuggestions}
             />
           </div>
           {activeTab === 'briefing' && <BriefingPanel />}
-          {activeTab === 'planner' && <WeekSchedule />}
+          {activeTab === 'planner' && (
+            <div style={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
+              <div style={{ flex: 1.2, overflowY: 'auto', borderBottom: '1px solid var(--border)' }}>
+                <WeekSchedule />
+              </div>
+              <div style={{ flex: 1, overflowY: 'auto', padding: 20, background: 'var(--surface-2)' }}>
+                <TaskBoard />
+              </div>
+            </div>
+          )}
           {activeTab === 'emails' && <EmailSummaryPanel />}
           {activeTab === 'finances' && <FinanceDashboard />}
 

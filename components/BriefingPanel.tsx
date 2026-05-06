@@ -176,26 +176,6 @@ export default function BriefingPanel() {
         </div>
       </div>
 
-      {/* Urgent Alerts (Priority Digest) */}
-      {briefing.urgentAlerts?.length > 0 && (
-        <section style={{ marginBottom: 28 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
-            <span style={{ fontSize: 18 }} className="animate-pulse">🚨</span>
-            <h3 style={{ fontSize: 16, fontWeight: 700, color: '#f87171' }}>Critical Radar</h3>
-          </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            {briefing.urgentAlerts.map((a, i) => (
-              <div key={i} className="glass animate-pulse" style={{ padding: '16px 20px', borderRadius: 16, background: 'rgba(239, 68, 68, 0.05)', border: '1px solid rgba(239, 68, 68, 0.2)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <div>
-                  <p style={{ fontSize: 14, fontWeight: 800, color: '#ef4444' }}>{a.title}</p>
-                  <p style={{ fontSize: 12, color: 'rgba(239, 68, 68, 0.8)' }}>Starts in {a.timeLeft}</p>
-                </div>
-                <div style={{ padding: '4px 12px', background: '#ef4444', color: 'white', fontSize: 11, fontWeight: 900, borderRadius: 20, textTransform: 'uppercase' }}>Now</div>
-              </div>
-            ))}
-          </div>
-        </section>
-      )}
 
       {/* Today's Digest / Reminders */}
       {briefing.todayReminders?.length > 0 && (
