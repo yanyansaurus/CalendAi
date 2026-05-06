@@ -56,10 +56,12 @@ export default function CommandPalette({ isOpen, onClose, onSelect }: Props) {
       if (e.key === 'Escape') onClose()
       if (e.key === 'ArrowDown') {
         e.preventDefault()
+        if (filteredCommands.length === 0) return
         setSelectedIndex(prev => (prev + 1) % filteredCommands.length)
       }
       if (e.key === 'ArrowUp') {
         e.preventDefault()
+        if (filteredCommands.length === 0) return
         setSelectedIndex(prev => (prev - 1 + filteredCommands.length) % filteredCommands.length)
       }
       if (e.key === 'Enter' && filteredCommands[selectedIndex]) {

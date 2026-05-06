@@ -20,7 +20,6 @@ const COMMAND_CATEGORIES = [
     commands: [
       { icon: '📅', name: 'Create event', text: 'Add an event called "Project Planning" tomorrow at 2 PM for 1 hour' },
       { icon: '🤝', name: 'Schedule meeting', text: 'Schedule Meeting' },
-      { icon: '📋', name: 'Add tasks for the day', text: 'I need to plan my day. I have a dentist appointment at 3 PM and need to review code.' },
       { icon: '☀️', name: 'Daily briefing', text: 'Good morning! What\'s on my plate today?' },
       { icon: '🔄', name: 'Reschedule', text: 'Reschedule my "Budget Review" meeting to Thursday at 1 PM' },
       { icon: '❌', name: 'Cancel event', text: 'Cancel my afternoon sync today' },
@@ -31,7 +30,6 @@ const COMMAND_CATEGORIES = [
     commands: [
       { icon: '📨', name: 'Check inbox', text: 'Check my unread emails and tell me if anything is urgent' },
       { icon: '✉️', name: 'Send email', text: 'Send an email to john@example.com letting him know I am running 5 minutes late' },
-      { icon: '✍️', name: 'Draft reply', text: 'Draft a polite decline reply to the latest investor email' },
     ],
   },
   {
@@ -937,10 +935,10 @@ export default function ChatPanel({ reminders, setReminders, suggestions, setSug
           <button
             id="btn-send"
             onClick={() => sendMessage(input)}
-            disabled={!input.trim() || isTyping}
+            disabled={(!input.trim() && !imageBase64) || isTyping}
             style={{
               width: 40, height: 40, borderRadius: 12, border: 'none', cursor: 'pointer',
-              background: input.trim() && !isTyping
+              background: (input.trim() || imageBase64) && !isTyping
                 ? 'linear-gradient(135deg, var(--brand), #4f46e5)'
                 : 'var(--surface-3)',
               color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center',

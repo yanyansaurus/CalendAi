@@ -245,7 +245,15 @@ export default function MeetingWizardCard({ onComplete, onCancel }: MeetingWizar
                   <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
                     <input 
                       placeholder="name@example.com" value={newGuest} onChange={e => setNewGuest(e.target.value)}
-                      onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), attendees.push(newGuest), setNewGuest(''))}
+                      onKeyDown={e => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault()
+                          if (newGuest.includes('@')) {
+                            setAttendees([...attendees, newGuest])
+                            setNewGuest('')
+                          }
+                        }
+                      }}
                       style={{ flex: 1, padding: '14px 20px', borderRadius: 16, background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: '#fff' }}
                     />
                     <button onClick={() => { if(newGuest.includes('@')) { setAttendees([...attendees, newGuest]); setNewGuest('') } }} style={{ padding: '0 24px', borderRadius: 16, background: 'var(--brand)', border: 'none', color: '#fff', fontWeight: 600, cursor: 'pointer' }}>Add</button>

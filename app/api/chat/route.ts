@@ -609,7 +609,7 @@ CHAT: You have 3 unread emails. Here's what needs attention:
 
           return NextResponse.json({
             type: 'chat',
-            text: analysisText,
+            text: finalAnalysis,
             action,
             emails,
             suggestedAnswers: action?.suggestedAnswers || []

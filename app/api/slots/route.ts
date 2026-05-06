@@ -18,8 +18,11 @@ export async function GET(req: Request) {
   }
 
   try {
-    const timeMin = new Date(`${dateStr}T00:00:00Z`).toISOString()
-    const timeMax = new Date(`${dateStr}T23:59:59Z`).toISOString()
+    const timeMin = new Date(`${dateStr}T00:00:00`).toLocaleString('en-US', { timeZone: timezone })
+    const timeMax = new Date(`${dateStr}T23:59:59`).toLocaleString('en-US', { timeZone: timezone })
+    
+    const isoMin = new Date(timeMin).toISOString()
+    const isoMax = new Date(timeMax).toISOString()
 
     // Fetch busy slots for primary AND all attendees
     const busySlotsPromises = [
@@ -28,7 +31,10 @@ export async function GET(req: Request) {
     ]
 
     const allBusyResults = await Promise.all(busySlotsPromises)
-    const busySlots = allBusyResults.flat()
+    const busySlots = allBusyResults.flat().filter(slot => {
+      const title = (slot as any).title?.toLowerCase() || ''
+      return !title.includes('available slot') && !title.includes('free time')
+    })
 
     // We want to pass the correct target date to computeFreeSlots.
     // However, computeFreeSlots is currently hardcoded for the whole week or specific days?

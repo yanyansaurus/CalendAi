@@ -365,26 +365,7 @@ export default function WeekSchedule() {
                   )
                 })}
 
-                {/* Current time indicator */}
-                {isToday && (() => {
-                  const now = new Date()
-                  const nowHour = now.getHours() + now.getMinutes() / 60
-                  if (nowHour < 5 || nowHour > 23) return null
-                  const top = (nowHour - 5) * 60
-                  return (
-                    <div style={{
-                      position: 'absolute', top, left: 0, right: 0,
-                      height: 2, background: '#ef4444', zIndex: 5,
-                      boxShadow: '0 0 6px rgba(239,68,68,0.5)',
-                    }}>
-                      <div style={{
-                        width: 8, height: 8, borderRadius: '50%',
-                        background: '#ef4444', position: 'absolute',
-                        left: -4, top: -3,
-                      }} />
-                    </div>
-                  )
-                })()}
+
               </div>
             )
           })}
