@@ -131,6 +131,9 @@ export async function GET(req: Request) {
     GENERATE A BRIEFING IN THIS EXACT JSON FORMAT:
     {
       "greeting": "A warm, personalized greeting",
+      "urgentAlerts": [
+        { "type": "TIGHT_GAP | HEAVY_DAY | CONFLICT", "message": "Explicit warning", "suggestion": "Action to fix it" }
+      ],
       "todayReminders": [
         { "time": "HH:MM", "endTime": "HH:MM", "title": "Task/Meeting name", "description": "1 sentence context", "duration": "X mins/hrs", "type": "calendar|task|email", "urgency": "high|medium|low" }
       ],
@@ -148,12 +151,12 @@ export async function GET(req: Request) {
       "motivationalNote": "A brief tip or encouraging sign-off."
     }
 
-    IMPORTANT INSTRUCTIONS:
-    - ALL times (time, endTime) MUST be in 12-hour AM/PM format (e.g., "9:30 AM", "2:00 PM").
-    - You MUST include "Wake Up" and "Sleep" times in 'todayReminders' if they exist in the context. They are non-negotiable anchors.
-    - Focus on 'todayReminders' for the current day only.
-    - Acknowledge any recently added schedule or routine updates for today or tomorrow.
-    - Ensure 'recommendedSchedule' suggests slots for focus or breaks based on the gaps in busy slots.
+    RISK DETECTION RULES:
+    1. TIGHT_GAP: If gap between two meetings is < 15 mins. Suggest adding a buffer.
+    2. HEAVY_DAY: If total meeting time exceeds 5 hours. Suggest rescheduling low-priority items.
+    3. CONFLICT: If two events overlap. Flag immediately.
+    4. Focus on 'todayReminders' for the current day only.
+    5. Ensure 'recommendedSchedule' suggests slots for focus or breaks based on the gaps in busy slots.
   `;
 
   let briefing: any = null

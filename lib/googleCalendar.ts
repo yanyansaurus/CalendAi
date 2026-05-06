@@ -76,6 +76,39 @@ export async function getFreeBusy(
   }))
 }
 
+export async function getDetailedEvents(
+  accessToken: string,
+  start: string,
+  end: string,
+  timezone = 'UTC',
+  calendarId = 'primary'
+): Promise<BusySlot[]> {
+  const auth = getAuthClient(accessToken)
+  const calendar = google.calendar({ version: 'v3', auth })
+
+  try {
+    const res = await calendar.events.list({
+      calendarId,
+      timeMin: start,
+      timeMax: end,
+      singleEvents: true,
+      orderBy: 'startTime',
+      timeZone: timezone
+    })
+
+    const items = res.data.items ?? []
+    return items.map(item => ({
+      start: item.start?.dateTime || item.start?.date || '',
+      end: item.end?.dateTime || item.end?.date || '',
+      title: calendarId === 'primary' ? (item.summary || 'Busy') : `Conflict (${calendarId.split('@')[0]})`
+    }))
+  } catch (e) {
+    // If we can't see their calendar, just return empty (fallback)
+    console.warn(`Could not fetch calendar for ${calendarId}`, e)
+    return []
+  }
+}
+
 // ─── Compute free slots ≥ minMinutes within working hours ─────────────────────
 export function computeFreeSlots(
   busySlots: BusySlot[],
@@ -91,24 +124,33 @@ export function computeFreeSlots(
   const free: FreeSlot[] = []
   const current = new Date(rangeStart)
 
+  const now = new Date()
+
   while (current <= rangeEnd) {
     const day = current.getDay()
-    if (day !== 0 && day !== 6) { // Skip weekends
-      const dayStart = new Date(current)
-      dayStart.setHours(wsH, wsM, 0, 0)
-      const dayEnd = new Date(current)
-      dayEnd.setHours(weH, weM, 0, 0)
+    // ALLOW WEEKENDS - removed the day !== 0 && day !== 6 check
 
-      const busyToday = busySlots
-        .filter((b) => {
-          const bs = new Date(b.start)
-          return bs >= dayStart && bs <= dayEnd
-        })
-        .sort((a, b) => new Date(a.start).getTime() - new Date(b.start).getTime())
+    const dayStart = new Date(current)
+    dayStart.setHours(wsH, wsM, 0, 0)
+    const dayEnd = new Date(current)
+    dayEnd.setHours(weH, weM, 0, 0)
 
-      let cursor = dayStart
+    const busyToday = busySlots
+      .filter((b) => {
+        const bs = new Date(b.start)
+        const be = new Date(b.end)
+        // Correct overlap check: intersection of [bs, be] and [dayStart, dayEnd]
+        return bs < dayEnd && be > dayStart
+      })
+      .sort((a, b) => new Date(a.start).getTime() - new Date(b.start).getTime())
 
-      for (const busy of busyToday) {
+    // If today, don't suggest past times
+    let cursor = dayStart
+    if (dayStart.toDateString() === now.toDateString()) {
+      if (now > cursor) cursor = now
+    }
+
+    for (const busy of busyToday) {
         const busyStart = new Date(busy.start)
         const busyEnd = new Date(busy.end)
 
@@ -138,7 +180,7 @@ export function computeFreeSlots(
           })
         }
       }
-    }
+
     current.setDate(current.getDate() + 1)
   }
 

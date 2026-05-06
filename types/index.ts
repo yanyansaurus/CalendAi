@@ -28,6 +28,7 @@ export type AgentIntent =
   | 'travel_mode'
   | 'analyze_routine'
   | 'show_routine_modal'
+  | 'show_meeting_wizard'
   | 'chat'
   | 'show_week_modal'
 
@@ -82,6 +83,7 @@ export interface ScheduleTask {
 export interface BusySlot {
   start: string               // ISO 8601
   end: string
+  title?: string
 }
 
 export interface FreeSlot {

@@ -14,7 +14,21 @@ export function parseIntent(rawText: string): {
 } {
   const trimmed = rawText.trim()
 
-  // Plain chat response
+  // 1. Try to find JSON block if model wrapped it in markdown or added text around it
+  const jsonMatch = trimmed.match(/\{[\s\S]*\}/)
+  const candidate = jsonMatch ? jsonMatch[0] : trimmed
+
+  try {
+    const action = JSON.parse(candidate) as AgentAction
+    // If it has an intent, we treat it as an action
+    if (action.intent) {
+      return { isChat: action.intent === 'chat', action }
+    }
+  } catch (e) {
+    // Not valid JSON or didn't contain JSON
+  }
+
+  // 2. Fallback to legacy CHAT: prefix
   if (trimmed.startsWith('CHAT:')) {
     return {
       isChat:   true,
@@ -22,22 +36,10 @@ export function parseIntent(rawText: string): {
     }
   }
 
-  // Strip accidental markdown fences (model sometimes adds them)
-  const cleaned = trimmed
-    .replace(/^```json\s*/i, '')
-    .replace(/^```\s*/i, '')
-    .replace(/```\s*$/,    '')
-    .trim()
-
-  try {
-    const action = JSON.parse(cleaned) as AgentAction
-    return { isChat: false, action }
-  } catch {
-    // Fallback: treat as chat if JSON parse fails
-    return {
-      isChat:   true,
-      chatText: trimmed,
-    }
+  // 3. Final Fallback: treat as plain text chat
+  return {
+    isChat:   true,
+    chatText: trimmed,
   }
 }
 

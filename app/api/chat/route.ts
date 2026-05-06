@@ -99,6 +99,16 @@ export async function POST(req: Request) {
     })
   } catch (err: any) {
     console.error('[ExecutiveVAi] AI Error:', err.message)
+    const errorMsg = err.message.toLowerCase()
+    
+    // User-friendly catch for rate limits, credit depletion, or missing models
+    if (errorMsg.includes('429') || errorMsg.includes('credits') || errorMsg.includes('too many requests') || errorMsg.includes('limit reached') || errorMsg.includes('404') || errorMsg.includes('not found')) {
+      return NextResponse.json({
+        type: 'chat',
+        text: "sorry our ai is limited yun can resubmit in 30 seconds",
+      })
+    }
+
     return NextResponse.json({
       type: 'chat',
       text: `⚠️ AI Service Error: ${err.message}. Please try again in a moment.`,
@@ -141,6 +151,14 @@ export async function POST(req: Request) {
           text: action.naturalResponse ?? "I've drafted the details for you. Ready to confirm?",
           action,
           suggestedAnswers: action?.suggestedAnswers || ['Confirm & Sync', 'Change time', 'Cancel']
+        })
+      }
+
+      case 'show_meeting_wizard': {
+        return NextResponse.json({
+          type: 'show_meeting_wizard',
+          text: action.naturalResponse || "Let's schedule that. Please fill out the details below:",
+          action
         })
       }
 

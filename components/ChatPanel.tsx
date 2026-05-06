@@ -4,10 +4,13 @@ import type { ChatMessage, FreeSlot, MeetingResult, Reminder } from '@/types'
 import MeetingLinkCard from '@/components/MeetingLinkCard'
 import DayPlanCard from '@/components/DayPlanCard'
 import DraftEventCard from '@/components/DraftEventCard'
+import MeetingWizardCard from '@/components/MeetingWizardCard'
+import CancellationWizard from '@/components/CancellationWizard'
 import ReminderBubble from '@/components/ReminderBubble'
 import BudgetChart from '@/components/BudgetChart'
 import CommandPalette from '@/components/CommandPalette'
 import RoutineModal from '@/components/RoutineModal'
+import SettingsModal, { UserPreferences } from '@/components/SettingsModal'
 import WeekScheduleModal from '@/components/WeekScheduleModal'
 import { saveTasksToCalendar } from '@/app/actions/saveTasks.action'
 
@@ -16,7 +19,7 @@ const COMMAND_CATEGORIES = [
     label: '📅 Calendar',
     commands: [
       { icon: '📅', name: 'Create event', text: 'Add an event called "Project Planning" tomorrow at 2 PM for 1 hour' },
-      { icon: '🤝', name: 'Schedule meeting', text: 'Schedule a Zoom meeting with sarah@example.com next Friday at 10 AM' },
+      { icon: '🤝', name: 'Schedule meeting', text: 'Schedule Meeting' },
       { icon: '📋', name: 'Add tasks for the day', text: 'I need to plan my day. I have a dentist appointment at 3 PM and need to review code.' },
       { icon: '☀️', name: 'Daily briefing', text: 'Good morning! What\'s on my plate today?' },
       { icon: '🔄', name: 'Reschedule', text: 'Reschedule my "Budget Review" meeting to Thursday at 1 PM' },
@@ -261,6 +264,10 @@ export default function ChatPanel({ reminders, setReminders, suggestions, setSug
   const [imageBase64, setImageBase64] = useState<string | null>(null)
   const [isVoiceMode, setIsVoiceMode] = useState(false)
   const [isRescheduling, setIsRescheduling] = useState(false)
+  const [showManualWizard, setShowManualWizard] = useState(false)
+  const [showScrubMode, setShowScrubMode] = useState(false)
+  const [showSettings, setShowSettings] = useState(false)
+  const [prefs, setPrefs] = useState<UserPreferences | null>(null)
   const bottomRef = useRef<HTMLDivElement>(null)
   const commandRef = useRef<HTMLDivElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -510,6 +517,22 @@ export default function ChatPanel({ reminders, setReminders, suggestions, setSug
               </div>
             </div>
 
+            {/* Meeting Wizard */}
+            {msg.type === 'show_meeting_wizard' && (
+              <MeetingWizardCard 
+                onComplete={(details) => {
+                  const emails = details.attendees.join(', ')
+                  sendMessage(`Confirm: Create a ${details.platform} meeting titled "${details.title}" on ${details.startTime} for ${details.duration} minutes with attendees: ${emails}. Description: ${details.description}`)
+                  // Dismiss the wizard from state immediately
+                  setMessages(prev => prev.map(m => m.id === msg.id ? { ...m, type: undefined } : m))
+                }}
+                onCancel={() => {
+                  sendMessage("Cancel meeting schedule.")
+                  setMessages(prev => prev.map(m => m.id === msg.id ? { ...m, type: undefined } : m))
+                }}
+              />
+            )}
+
             {/* Draft Event Card */}
             {msg.type === 'draft_event' && msg.action && (
               <DraftEventCard
@@ -708,6 +731,16 @@ export default function ChatPanel({ reminders, setReminders, suggestions, setSug
                 <button
                   key={cmd.name}
                   onClick={() => {
+                    if (cmd.name === 'Schedule meeting') {
+                      setShowManualWizard(true)
+                      setShowCommands(false)
+                      return
+                    }
+                    if (cmd.name === 'Cancel event') {
+                      setShowScrubMode(true)
+                      setShowCommands(false)
+                      return
+                    }
                     if (cmd.name === 'Create event' || cmd.name === 'Create Online Meeting' || cmd.name === 'Add tasks for the day' || cmd.name === 'Reschedule') {
                       if (cmd.name === 'Reschedule') setIsRescheduling(true)
                       setModalMode(cmd.name === 'Add tasks for the day' ? 'task' : 'event')
@@ -757,6 +790,30 @@ export default function ChatPanel({ reminders, setReminders, suggestions, setSug
         </div>
       )}
 
+      {/* Quick Actions Bar */}
+      <div style={{ padding: '0 20px 8px', display: 'flex', gap: 8 }}>
+        <button
+          onClick={() => { setModalMode('event'); setShowWeekModal(true) }}
+          style={{
+            fontSize: 11, fontWeight: 700, padding: '6px 12px', borderRadius: 20,
+            background: 'var(--brand-glow)', border: '1px solid rgba(99,102,241,0.3)',
+            color: 'var(--brand-light)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6
+          }}
+        >
+          📅 Add Event
+        </button>
+        <button
+          onClick={() => { setModalMode('task'); setShowWeekModal(true) }}
+          style={{
+            fontSize: 11, fontWeight: 700, padding: '6px 12px', borderRadius: 20,
+            background: 'rgba(52,211,153,0.1)', border: '1px solid rgba(52,211,153,0.3)',
+            color: '#34d399', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6
+          }}
+        >
+          📋 Add Task
+        </button>
+      </div>
+
       {/* Input bar */}
       <div style={{ padding: '0 20px 20px' }}>
         <div style={{
@@ -778,6 +835,18 @@ export default function ChatPanel({ reminders, setReminders, suggestions, setSug
             title="Show commands"
           >
             ⚡
+          </button>
+          <button
+            onClick={() => setShowSettings(true)}
+            style={{
+              width: 36, height: 36, borderRadius: 10, border: 'none', cursor: 'pointer',
+              background: 'var(--surface-3)', color: 'var(--text-muted)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              fontSize: 16, flexShrink: 0, transition: 'all 0.15s',
+            }}
+            title="Executive Protocol Settings"
+          >
+            ⚙️
           </button>
           <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 8 }}>
             {imageBase64 && (
@@ -952,6 +1021,37 @@ export default function ChatPanel({ reminders, setReminders, suggestions, setSug
 
             setInput(prompt)
             setTimeout(() => document.getElementById('chat-input')?.focus(), 50)
+          }}
+        />
+      )}
+
+      {showManualWizard && (
+        <MeetingWizardCard 
+          onComplete={(details) => {
+            setShowManualWizard(false)
+            const emails = details.attendees.join(', ')
+            sendMessage(`Confirm: Create a ${details.platform} meeting titled "${details.title}" on ${details.startTime} for ${details.duration} minutes with attendees: ${emails}. Description: ${details.description}`)
+          }}
+          onCancel={() => setShowManualWizard(false)}
+        />
+      )}
+
+      {showScrubMode && (
+        <CancellationWizard 
+          onClose={() => setShowScrubMode(false)}
+          onComplete={(id, title) => {
+            setShowScrubMode(false)
+            sendMessage(`Mission Scrubbed: I've successfully removed "${title}" from your calendar.`)
+          }}
+        />
+      )}
+
+      {showSettings && (
+        <SettingsModal 
+          onClose={() => setShowSettings(false)}
+          onSave={(newPrefs) => {
+            setPrefs(newPrefs)
+            sendMessage(`Protocol Updated: I've successfully synchronized your new executive preferences.`)
           }}
         />
       )}

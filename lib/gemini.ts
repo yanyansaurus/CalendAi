@@ -4,9 +4,9 @@ import { GoogleGenerativeAI } from '@google/generative-ai'
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!)
 
 const MODEL_PRIORITY = [
-  'gemini-2.5-flash',
-  'gemini-3.1-flash-lite',
-  'gemini-2.5-pro',
+  'gemini-2.0-flash-exp',
+  'gemini-1.5-flash',
+  'gemini-1.5-pro-latest',
 ]
 
 export function getGeminiModel(systemInstruction?: string) {
@@ -134,13 +134,8 @@ The JSON must exactly match this shape:
 
 Valid intents:
   chat            – pure conversation or friendly talk. Use this when no other action is needed.
-  draft_meeting   – draft an Online Meeting (Google Meet or Zoom) for the user to review.
-                    **WIZARD FLOW REQUIREMENT**: You MUST enforce a strict step-by-step conversation. If the user says "Schedule Meeting" and does NOT provide all details upfront, use the 'chat' or 'find_slots' intent to ask ONE question at a time in this exact order:
-                    1. Date & Recurrence: "What date would you like to hold the meeting? And is this a repeating meeting (e.g., every week) or not?"
-                    2. Time Slots: Use 'find_slots' to show vacant times for that date so the user can click one.
-                    3. Platform: "Would you prefer Zoom or Google Meet?"
-                    4. Details: "What should be the Title, Description, and the Emails of the attendees?"
-                    ONLY use 'draft_meeting' once ALL 4 steps are complete.
+  show_meeting_wizard - ONLY use this if the user asks to "Schedule a Meeting" without providing all the details. This will pop up an interactive UI box for them.
+  draft_meeting   – draft an Online Meeting (Google Meet or Zoom) for the user to review. ONLY use this if they have provided ALL details upfront.
                     **CONTACT RESOLUTION**: Search {contacts} and {history} to find emails for names mentioned.
                     **SMART AGENDA**: You MUST always generate a professional 3-point agenda in the "agenda" field based on the meeting title.
                     **SHUFFLE RULE**: If the user says "Find another time" or "Shuffle", look at {busySlots} and find the NEXT available 30-min gap.

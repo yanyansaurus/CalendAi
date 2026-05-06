@@ -259,11 +259,11 @@ export default function Dashboard({ session }: DashboardProps) {
           </div>
           {activeTab === 'briefing' && <BriefingPanel />}
           {activeTab === 'planner' && (
-            <div style={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
-              <div style={{ flex: 1.2, overflowY: 'auto', borderBottom: '1px solid var(--border)' }}>
+            <div style={{ display: 'flex', height: '100%', overflow: 'hidden' }}>
+              <div style={{ flex: 1, overflowY: 'auto', borderRight: '1px solid var(--border)' }}>
                 <WeekSchedule />
               </div>
-              <div style={{ flex: 1, overflowY: 'auto', padding: 20, background: 'var(--surface-2)' }}>
+              <div style={{ width: 340, flexShrink: 0, overflowY: 'auto', padding: '0px', background: 'var(--bg-subtle)' }}>
                 <TaskBoard />
               </div>
             </div>

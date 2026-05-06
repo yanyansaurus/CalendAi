@@ -10,7 +10,7 @@ interface Command {
 
 const COMMANDS: Command[] = [
   { icon: '📅', name: 'Create Event', description: 'Add a new event to calendar', text: 'Add an event called "Project Planning" tomorrow at 2 PM for 1 hour' },
-  { icon: '🤝', name: 'Create Online Meeting', description: 'Book a Zoom or Google Meet call', text: 'Schedule a Zoom meeting with sarah@example.com next Friday at 10 AM' },
+  { icon: '🤝', name: 'Create Online Meeting', description: 'Book a Zoom or Google Meet call', text: 'Schedule Meeting' },
   { icon: '🔍', name: 'Find Free Time', description: 'Scan calendar for vacant slots', text: 'Find me time for a 1.5-hour deep work session this Wednesday' },
   { icon: '📋', name: 'Plan My Day', description: 'Optimize your daily schedule', text: 'I need to plan my day. I have a dentist appointment at 3 PM and need to review code.' },
   { icon: '☀️', name: 'Daily Briefing', description: 'Get your schedule and budget summary', text: 'Good morning! What\'s on my plate today?' },

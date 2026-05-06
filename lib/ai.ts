@@ -32,18 +32,7 @@ export interface AIOptions {
   jsonMode?: boolean;
 }
 
-/**
- * The Universal AI Adapter
- */
-// Prioritized list of models (Highest quality to lowest)
-const GROQ_MODELS = [
-  "meta-llama/llama-4-scout-17b-16e-instruct",
-  "openai/gpt-oss-120b",
-  "meta-llama/llama-3.3-70b-versatile",
-  "openai/gpt-oss-20b",
-  "qwen/qwen3-32b",
-  "meta-llama/llama-3.1-8b-instant"
-];
+
 
 /**
  * The Universal AI Adapter
@@ -65,6 +54,14 @@ export async function getAIResponse(messages: AIMessage[], options: AIOptions = 
 
   return text;
 }
+
+// Prioritized list of models (Highest quality to lowest)
+const GROQ_MODELS = [
+  "llama-3.3-70b-versatile",
+  "llama-3.1-70b-versatile",
+  "llama-3.2-90b-text-preview",
+  "llama3-70b-8192"
+];
 
 async function callGroq(messages: AIMessage[], options: AIOptions) {
   const client = getGroqClient();
@@ -89,9 +86,9 @@ async function callGroq(messages: AIMessage[], options: AIOptions) {
       return response.choices[0]?.message?.content || "";
     } catch (error: any) {
       lastError = error;
-      const isRateLimit = error.message?.includes("429") || error.message?.includes("rate_limit") || error.message?.includes("quota");
+      const isRateLimit = error.message?.includes("429") || error.message?.includes("rate_limit") || error.message?.includes("quota") || error.message?.includes("not found") || error.message?.includes("404");
       if (isRateLimit) {
-        console.warn(`[Groq] Model ${modelName} hit limit. Rotating to next model...`);
+        console.warn(`[Groq] Model ${modelName} hit limit or not found. Rotating...`);
         continue; // Try the next model
       }
       // If it's a different error, stop and failover to Gemini
@@ -107,9 +104,10 @@ async function callGemini(messages: AIMessage[], options: AIOptions) {
   if (!genAI) throw new Error("Gemini API key is missing.");
 
   const geminiModels = [
-    "gemini-2.5-flash",
-    "gemini-3.1-flash-lite",
-    "gemini-2.5-pro"
+    "gemini-1.5-flash",
+    "gemini-1.5-flash-8b",
+    "gemini-1.5-pro",
+    "gemini-2.0-flash-exp",
   ];
   let lastError: any = null;
 

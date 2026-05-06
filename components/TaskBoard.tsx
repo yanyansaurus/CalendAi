@@ -111,80 +111,86 @@ export default function TaskBoard() {
 
   if (loading) {
     return (
-      <div style={{ padding: 40, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16 }}>
-        <div style={{ display: 'flex', gap: 6 }}>
-          <div className="typing-dot" style={{ width: 10, height: 10 }} />
-          <div className="typing-dot" style={{ width: 10, height: 10 }} />
-          <div className="typing-dot" style={{ width: 10, height: 10 }} />
-        </div>
-        <p style={{ color: 'var(--text-muted)', fontSize: 13 }}>Loading tasks…</p>
-      </div>
+      <div style={{ padding: 40, textAlign: 'center', color: 'var(--text-muted)' }}>Loading tasks...</div>
     )
   }
 
+  const filteredTasks = filter === 'all' ? tasks : tasks.filter(t => t.priority === filter)
+
   return (
-    <div style={{ overflowY: 'auto', height: '100%' }} className="container-padding">
-      {/* Header */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20, flexWrap: 'wrap', gap: 12 }}>
+    <div style={{ padding: 16 }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
         <div>
-          <h2 style={{ fontSize: 22, fontWeight: 700, marginBottom: 4 }}>Task Board</h2>
-          <p style={{ fontSize: 12, color: 'var(--text-muted)' }}>
-            {tasks.length} tasks · {tasks.filter(t => t.status === 'done').length} completed
-          </p>
+          <h2 style={{ fontSize: 18, fontWeight: 700, letterSpacing: '-0.02em' }}>Today's Focus</h2>
+          <p style={{ fontSize: 12, color: 'var(--text-muted)' }}>{tasks.filter(t => t.status !== 'done').length} tasks pending</p>
         </div>
-        <button className="btn-brand" onClick={() => setShowAdd(!showAdd)} style={{ fontSize: 13, padding: '8px 18px' }}>
-          {showAdd ? '✕ Close' : '+ Add Task'}
+        <button
+          onClick={() => setShowAdd(!showAdd)}
+          style={{
+            width: 32, height: 32, borderRadius: '50%', background: 'var(--brand)',
+            color: '#fff', border: 'none', cursor: 'pointer', display: 'flex',
+            alignItems: 'center', justifyContent: 'center', fontSize: 20,
+            boxShadow: '0 4px 12px rgba(99,102,241,0.3)'
+          }}
+        >
+          {showAdd ? '×' : '+'}
         </button>
+      </div>
+
+      {/* Filter Chips */}
+      <div style={{ display: 'flex', gap: 6, marginBottom: 20, overflowX: 'auto', paddingBottom: 4 }}>
+        {['all', 'high', 'medium', 'low'].map((f) => (
+          <button
+            key={f}
+            onClick={() => setFilter(f as any)}
+            style={{
+              padding: '4px 10px', borderRadius: 20, fontSize: 11, fontWeight: 600,
+              background: filter === f ? 'var(--brand)' : 'var(--surface-3)',
+              color: filter === f ? '#fff' : 'var(--text-muted)',
+              border: 'none', cursor: 'pointer', whiteSpace: 'nowrap',
+              transition: 'all 0.2s'
+            }}
+          >
+            {f === 'all' ? 'All Tasks' : f.charAt(0).toUpperCase() + f.slice(1)}
+          </button>
+        ))}
       </div>
 
       {/* Add Task Form */}
       {showAdd && (
-        <div className="glass" style={{ padding: 20, borderRadius: 14, marginBottom: 20 }}>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+        <div className="glass" style={{ padding: 16, borderRadius: 14, marginBottom: 20, border: '1px solid var(--brand-glow)' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
             <input
-              placeholder="Task title..."
+              placeholder="What needs to be done?"
               value={newTitle}
               onChange={e => setNewTitle(e.target.value)}
               style={{
-                background: 'var(--surface-3)', border: '1px solid var(--border)', borderRadius: 8,
+                background: 'var(--surface-2)', border: '1px solid var(--border)', borderRadius: 8,
                 padding: '10px 14px', color: 'var(--text)', fontSize: 14, outline: 'none',
               }}
-              onKeyDown={e => e.key === 'Enter' && handleAdd()}
+              autoFocus
             />
-            <input
-              placeholder="Description (optional)"
-              value={newDesc}
-              onChange={e => setNewDesc(e.target.value)}
-              style={{
-                background: 'var(--surface-3)', border: '1px solid var(--border)', borderRadius: 8,
-                padding: '8px 14px', color: 'var(--text)', fontSize: 13, outline: 'none',
-              }}
-            />
-            <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>
+            <div style={{ display: 'flex', gap: 8 }}>
               <select
                 value={newPriority}
                 onChange={e => setNewPriority(e.target.value as Task['priority'])}
                 style={{
-                  background: 'var(--surface-3)', border: '1px solid var(--border)', borderRadius: 8,
-                  padding: '8px 12px', color: 'var(--text)', fontSize: 13, outline: 'none',
+                  flex: 1, background: 'var(--surface-2)', border: '1px solid var(--border)', borderRadius: 8,
+                  padding: '8px 12px', color: 'var(--text)', fontSize: 12, outline: 'none',
                 }}
               >
                 <option value="high">🔴 High</option>
                 <option value="medium">🟡 Medium</option>
                 <option value="low">🟢 Low</option>
-                <option value="recreational">🎮 Recreational</option>
+                <option value="recreational">🎮 Rec</option>
               </select>
-              <input
-                type="date"
-                value={newDue}
-                onChange={e => setNewDue(e.target.value)}
-                style={{
-                  background: 'var(--surface-3)', border: '1px solid var(--border)', borderRadius: 8,
-                  padding: '8px 12px', color: 'var(--text)', fontSize: 13, outline: 'none',
-                }}
-              />
-              <button className="btn-brand" onClick={handleAdd} style={{ fontSize: 13, padding: '8px 20px', marginLeft: 'auto' }}>
-                Add
+              <button
+                onClick={handleAdd}
+                className="btn-brand"
+                style={{ flex: 1, padding: '8px 12px', fontSize: 12 }}
+                disabled={!newTitle.trim()}
+              >
+                Add Task
               </button>
             </div>
           </div>

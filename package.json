@@ -12,6 +12,7 @@
   "dependencies": {
     "@auth/core": "^0.34.3",
     "@google/generative-ai": "^0.21.0",
+    "@upstash/redis": "^1.38.0",
     "@vercel/analytics": "^2.0.1",
     "canvas-confetti": "^1.9.4",
     "googleapis": "^144.0.0",

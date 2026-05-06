@@ -14,26 +14,39 @@ export async function GET(req: Request) {
 
   const { searchParams } = new URL(req.url)
   const offset = parseInt(searchParams.get('offset') || '0')
+  const timeMinParam = searchParams.get('timeMin')
+  const timeMaxParam = searchParams.get('timeMax')
 
   try {
     const authClient = getAuthClient(googleToken)
     const calendar = google.calendar({ version: 'v3', auth: authClient })
 
-    // Calculate the start of the week (Monday) based on offset
-    const now = new Date()
-    const day = now.getDay()
-    const monday = new Date(now)
-    monday.setDate(now.getDate() - (day === 0 ? 6 : day - 1) + (offset * 7))
-    monday.setHours(0, 0, 0, 0)
-    
-    const sunday = new Date(monday)
-    sunday.setDate(monday.getDate() + 6)
-    sunday.setHours(23, 59, 59, 999)
+    let timeMin: string
+    let timeMax: string
+
+    if (timeMinParam && timeMaxParam) {
+      timeMin = timeMinParam
+      timeMax = timeMaxParam
+    } else {
+      // Calculate the start of the week (Monday) based on offset
+      const now = new Date()
+      const day = now.getDay()
+      const monday = new Date(now)
+      monday.setDate(now.getDate() - (day === 0 ? 6 : day - 1) + (offset * 7))
+      monday.setHours(0, 0, 0, 0)
+      
+      const sunday = new Date(monday)
+      sunday.setDate(monday.getDate() + 6)
+      sunday.setHours(23, 59, 59, 999)
+
+      timeMin = monday.toISOString()
+      timeMax = sunday.toISOString()
+    }
 
     const res = await calendar.events.list({
       calendarId: 'primary',
-      timeMin: monday.toISOString(),
-      timeMax: sunday.toISOString(),
+      timeMin,
+      timeMax,
       singleEvents: true,
       orderBy: 'startTime',
       maxResults: 250,
@@ -57,7 +70,7 @@ export async function GET(req: Request) {
 
     return NextResponse.json({ 
       events, 
-      weekStart: monday.toISOString(),
+      weekStart: timeMin,
       prefs: prefs || { wakeTime: '00:00', sleepTime: '23:59' }
     })
   } catch (error: any) {

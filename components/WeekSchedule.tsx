@@ -28,6 +28,13 @@ export default function WeekSchedule() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [offsetWeeks, setOffsetWeeks] = useState(0)
+  const [now, setNow] = useState(new Date())
+
+  // Update "now" indicator every minute
+  useEffect(() => {
+    const timer = setInterval(() => setNow(new Date()), 60000)
+    return () => clearInterval(timer)
+  }, [])
 
   const loadWeek = useCallback(async (offset: number) => {
     setLoading(true)
@@ -283,6 +290,30 @@ export default function WeekSchedule() {
                     borderBottom: '1px solid var(--border)',
                   }} />
                 ))}
+
+                {/* Current Time Indicator Line */}
+                {isToday && now.getHours() >= 5 && now.getHours() <= 23 && (
+                  <div style={{
+                    position: 'absolute',
+                    top: ((now.getHours() - 5) + (now.getMinutes() / 60)) * 60,
+                    left: 0,
+                    right: 0,
+                    height: 2,
+                    background: '#ef4444',
+                    zIndex: 10,
+                    boxShadow: '0 0 10px rgba(239, 68, 68, 0.4)'
+                  }}>
+                    <div style={{
+                      position: 'absolute',
+                      left: -5,
+                      top: -4,
+                      width: 10,
+                      height: 10,
+                      borderRadius: '50%',
+                      background: '#ef4444'
+                    }} />
+                  </div>
+                )}
 
                 {/* Events */}
                 {dayEvents.map(ev => {
