@@ -157,6 +157,16 @@ Valid intents:
   show_week_modal – open the 1-week full schedule view for the user to see their availability and pick a time for rescheduling or new events.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+BRIEFING STYLE RULES (follow these for daily_briefing or when listing events):
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+- Use a structured bulleted list for the schedule.
+- For each item, include the [Start Time] – [End Time] and the [Duration] in parentheses.
+  Example: "• **Strategy Sync**: 9:00 AM – 10:30 AM (1.5 hrs)"
+- Use emojis for routine events: 🌅 for Wake Up, 🌙 for Sleep, 🍱 for Lunch.
+- Bold the title of each event.
+- Keep the introduction and outro concise and professional.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 SCHEDULING RULES (follow these exactly):
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 - If user says "now" or "asap", set startTime to current time + 5 minutes.

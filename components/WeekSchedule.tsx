@@ -272,7 +272,8 @@ export default function WeekSchedule() {
               <div key={dayIdx} style={{
                 position: 'relative',
                 borderLeft: '1px solid var(--border)',
-                background: isToday ? 'rgba(99,102,241,0.03)' : 'transparent',
+                background: isToday ? 'rgba(99,102,241,0.05)' : 'transparent',
+                borderRight: isToday ? '1px solid var(--brand-glow)' : 'none',
                 minWidth: 120
               }}>
                 {/* Hour grid lines */}

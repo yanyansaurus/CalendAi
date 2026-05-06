@@ -58,6 +58,17 @@ export async function getSchedule(userId: string): Promise<ScheduleTask[]> {
   return raw ?? []
 }
 
+// ─── Routine Preferences (Wake/Sleep) ────────────────────────────────────────
+export async function savePreferences(userId: string, prefs: { wakeTime: string; sleepTime: string }) {
+  const kv = await getKV()
+  await kv.set(`prefs:${userId}`, JSON.stringify(prefs))
+}
+
+export async function getPreferences(userId: string): Promise<{ wakeTime: string; sleepTime: string } | null> {
+  const kv = await getKV()
+  return await kv.get<{ wakeTime: string; sleepTime: string }>(`prefs:${userId}`)
+}
+
 // ─── Chat history (cloud-persisted) ──────────────────────────────────────────
 const CHAT_HISTORY_TTL = 7 * 86400  // 7 days
 

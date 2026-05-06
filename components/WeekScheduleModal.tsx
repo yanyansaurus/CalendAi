@@ -13,9 +13,10 @@ interface Props {
   onSelectSlot: (dateStr: string, timeStr: string, title: string, description: string, durationStr: string, recurrence: string) => void
   onSelectEvent?: (event: CalendarEvent) => void
   isRescheduleMode?: boolean
+  mode?: 'event' | 'task'
 }
 
-export default function WeekScheduleModal({ onClose, onSelectSlot, onSelectEvent, isRescheduleMode }: Props) {
+export default function WeekScheduleModal({ onClose, onSelectSlot, onSelectEvent, isRescheduleMode, mode }: Props) {
   const [events, setEvents] = useState<CalendarEvent[]>([])
   const [loading, setLoading] = useState(true)
 
@@ -25,12 +26,21 @@ export default function WeekScheduleModal({ onClose, onSelectSlot, onSelectEvent
   const [durationMode, setDurationMode] = useState<'15m' | '30m' | '1hr' | '2hr' | 'custom'>('1hr')
   const [customMins, setCustomMins] = useState('45')
   const [recurrence, setRecurrence] = useState<'One-time' | 'Weekly' | 'Permanent'>('One-time')
+  const [startHour, setStartHour] = useState(9)
+  const [endHour, setEndHour] = useState(17)
+  const [selectedEventForResched, setSelectedEventForResched] = useState<CalendarEvent | null>(null)
 
   useEffect(() => {
     fetch('/api/calendar/week')
       .then(res => res.json())
       .then(data => {
         if (data.events) setEvents(data.events)
+        if (data.prefs) {
+          const wakeH = parseInt(data.prefs.wakeTime.split(':')[0]) + (parseInt(data.prefs.wakeTime.split(':')[1]) / 60)
+          const sleepH = parseInt(data.prefs.sleepTime.split(':')[0]) + (parseInt(data.prefs.sleepTime.split(':')[1]) / 60)
+          setStartHour(wakeH)
+          setEndHour(sleepH)
+        }
         setLoading(false)
       })
       .catch(() => setLoading(false))
@@ -43,9 +53,9 @@ export default function WeekScheduleModal({ onClose, onSelectSlot, onSelectEvent
     return d
   })
 
-  // Standard working hours start/end
-  const START_HOUR = 9
-  const END_HOUR = 17
+  // Dynamic working hours based on routine
+  const START_HOUR = startHour
+  const END_HOUR = endHour
 
   const formatTime = (h: number) => {
     const hour = Math.floor(h)
@@ -84,12 +94,12 @@ export default function WeekScheduleModal({ onClose, onSelectSlot, onSelectEvent
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <div>
               <h2 style={{ fontSize: 20, fontWeight: 800 }}>
-                {isRescheduleMode ? '🔄 Select Event to Reschedule' : '📅 Draft New Event'}
+                {isRescheduleMode ? '🔄 Select Event to Reschedule' : mode === 'task' ? '📝 Draft New Task' : '📅 Draft New Event'}
               </h2>
               <p style={{ fontSize: 13, color: 'var(--text-muted)' }}>
                 {isRescheduleMode 
                   ? 'Click an existing event (highlighted) to pick it for rescheduling.' 
-                  : 'Configure details, then click a slot below to insert.'}
+                  : mode === 'task' ? 'Define your task details, then pick a time slot below.' : 'Configure details, then click a slot below to insert.'}
               </p>
             </div>
             <button onClick={onClose} style={{ background: 'var(--surface-3)', border: 'none', width: 32, height: 32, borderRadius: '50%', color: 'var(--text)', cursor: 'pointer' }}>✕</button>
@@ -99,8 +109,8 @@ export default function WeekScheduleModal({ onClose, onSelectSlot, onSelectEvent
             <>
               <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
                 <div style={{ flex: '1 1 200px' }}>
-                  <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--text-subtle)', marginBottom: 4 }}>Event Title</label>
-                  <input value={title} onChange={e => setTitle(e.target.value)} style={{ width: '100%', padding: '8px 12px', background: 'var(--surface-2)', border: '1px solid var(--border)', borderRadius: 8, color: 'var(--text)', fontSize: 14 }} placeholder="E.g., Strategy Sync" />
+                  <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--text-subtle)', marginBottom: 4 }}>{mode === 'task' ? 'Task Name' : 'Event Title'}</label>
+                  <input value={title} onChange={e => setTitle(e.target.value)} style={{ width: '100%', padding: '8px 12px', background: 'var(--surface-2)', border: '1px solid var(--border)', borderRadius: 8, color: 'var(--text)', fontSize: 14 }} placeholder={mode === 'task' ? 'E.g., Review code' : 'E.g., Strategy Sync'} />
                 </div>
                 <div style={{ flex: '1 1 300px' }}>
                   <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--text-subtle)', marginBottom: 4 }}>Description (Optional)</label>
@@ -148,13 +158,76 @@ export default function WeekScheduleModal({ onClose, onSelectSlot, onSelectEvent
               <div className="typing-dot" style={{ margin: '0 6px' }} />
               <div className="typing-dot" />
             </div>
+          ) : selectedEventForResched ? (
+            <div className="animate-fade-in" style={{ maxWidth: 500, margin: '0 auto' }}>
+              <button 
+                onClick={() => setSelectedEventForResched(null)}
+                style={{ background: 'transparent', border: 'none', color: 'var(--brand-light)', fontWeight: 700, cursor: 'pointer', marginBottom: 20, display: 'flex', alignItems: 'center', gap: 6 }}
+              >
+                ← Back to full week
+              </button>
+              
+              <div className="glass" style={{ padding: 24, borderRadius: 20, border: '1px solid var(--brand)', marginBottom: 32 }}>
+                <h3 style={{ fontSize: 18, fontWeight: 800, marginBottom: 8 }}>Rescheduling: {selectedEventForResched.title}</h3>
+                <p style={{ fontSize: 14, color: 'var(--text-muted)' }}>
+                  Current: {new Date(selectedEventForResched.start).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} – {new Date(selectedEventForResched.end).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                </p>
+              </div>
+
+              <h4 style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-subtle)', textTransform: 'uppercase', marginBottom: 16 }}>Available Times Today</h4>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                {(() => {
+                  const today = days[0]
+                  const dayEvents = events.filter(e => new Date(e.start).toDateString() === today.toDateString())
+                  const slots: JSX.Element[] = []
+                  let currentH = START_HOUR
+                  const durHours = (new Date(selectedEventForResched.end).getTime() - new Date(selectedEventForResched.start).getTime()) / 3600000
+                  const sortedEvents = [...dayEvents].sort((a, b) => new Date(a.start).getTime() - new Date(b.start).getTime())
+
+                  while (currentH < END_HOUR) {
+                    const event = sortedEvents.find(e => {
+                      const start = new Date(e.start)
+                      const eStart = start.getHours() + (start.getMinutes() / 60)
+                      const eEnd = new Date(e.end).getHours() + (new Date(e.end).getMinutes() / 60)
+                      return currentH >= eStart && currentH < eEnd
+                    })
+
+                    if (event) {
+                      currentH = new Date(event.end).getHours() + (new Date(event.end).getMinutes() / 60)
+                      continue
+                    }
+
+                    const endH = currentH + durHours
+                    if (endH <= END_HOUR) {
+                      const timeStr = formatTime(currentH)
+                      const endTimeStr = formatTime(endH)
+                      slots.push(
+                        <button
+                          key={currentH}
+                          onClick={() => {
+                            onSelectSlot(today.toLocaleDateString('en-US', { weekday: 'long' }), timeStr, selectedEventForResched.title, `Rescheduling ${selectedEventForResched.title}`, `${Math.round(durHours * 60)} minutes`, 'One-time')
+                          }}
+                          className="btn-ghost glass"
+                          style={{ padding: '14px 20px', borderRadius: 12, textAlign: 'left', cursor: 'pointer', border: '1px solid var(--border)' }}
+                        >
+                          <div style={{ fontWeight: 800, color: 'var(--brand-light)', fontSize: 15 }}>{timeStr} – {endTimeStr}</div>
+                          <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>Move to this slot</div>
+                        </button>
+                      )
+                    }
+                    currentH += 0.5
+                  }
+                  return slots.length > 0 ? slots : <div style={{ textAlign: 'center', padding: 20, color: 'var(--text-muted)' }}>No free slots found for today.</div>
+                })()}
+              </div>
+            </div>
           ) : (
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 16 }}>
+            <div style={{ display: 'flex', overflowX: 'auto', gap: 16, paddingBottom: 12, scrollBehavior: 'smooth' }}>
               {days.map((day, i) => {
                 const dayEvents = events.filter(e => new Date(e.start).toDateString() === day.toDateString())
                 
                 return (
-                  <div key={i} style={{ background: 'var(--surface-2)', borderRadius: 16, padding: 16, border: '1px solid var(--border)' }}>
+                  <div key={i} style={{ flex: '0 0 280px', background: 'var(--surface-2)', borderRadius: 16, padding: 16, border: '1px solid var(--border)' }}>
                     <div style={{ marginBottom: 12, borderBottom: '1px solid var(--border)', paddingBottom: 8 }}>
                       <div style={{ fontWeight: 800 }}>{day.toLocaleDateString('en-US', { weekday: 'long' })}</div>
                       <div style={{ fontSize: 12, color: 'var(--brand-light)' }}>{day.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</div>
@@ -189,7 +262,7 @@ export default function WeekScheduleModal({ onClose, onSelectSlot, onSelectEvent
                               slots.push(
                                 <button
                                   key={event.id + currentH}
-                                  onClick={() => onSelectEvent(event)}
+                                  onClick={() => setSelectedEventForResched(event)}
                                   className="animate-pulse"
                                   style={{ 
                                     fontSize: 11, padding: '10px', background: 'rgba(99, 102, 241, 0.1)', 

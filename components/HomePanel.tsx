@@ -45,7 +45,33 @@ export default function HomePanel() {
   const [loading, setLoading] = useState(true)
   const [showWelcome, setShowWelcome] = useState(false)
   const [isIncomplete, setIsIncomplete] = useState(false)
+  const [currentTime, setCurrentTime] = useState(new Date())
   const { data: session } = useSession()
+
+  // Update clock every minute
+  useEffect(() => {
+    const timer = setInterval(() => setCurrentTime(new Date()), 60000)
+    return () => clearInterval(timer)
+  }, [])
+
+  const getEventStatus = (ev: TimelineEvent) => {
+    const now = new Date()
+    const nowMin = now.getHours() * 60 + now.getMinutes()
+
+    const parseTime = (t: string) => {
+      let [h, m] = t.split(':').map(Number)
+      if (t.includes('PM') && h < 12) h += 12
+      if (t.includes('AM') && h === 12) h = 0
+      return h * 60 + m
+    }
+
+    const startMin = parseTime(ev.time)
+    const endMin = ev.endTime ? parseTime(ev.endTime) : startMin + 30
+
+    if (nowMin >= startMin && nowMin < endMin) return 'NOW'
+    if (nowMin < startMin) return 'UP NEXT'
+    return 'PAST'
+  }
 
   const loadData = async (forceRefresh = false) => {
     const now = new Date()
@@ -61,14 +87,14 @@ export default function HomePanel() {
       try {
         const parsed = JSON.parse(cached)
         const { stats: cStats, timeline: cTimeline, briefing: cBriefing, lastFetchedAt, userId } = parsed
-        
+
         if (userId !== session.user.email) {
           localStorage.removeItem('executive_vai_home_cache_v4')
         } else {
           setStats(cStats)
           setTimeline(cTimeline)
           if (cBriefing) setBriefing(cBriefing)
-          
+
           if (lastFetchedAt && new Date(lastFetchedAt).toDateString() === todayStr) {
             setLoading(false)
             return
@@ -122,19 +148,23 @@ export default function HomePanel() {
     }
   }
 
-  // Trigger analysis whenever timeline changes
+  // Trigger analysis whenever timeline or stats changes
   useEffect(() => {
     if (session?.user?.email) {
-      const isSparse = timeline.length < 5
+      // Consider it sparse only if both the curated timeline and the raw counts are low
+      const meetingCount = typeof stats[0].value === 'number' ? stats[0].value : 0
+      const taskCount = typeof stats[1].value === 'number' ? stats[1].value : 0
+
+      const isSparse = timeline.length < 5 && (meetingCount + taskCount) < 5
       setIsIncomplete(isSparse)
-      console.log('[Onboarding v12] Analysis - Items:', timeline.length, 'IsSparse:', isSparse)
+      console.log('[Onboarding v12] Analysis - Timeline:', timeline.length, 'Total Items:', meetingCount + taskCount, 'IsSparse:', isSparse)
 
       const onboardedKey = `executive_vai_onboarded_v11_${session?.user?.email}`
       if (!localStorage.getItem(onboardedKey) || isSparse) {
         setShowWelcome(true)
       }
     }
-  }, [timeline, session])
+  }, [timeline, stats, session])
 
   useEffect(() => {
     const handleRefresh = () => loadData(true) // FORCE TRUE
@@ -150,11 +180,33 @@ export default function HomePanel() {
 
   return (
     <div style={{ overflowY: 'auto', height: '100%', paddingBottom: 80 }} className="container-padding">
+      {/* Top Status Bar (Clock & Sync) */}
+      <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: 16, marginBottom: 12, marginTop: 10 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: 'var(--brand-light)', fontWeight: 700, fontSize: 14 }}>
+          <span style={{ fontSize: 16 }}>🕒</span>
+          {currentTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+          <span style={{ opacity: 0.6, fontWeight: 500, fontSize: 12, marginLeft: 4 }}>
+            {currentTime.toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' })}
+          </span>
+        </div>
+        <button 
+          onClick={() => loadData(true)}
+          className="btn-ghost"
+          style={{ 
+            padding: '6px 12px', borderRadius: 10, display: 'flex', alignItems: 'center', gap: 8,
+            fontSize: 12, fontWeight: 700, color: 'var(--brand)', background: 'var(--surface-2)'
+          }}
+        >
+          <span style={{ animation: loading ? 'spin 1s linear infinite' : 'none', display: 'inline-block' }}>🔄</span>
+          Sync
+        </button>
+      </div>
+
       {/* Proactive Onboarding / Welcome */}
       {showWelcome && (
-        <section 
-          className="glass" 
-          style={{ 
+        <section
+          className="glass"
+          style={{
             padding: 32, borderRadius: 24, marginBottom: 32, marginTop: 10,
             background: 'linear-gradient(135deg, var(--brand) 0%, #4f46e5 100%)',
             color: 'white', border: 'none', position: 'relative', overflow: 'hidden'
@@ -163,13 +215,13 @@ export default function HomePanel() {
           <div style={{ position: 'relative', zIndex: 2 }}>
             <h2 style={{ fontSize: 24, fontWeight: 800, marginBottom: 12 }}>Welcome, {session?.user?.name?.split(' ')[0] || 'User'}! 👋</h2>
             <p style={{ fontSize: 16, opacity: 0.9, lineHeight: 1.6, maxWidth: 600 }}>
-              I&apos;ve analyzed your schedule. {isIncomplete 
+              I&apos;ve analyzed your schedule. {isIncomplete
                 ? "Your schedule looks a bit thin. I recommend setting up a planning template (Work, Sleep, Lunch, etc.) to keep your routine consistent. Wanna try?"
                 : "Your schedule is looking sharp! You can refine, add, or delete events for today, tomorrow, next three days, weekend, weekdays, or your full week anytime."}
             </p>
             {isIncomplete ? (
               <div style={{ display: 'flex', gap: 12, marginTop: 20 }}>
-                <button 
+                <button
                   onClick={() => {
                     localStorage.setItem(`executive_vai_onboarded_v11_${session?.user?.email}`, 'true')
                     setShowWelcome(false)
@@ -178,19 +230,19 @@ export default function HomePanel() {
                       window.dispatchEvent(new CustomEvent('open-routine-setup'))
                     }, 100)
                   }}
-                  style={{ 
+                  style={{
                     padding: '10px 24px', borderRadius: 12, background: 'white', color: 'var(--brand)',
                     fontWeight: 700, border: 'none', cursor: 'pointer', fontSize: 14
                   }}
                 >
                   Wanna try?
                 </button>
-                <button 
+                <button
                   onClick={() => {
                     localStorage.setItem(`executive_vai_onboarded_v11_${session?.user?.email}`, 'true')
                     setShowWelcome(false)
                   }}
-                  style={{ 
+                  style={{
                     padding: '10px 20px', borderRadius: 12, background: 'rgba(255,255,255,0.2)', color: 'white',
                     fontWeight: 600, border: 'none', cursor: 'pointer', fontSize: 14
                   }}
@@ -200,14 +252,14 @@ export default function HomePanel() {
               </div>
             ) : (
               <div style={{ display: 'flex', gap: 12, marginTop: 20 }}>
-                <button 
+                <button
                   onClick={() => {
                     window.dispatchEvent(new CustomEvent('switch-tab', { detail: { tab: 'planner' } }))
                     setTimeout(() => {
                       window.dispatchEvent(new CustomEvent('open-routine-setup'))
                     }, 100)
                   }}
-                  style={{ 
+                  style={{
                     padding: '10px 24px', borderRadius: 12, background: 'white', color: 'var(--brand)',
                     fontWeight: 700, border: 'none', cursor: 'pointer', fontSize: 14
                   }}
@@ -217,12 +269,12 @@ export default function HomePanel() {
               </div>
             )}
             {!isIncomplete && (
-              <button 
+              <button
                 onClick={() => {
                   localStorage.setItem(`executive_vai_onboarded_v11_${session?.user?.email}`, 'true')
                   setShowWelcome(false)
                 }}
-                style={{ 
+                style={{
                   marginTop: 20, padding: '10px 20px', borderRadius: 12, background: 'white', color: 'var(--brand)',
                   fontWeight: 700, border: 'none', cursor: 'pointer', fontSize: 14
                 }}
@@ -232,35 +284,26 @@ export default function HomePanel() {
             )}
           </div>
           {/* Decorative Circle */}
-          <div style={{ 
-            position: 'absolute', right: -40, top: -40, width: 200, height: 200, 
-            borderRadius: '50%', background: 'rgba(255,255,255,0.1)', zIndex: 1 
+          <div style={{
+            position: 'absolute', right: -40, top: -40, width: 200, height: 200,
+            borderRadius: '50%', background: 'rgba(255,255,255,0.1)', zIndex: 1
           }} />
         </section>
       )}
 
       {/* Hero Welcome (Normal state) */}
       {!showWelcome && (
-        <section style={{ marginBottom: 40, marginTop: 10, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+        <section style={{ marginBottom: 40, marginTop: 10, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
           <div>
             <h2 style={{ fontSize: 28, fontWeight: 800, marginBottom: 8, letterSpacing: '-0.02em' }}>
               Your Command Center
             </h2>
-            <p style={{ color: 'var(--text-muted)', fontSize: 15, maxWidth: 600 }}>
-              You have {stats[0].value} meetings and {stats[1].value} tasks on your radar today.
-            </p>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+              <p style={{ color: 'var(--text-muted)', fontSize: 15, maxWidth: 600 }}>
+                You have {stats[0].value} meetings and {stats[1].value} tasks on your radar today.
+              </p>
+            </div>
           </div>
-          <button 
-            onClick={() => loadData(true)}
-            className="btn-ghost"
-            style={{ 
-              padding: 10, borderRadius: 12, display: 'flex', alignItems: 'center', gap: 8,
-              fontSize: 12, fontWeight: 700, color: 'var(--brand)'
-            }}
-          >
-            <span style={{ animation: loading ? 'spin 1s linear infinite' : 'none', display: 'inline-block' }}>🔄</span>
-            Clear Cache
-          </button>
         </section>
       )}
 
@@ -326,7 +369,7 @@ export default function HomePanel() {
             </div>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
-              
+
               {/* 1. Critical Radar */}
               {briefing?.urgentAlerts && briefing.urgentAlerts.length > 0 && (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
@@ -354,15 +397,45 @@ export default function HomePanel() {
                   </div>
                 ) : (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                    {timeline.map((ev, i) => (
-                      <div key={i} className="glass-hover" style={{ padding: 16, borderRadius: 16, display: 'flex', alignItems: 'center', gap: 16, transition: 'all 0.2s' }}>
-                        <div style={{ minWidth: 60, fontSize: 12, fontWeight: 700, color: 'var(--brand-light)' }}>{ev.time}</div>
-                        <div style={{ flex: 1 }}>
-                          <p style={{ fontSize: 14, fontWeight: 700 }}>{ev.title}</p>
-                          <p style={{ fontSize: 11, color: 'var(--text-muted)' }}>{ev.duration} • {ev.type}</p>
+                    {timeline.map((ev, i) => {
+                      const status = getEventStatus(ev)
+                      const isPast = status === 'PAST'
+                      const isNow = status === 'NOW'
+                      const isNext = status === 'UP NEXT'
+
+                      return (
+                        <div
+                          key={i}
+                          className="glass-hover"
+                          style={{
+                            padding: 16, borderRadius: 16, display: 'flex', alignItems: 'center', gap: 16, transition: 'all 0.2s',
+                            opacity: isPast ? 0.5 : 1,
+                            border: isNow ? '1px solid var(--brand-glow)' : '1px solid transparent',
+                            background: isNow ? 'rgba(99,102,241,0.05)' : 'transparent',
+                            transform: isNow ? 'scale(1.02)' : 'scale(1)',
+                            position: 'relative'
+                          }}
+                        >
+                          <div style={{ minWidth: 60, fontSize: 12, fontWeight: 700, color: isNow ? 'var(--brand)' : 'var(--brand-light)' }}>{ev.time}</div>
+                          <div style={{ flex: 1 }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                              <p style={{ fontSize: 14, fontWeight: 700 }}>{ev.title}</p>
+                              {isNow && (
+                                <span className="animate-pulse" style={{ padding: '2px 8px', borderRadius: 20, background: 'var(--brand)', color: 'white', fontSize: 9, fontWeight: 800 }}>
+                                  NOW
+                                </span>
+                              )}
+                              {isNext && i === timeline.findIndex(e => getEventStatus(e) === 'UP NEXT') && (
+                                <span style={{ padding: '2px 8px', borderRadius: 20, background: 'rgba(99,102,241,0.1)', color: 'var(--brand-light)', fontSize: 9, fontWeight: 800, border: '1px solid var(--brand-glow)' }}>
+                                  UP NEXT
+                                </span>
+                              )}
+                            </div>
+                            <p style={{ fontSize: 11, color: 'var(--text-muted)' }}>{ev.duration} • {ev.type}</p>
+                          </div>
                         </div>
-                      </div>
-                    ))}
+                      )
+                    })}
                   </div>
                 )}
               </div>
@@ -399,7 +472,7 @@ export default function HomePanel() {
 
         {/* Right Column: Performance & Actions */}
         <section style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
-          
+
           {/* Weekly Performance Scorecard (New) */}
           {briefing && briefing.weeklyAnalysis && (
             <div className="glass" style={{ padding: 24, borderRadius: 24, background: 'linear-gradient(135deg, var(--surface-2) 0%, var(--bg) 100%)', border: '1px solid var(--brand-glow)' }}>
@@ -428,11 +501,11 @@ export default function HomePanel() {
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 16 }}>
             {stats.map((stat, idx) => (
-              <div 
-                key={idx} 
+              <div
+                key={idx}
                 className="glass-hover"
-                style={{ 
-                  padding: 20, 
+                style={{
+                  padding: 20,
                   borderRadius: 20,
                   display: 'flex',
                   alignItems: 'center',
@@ -440,8 +513,8 @@ export default function HomePanel() {
                   transition: 'all 0.3s ease'
                 }}
               >
-                <div style={{ 
-                  width: 48, height: 48, borderRadius: 14, 
+                <div style={{
+                  width: 48, height: 48, borderRadius: 14,
                   background: `${stat.color}15`,
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                   fontSize: 20

@@ -28,7 +28,7 @@ export async function getFreeBusy(
     timeZone: timezone,
     year: 'numeric', month: '2-digit', day: '2-digit'
   }).formatToParts(now)
-  
+
   const year = parts.find(p => p.type === 'year')?.value
   const month = parts.find(p => p.type === 'month')?.value
   const day = parts.find(p => p.type === 'day')?.value
@@ -41,19 +41,19 @@ export async function getFreeBusy(
     const localToday = new Date(`${dateStr}T12:00:00`)
     const dayOfWeek = localToday.getDay()
     const diffToMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1
-    
+
     const monday = new Date(localToday)
     monday.setDate(localToday.getDate() - diffToMonday)
-    
+
     const sunday = new Date(monday)
     sunday.setDate(monday.getDate() + 6)
-    
+
     const mParts = new Intl.DateTimeFormat('en-CA', { timeZone: timezone, year: 'numeric', month: '2-digit', day: '2-digit' }).formatToParts(monday)
     const sParts = new Intl.DateTimeFormat('en-CA', { timeZone: timezone, year: 'numeric', month: '2-digit', day: '2-digit' }).formatToParts(sunday)
-    
+
     const mStr = `${mParts.find(p => p.type === 'year')?.value}-${mParts.find(p => p.type === 'month')?.value}-${mParts.find(p => p.type === 'day')?.value}`
     const sStr = `${sParts.find(p => p.type === 'year')?.value}-${sParts.find(p => p.type === 'month')?.value}-${sParts.find(p => p.type === 'day')?.value}`
-    
+
     timeMin = new Date(`${mStr}T00:00:00Z`).toISOString()
     timeMax = new Date(`${sStr}T23:59:59Z`).toISOString()
   } else {
@@ -72,7 +72,7 @@ export async function getFreeBusy(
   const busy = res.data.calendars?.primary?.busy ?? []
   return busy.map((b) => ({
     start: b.start ?? '',
-    end:   b.end   ?? '',
+    end: b.end ?? '',
   }))
 }
 
@@ -82,9 +82,11 @@ export function computeFreeSlots(
   rangeStart: Date,
   rangeEnd: Date,
   minMinutes = 30,
+  workStartStr = '00:00',
+  workEndStr = '23:59'
 ): FreeSlot[] {
-  const workStart = 0  // Midnight
-  const workEnd   = 24 // Next Midnight
+  const [wsH, wsM] = workStartStr.split(':').map(Number)
+  const [weH, weM] = workEndStr.split(':').map(Number)
 
   const free: FreeSlot[] = []
   const current = new Date(rangeStart)
@@ -93,9 +95,9 @@ export function computeFreeSlots(
     const day = current.getDay()
     if (day !== 0 && day !== 6) { // Skip weekends
       const dayStart = new Date(current)
-      dayStart.setHours(workStart, 0, 0, 0)
+      dayStart.setHours(wsH, wsM, 0, 0)
       const dayEnd = new Date(current)
-      dayEnd.setHours(workEnd, 0, 0, 0)
+      dayEnd.setHours(weH, weM, 0, 0)
 
       const busyToday = busySlots
         .filter((b) => {
@@ -108,17 +110,17 @@ export function computeFreeSlots(
 
       for (const busy of busyToday) {
         const busyStart = new Date(busy.start)
-        const busyEnd   = new Date(busy.end)
+        const busyEnd = new Date(busy.end)
 
         if (cursor < busyStart) {
-          const durMs  = busyStart.getTime() - cursor.getTime()
+          const durMs = busyStart.getTime() - cursor.getTime()
           const durMin = Math.floor(durMs / 60000)
           if (durMin >= minMinutes) {
             free.push({
-              start:           cursor.toISOString(),
-              end:             busyStart.toISOString(),
+              start: cursor.toISOString(),
+              end: busyStart.toISOString(),
               durationMinutes: durMin,
-              label:           formatSlotLabel(cursor, busyStart),
+              label: formatSlotLabel(cursor, busyStart),
             })
           }
         }
@@ -129,10 +131,10 @@ export function computeFreeSlots(
         const durMin = Math.floor((dayEnd.getTime() - cursor.getTime()) / 60000)
         if (durMin >= minMinutes) {
           free.push({
-            start:           cursor.toISOString(),
-            end:             dayEnd.toISOString(),
+            start: cursor.toISOString(),
+            end: dayEnd.toISOString(),
             durationMinutes: durMin,
-            label:           formatSlotLabel(cursor, dayEnd),
+            label: formatSlotLabel(cursor, dayEnd),
           })
         }
       }
@@ -146,7 +148,7 @@ export function computeFreeSlots(
 function formatSlotLabel(start: Date, end: Date): string {
   const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
   const fmt = (d: Date) =>
-    d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false })
+    d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })
   return `${days[start.getDay()]} ${fmt(start)}–${fmt(end)}`
 }
 
@@ -167,17 +169,17 @@ export async function createCalendarEvent(
   const event = await calendar.events.insert({
     calendarId: 'primary',
     requestBody: {
-      summary:     opts.title,
+      summary: opts.title,
       description: opts.description,
-      colorId:     opts.colorId,
+      colorId: opts.colorId,
       start: { dateTime: opts.startTime },
-      end:   { dateTime: opts.endTime   },
+      end: { dateTime: opts.endTime },
     },
   })
 
   return {
-    eventId:  event.data.id        ?? '',
-    htmlLink: event.data.htmlLink  ?? '',
+    eventId: event.data.id ?? '',
+    htmlLink: event.data.htmlLink ?? '',
   }
 }
 
@@ -199,16 +201,16 @@ export async function createGoogleMeet(
   ).toISOString()
 
   const event = await calendar.events.insert({
-    calendarId:            'primary',
+    calendarId: 'primary',
     conferenceDataVersion: 1,
     requestBody: {
-      summary:   opts.title,
-      start:     { dateTime: opts.startTime },
-      end:       { dateTime: endTime },
+      summary: opts.title,
+      start: { dateTime: opts.startTime },
+      end: { dateTime: endTime },
       attendees: (opts.attendees ?? []).map((e) => ({ email: e })),
       conferenceData: {
         createRequest: {
-          requestId:             crypto.randomUUID(),
+          requestId: crypto.randomUUID(),
           conferenceSolutionKey: { type: 'hangoutsMeet' },
         },
       },
@@ -226,8 +228,8 @@ export async function getWeekEvents(accessToken: string) {
   const auth = getAuthClient(accessToken)
   const calendar = google.calendar({ version: 'v3', auth })
 
-  const now    = new Date()
-  const day    = now.getDay()
+  const now = new Date()
+  const day = now.getDay()
   const monday = new Date(now)
   monday.setDate(now.getDate() - (day === 0 ? 6 : day - 1))
   monday.setHours(0, 0, 0, 0)
@@ -236,21 +238,21 @@ export async function getWeekEvents(accessToken: string) {
   sunday.setHours(23, 59, 59, 0)
 
   const res = await calendar.events.list({
-    calendarId:   'primary',
-    timeMin:       monday.toISOString(),
-    timeMax:       sunday.toISOString(),
-    singleEvents:  true,
-    orderBy:      'startTime',
-    maxResults:    100,
+    calendarId: 'primary',
+    timeMin: monday.toISOString(),
+    timeMax: sunday.toISOString(),
+    singleEvents: true,
+    orderBy: 'startTime',
+    maxResults: 100,
   })
 
   return (res.data.items ?? []).map((e) => ({
-    title:     e.summary ?? 'Untitled',
-    start:     e.start?.dateTime ?? e.start?.date ?? '',
-    end:       e.end?.dateTime   ?? e.end?.date   ?? '',
+    title: e.summary ?? 'Untitled',
+    start: e.start?.dateTime ?? e.start?.date ?? '',
+    end: e.end?.dateTime ?? e.end?.date ?? '',
     durationMinutes: Math.round(
       (new Date(e.end?.dateTime ?? e.end?.date ?? '').getTime() -
-       new Date(e.start?.dateTime ?? e.start?.date ?? '').getTime()) / 60000,
+        new Date(e.start?.dateTime ?? e.start?.date ?? '').getTime()) / 60000,
     ),
   }))
 }
@@ -267,25 +269,23 @@ export async function getTodayEvents(accessToken: string, timezone = 'UTC') {
     month: '2-digit',
     day: '2-digit'
   }).formatToParts(now)
-  
+
   const year = parts.find(p => p.type === 'year')?.value
   const month = parts.find(p => p.type === 'month')?.value
   const day = parts.find(p => p.type === 'day')?.value
   const dateStr = `${year}-${month}-${day}`
 
-  // FIXED WINDOW: 12:00 AM to 11:59 PM in the user's timezone
-  // We fetch a slightly wider range (2 hours before/after) just to be safe with 
-  // transition boundaries, but we filter strictly by dateStr.
-  const timeMin = new Date(`${dateStr}T00:00:00`).toISOString() 
-  // Note: Date constructor with naive string uses local time, but we want UTC boundaries
-  // for the API list call that are 'wide enough'.
-  
+  // WIDER WINDOW: Fetch 24 hours before and after to handle all timezones
+  const dayStart = new Date(`${dateStr}T00:00:00Z`)
+  const timeMin = new Date(dayStart.getTime() - 24 * 60 * 60 * 1000).toISOString()
+  const timeMax = new Date(dayStart.getTime() + 48 * 60 * 60 * 1000).toISOString()
+
   const res = await calendar.events.list({
-    calendarId:   'primary',
-    timeMin:      `${dateStr}T00:00:00Z`, // UTC-relative but Google will handle it
-    timeMax:      `${dateStr}T23:59:59Z`,
+    calendarId: 'primary',
+    timeMin,
+    timeMax,
     singleEvents: true,
-    orderBy:      'startTime',
+    orderBy: 'startTime',
   })
 
   const formatter = new Intl.DateTimeFormat('en-CA', {
@@ -298,10 +298,10 @@ export async function getTodayEvents(accessToken: string, timezone = 'UTC') {
   // PRECISE FILTER: Convert each event's start time to the user's timezone and check the date
   return (res.data.items ?? [])
     .map((e) => ({
-      title:       e.summary ?? 'Busy',
+      title: e.summary ?? 'Busy',
       description: e.description ?? '',
-      start:       e.start?.dateTime ?? e.start?.date ?? '',
-      end:         e.end?.dateTime   ?? e.end?.date   ?? '',
+      start: e.start?.dateTime ?? e.start?.date ?? '',
+      end: e.end?.dateTime ?? e.end?.date ?? '',
     }))
     .filter(e => {
       try {
@@ -312,12 +312,12 @@ export async function getTodayEvents(accessToken: string, timezone = 'UTC') {
           month: '2-digit',
           day: '2-digit'
         }).formatToParts(eventDate)
-        
+
         const eYear = eParts.find(p => p.type === 'year')?.value
         const eMonth = eParts.find(p => p.type === 'month')?.value
         const eDay = eParts.find(p => p.type === 'day')?.value
         const eDateStr = `${eYear}-${eMonth}-${eDay}`
-        
+
         return eDateStr === dateStr
       } catch {
         return e.start.startsWith(dateStr)

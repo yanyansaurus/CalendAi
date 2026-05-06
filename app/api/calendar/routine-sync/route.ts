@@ -100,6 +100,13 @@ export async function POST(req: Request) {
       const { date, wakeTime, sleepTime, activities } = routine
       const dateStr = date // "YYYY-MM-DD"
       
+      // Save preferences to Redis for the AI to use later
+      const userId = session?.user?.email
+      if (userId) {
+        const { savePreferences } = await import('@/lib/reminderEngine')
+        await savePreferences(userId, { wakeTime, sleepTime })
+      }
+
       // 1. CLEANUP: Remove any existing "Architected" events for this specific day to allow clean overwriting
       const existing = await calendar.events.list({
         calendarId: 'primary',

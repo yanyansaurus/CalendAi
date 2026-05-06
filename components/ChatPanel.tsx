@@ -17,8 +17,7 @@ const COMMAND_CATEGORIES = [
     commands: [
       { icon: '📅', name: 'Create event', text: 'Add an event called "Project Planning" tomorrow at 2 PM for 1 hour' },
       { icon: '🤝', name: 'Schedule meeting', text: 'Schedule a Zoom meeting with sarah@example.com next Friday at 10 AM' },
-      { icon: '🔍', name: 'Find free time', text: 'Find me time for a 1.5-hour deep work session this Wednesday' },
-      { icon: '📋', name: 'Plan my day', text: 'I need to plan my day. I have a dentist appointment at 3 PM and need to review code.' },
+      { icon: '📋', name: 'Add tasks for the day', text: 'I need to plan my day. I have a dentist appointment at 3 PM and need to review code.' },
       { icon: '☀️', name: 'Daily briefing', text: 'Good morning! What\'s on my plate today?' },
       { icon: '🔄', name: 'Reschedule', text: 'Reschedule my "Budget Review" meeting to Thursday at 1 PM' },
       { icon: '❌', name: 'Cancel event', text: 'Cancel my afternoon sync today' },
@@ -60,15 +59,15 @@ function SuggestionBubble({ suggestion, onDismiss, onAccept }: { suggestion: any
       <p style={{ fontSize: 12, fontWeight: 600, color: 'var(--text)', marginBottom: 4 }}>{suggestion.from}</p>
       <p style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 12, lineHeight: 1.4 }}>{suggestion.question}</p>
       <div style={{ display: 'flex', gap: 8 }}>
-        <button 
-          className="btn-brand" 
+        <button
+          className="btn-brand"
           style={{ flex: 1, padding: '6px', fontSize: 11, borderRadius: 6 }}
           onClick={() => onAccept(suggestion)}
         >
           ✅ Yes, do it
         </button>
-        <button 
-          className="btn-ghost" 
+        <button
+          className="btn-ghost"
           style={{ padding: '6px 12px', fontSize: 11, borderRadius: 6 }}
           onClick={() => onDismiss(suggestion.id)}
         >
@@ -85,7 +84,7 @@ function DraftEmailCard({ action, onSend }: { action: any, onSend: (to: string, 
   const [body, setBody] = useState(action.emailBody || '')
   const [to, setTo] = useState(action.emailTo || '')
   const [subject, setSubject] = useState(action.emailSubject || '')
-  
+
   useEffect(() => {
     setBody(action.emailBody || '')
     setTo(action.emailTo || '')
@@ -101,20 +100,20 @@ function DraftEmailCard({ action, onSend }: { action: any, onSend: (to: string, 
     const title = meetingDetails.title || action.emailSubject || 'Meeting'
     const platform = meetingDetails.platform || 'google_meet'
     const duration = meetingDetails.duration || 30
-    
+
     parts.push(`Schedule a ${duration}-minute ${platform === 'zoom' ? 'Zoom' : 'Google Meet'} meeting titled "${title}"`)
-    
+
     if (meetingDetails.suggestedTime) {
       const dt = new Date(meetingDetails.suggestedTime)
       const timeStr = dt.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })
       const dateStr = dt.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })
       parts.push(`on ${dateStr} at ${timeStr}`)
     }
-    
+
     if (meetingDetails.attendees?.length) {
       parts.push(`with ${meetingDetails.attendees.join(', ')}`)
     }
-    
+
     return parts.join(' ')
   }
 
@@ -134,10 +133,10 @@ function DraftEmailCard({ action, onSend }: { action: any, onSend: (to: string, 
       </div>
       <div style={{ marginBottom: 8, display: 'flex', alignItems: 'center', gap: 8 }}>
         <span style={{ fontSize: 12, color: 'var(--text-muted)', width: 50 }}>To: </span>
-        <input 
+        <input
           value={to}
           onChange={e => setTo(e.target.value)}
-          style={{ 
+          style={{
             flex: 1, background: 'transparent', border: 'none', borderBottom: '1px solid var(--border)',
             fontSize: 13, fontWeight: 600, color: 'var(--text)', outline: 'none', padding: '4px 0'
           }}
@@ -145,20 +144,20 @@ function DraftEmailCard({ action, onSend }: { action: any, onSend: (to: string, 
       </div>
       <div style={{ marginBottom: 12, display: 'flex', alignItems: 'center', gap: 8 }}>
         <span style={{ fontSize: 12, color: 'var(--text-muted)', width: 50 }}>Subject: </span>
-        <input 
+        <input
           value={subject}
           onChange={e => setSubject(e.target.value)}
-          style={{ 
+          style={{
             flex: 1, background: 'transparent', border: 'none', borderBottom: '1px solid var(--border)',
             fontSize: 13, fontWeight: 600, color: 'var(--text)', outline: 'none', padding: '4px 0'
           }}
         />
       </div>
-      <textarea 
+      <textarea
         value={body}
         onChange={e => setBody(e.target.value)}
-        style={{ 
-          background: 'var(--bg)', padding: 12, borderRadius: 8, fontSize: 13, 
+        style={{
+          background: 'var(--bg)', padding: 12, borderRadius: 8, fontSize: 13,
           color: 'var(--text)', width: '100%', minHeight: 120, lineHeight: 1.5,
           border: '1px solid var(--border)', resize: 'vertical', fontFamily: 'inherit',
           outline: 'none'
@@ -220,8 +219,8 @@ function DraftEmailCard({ action, onSend }: { action: any, onSend: (to: string, 
                 const dt = meetingDetails.suggestedTime ? new Date(meetingDetails.suggestedTime) : new Date()
                 const dateStr = dt.toLocaleString()
                 const dur = meetingDetails.duration || 30
-                window.dispatchEvent(new CustomEvent('send-chat', { 
-                  detail: { message: `Add an event to my calendar for "${title}" on ${dateStr} for ${dur} minutes` } 
+                window.dispatchEvent(new CustomEvent('send-chat', {
+                  detail: { message: `Add an event to my calendar for "${title}" on ${dateStr} for ${dur} minutes` }
                 }))
               }}
             >
@@ -235,9 +234,9 @@ function DraftEmailCard({ action, onSend }: { action: any, onSend: (to: string, 
 }
 
 const WELCOME_MSG: ChatMessage = {
-  id:        'welcome',
-  role:      'assistant',
-  content:   'Good day! I\'m ExecutiveVAi, your AI Executive Assistant. Here\'s what I can do:\n\n📅 Schedule meetings, find free slots, plan your day\n💰 Track expenses, check your budget\n📧 Read & send emails\n📊 Analyse your weekly time\n\nJust tell me what you need!',
+  id: 'welcome',
+  role: 'assistant',
+  content: 'Good day! I\'m ExecutiveVAi, your AI Executive Assistant. Here\'s what I can do:\n\n📅 Schedule meetings, find free slots, plan your day\n💰 Track expenses, check your budget\n📧 Read & send emails\n📊 Analyse your weekly time\n\nJust tell me what you need!',
   timestamp: new Date().toISOString(),
 }
 
@@ -249,21 +248,22 @@ interface ChatPanelProps {
 }
 
 export default function ChatPanel({ reminders, setReminders, suggestions, setSuggestions }: ChatPanelProps) {
-  const [messages, setMessages]       = useState<ChatMessage[]>([WELCOME_MSG])
-  const [input, setInput]             = useState('')
-  const [isTyping, setIsTyping]       = useState(false)
+  const [messages, setMessages] = useState<ChatMessage[]>([WELCOME_MSG])
+  const [input, setInput] = useState('')
+  const [isTyping, setIsTyping] = useState(false)
   const [isListening, setIsListening] = useState(false)
   const [historyLoaded, setHistoryLoaded] = useState(false)
   const [showCommands, setShowCommands] = useState(false)
   const [showPalette, setShowPalette] = useState(false)
   const [showRoutineModal, setShowRoutineModal] = useState(false)
   const [showWeekModal, setShowWeekModal] = useState(false)
+  const [modalMode, setModalMode] = useState<'event' | 'task'>('event')
   const [imageBase64, setImageBase64] = useState<string | null>(null)
   const [isVoiceMode, setIsVoiceMode] = useState(false)
   const [isRescheduling, setIsRescheduling] = useState(false)
-  const bottomRef                     = useRef<HTMLDivElement>(null)
-  const commandRef                    = useRef<HTMLDivElement>(null)
-  const fileInputRef                  = useRef<HTMLInputElement>(null)
+  const bottomRef = useRef<HTMLDivElement>(null)
+  const commandRef = useRef<HTMLDivElement>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   // Save suggestions to localStorage
   useEffect(() => {
@@ -371,7 +371,7 @@ export default function ChatPanel({ reminders, setReminders, suggestions, setSug
 
   const sendMessage = useCallback(async (text: string) => {
     if (!text.trim() && !imageBase64) return
-    
+
     // Feature: Instantly clear chat history when requested
     if (text.trim().toLowerCase() === 'clear chat history') {
       clearHistory()
@@ -379,9 +379,9 @@ export default function ChatPanel({ reminders, setReminders, suggestions, setSug
     }
 
     const userMsg: ChatMessage = {
-      id:        crypto.randomUUID(),
-      role:      'user',
-      content:   text || '[Uploaded Image]',
+      id: crypto.randomUUID(),
+      role: 'user',
+      content: text || '[Uploaded Image]',
       timestamp: new Date().toISOString(),
     }
 
@@ -393,11 +393,11 @@ export default function ChatPanel({ reminders, setReminders, suggestions, setSug
 
     try {
       const history = messages.map((m) => ({ role: m.role, content: m.content }))
-      const res  = await fetch('/api/chat', {
-        method:  'POST',
+      const res = await fetch('/api/chat', {
+        method: 'POST',
         headers: {
-          'Content-Type':  'application/json',
-          'x-timezone':    Intl.DateTimeFormat().resolvedOptions().timeZone,
+          'Content-Type': 'application/json',
+          'x-timezone': Intl.DateTimeFormat().resolvedOptions().timeZone,
         },
         body: JSON.stringify({ message: text, history, imageBase64: currentImg }),
       })
@@ -405,15 +405,15 @@ export default function ChatPanel({ reminders, setReminders, suggestions, setSug
       const data = await res.json()
 
       const aiMsg: ChatMessage = {
-        id:            crypto.randomUUID(),
-        role:          'assistant',
-        content:       data.text ?? '',
-        timestamp:     new Date().toISOString(),
-        action:        data.action,
-        type:          data.type,
+        id: crypto.randomUUID(),
+        role: 'assistant',
+        content: data.text ?? '',
+        timestamp: new Date().toISOString(),
+        action: data.action,
+        type: data.type,
         meetingResult: data.meetingResult,
-        schedule:      data.schedule,
-        freeSlots:     data.freeSlots,
+        schedule: data.schedule,
+        freeSlots: data.freeSlots,
         suggestedAnswers: data.suggestedAnswers || [],
       }
 
@@ -437,9 +437,9 @@ export default function ChatPanel({ reminders, setReminders, suggestions, setSug
       setIsVoiceMode(false) // reset voice mode after one response
     } catch (err) {
       setMessages((prev) => [...prev, {
-        id:        crypto.randomUUID(),
-        role:      'assistant',
-        content:   '⚠️ Something went wrong. Please try again.',
+        id: crypto.randomUUID(),
+        role: 'assistant',
+        content: '⚠️ Something went wrong. Please try again.',
         timestamp: new Date().toISOString(),
       }])
     } finally {
@@ -470,9 +470,9 @@ export default function ChatPanel({ reminders, setReminders, suggestions, setSug
       {/* Reminder bubbles */}
       <div style={{ position: 'fixed', top: 24, right: 24, zIndex: 100, display: 'flex', flexDirection: 'column', gap: 12 }}>
         {suggestions.map((s) => (
-          <SuggestionBubble 
-            key={s.id} 
-            suggestion={s} 
+          <SuggestionBubble
+            key={s.id}
+            suggestion={s}
             onDismiss={(id) => {
               const next = suggestions.filter(x => x.id !== id)
               setSuggestions(next)
@@ -495,8 +495,10 @@ export default function ChatPanel({ reminders, setReminders, suggestions, setSug
       <div style={{ flex: 1, overflowY: 'auto', padding: '24px 20px', display: 'flex', flexDirection: 'column', gap: 16 }}>
         {messages.map((msg) => (
           <div key={msg.id} className="animate-fade-up"
-               style={{ display: 'flex', flexDirection: 'column', gap: 8,
-                        alignItems: msg.role === 'user' ? 'flex-end' : 'flex-start' }}>
+            style={{
+              display: 'flex', flexDirection: 'column', gap: 8,
+              alignItems: msg.role === 'user' ? 'flex-end' : 'flex-start'
+            }}>
 
             {/* Bubble Container */}
             <div style={{ display: 'flex', gap: 8, alignItems: 'flex-end', maxWidth: '90%', flexDirection: msg.role === 'user' ? 'row-reverse' : 'row' }}>
@@ -510,7 +512,7 @@ export default function ChatPanel({ reminders, setReminders, suggestions, setSug
 
             {/* Draft Event Card */}
             {msg.type === 'draft_event' && msg.action && (
-              <DraftEventCard 
+              <DraftEventCard
                 action={msg.action}
                 onConfirm={() => {
                   const intent = msg.action?.intent === 'draft_meeting' ? 'meeting' : 'event'
@@ -525,23 +527,23 @@ export default function ChatPanel({ reminders, setReminders, suggestions, setSug
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8, width: '100%' }}>
                 <MeetingLinkCard meeting={msg.meetingResult} />
                 <div className="animate-fade-up" style={{ display: 'flex', gap: 8, flexWrap: 'wrap', animationDelay: '0.2s' }}>
-                  <button 
-                    className="btn-ghost" 
+                  <button
+                    className="btn-ghost"
                     style={{ fontSize: 12, padding: '6px 12px', background: 'var(--surface-2)', border: '1px solid var(--border)' }}
                     onClick={() => sendMessage(`Draft an email to the attendees sharing this meeting link: ${msg.meetingResult?.joinUrl}`)}
                   >
                     📧 Draft Email with Link
                   </button>
-                  <button 
-                    className="btn-ghost" 
+                  <button
+                    className="btn-ghost"
                     style={{ fontSize: 12, padding: '6px 12px', background: 'var(--surface-2)', border: '1px solid var(--border)' }}
                     onClick={() => sendMessage(`Prepare a meeting agenda for this call`)}
                   >
                     📝 Draft Agenda
                   </button>
                   {msg.meetingResult.platform === 'zoom' && (
-                    <button 
-                      className="btn-ghost" 
+                    <button
+                      className="btn-ghost"
                       style={{ fontSize: 12, padding: '6px 12px', background: 'var(--surface-2)', border: '1px solid var(--border)' }}
                       onClick={() => sendMessage(`Add an event to my calendar for "${msg.meetingResult?.title}" on ${new Date(msg.meetingResult?.startTime || '').toLocaleString()} for ${msg.meetingResult?.duration} minutes`)}
                     >
@@ -636,9 +638,9 @@ export default function ChatPanel({ reminders, setReminders, suggestions, setSug
 
             {/* Draft Email Card */}
             {msg.action?.intent === 'draft_email' && (
-              <DraftEmailCard 
-                action={msg.action} 
-                onSend={(to, subject, body) => sendMessage(`Send this exact email directly to ${to} with subject "${subject}" and body:\n\n${body}`)} 
+              <DraftEmailCard
+                action={msg.action}
+                onSend={(to, subject, body) => sendMessage(`Send this exact email directly to ${to} with subject "${subject}" and body:\n\n${body}`)}
               />
             )}
 
@@ -653,10 +655,10 @@ export default function ChatPanel({ reminders, setReminders, suggestions, setSug
                   <button
                     key={idx}
                     className="btn-ghost animate-fade-in"
-                    style={{ 
-                      fontSize: 12, 
-                      padding: '6px 14px', 
-                      borderRadius: 20, 
+                    style={{
+                      fontSize: 12,
+                      padding: '6px 14px',
+                      borderRadius: 20,
                       border: '1px solid var(--brand-light)',
                       background: 'rgba(99,102,241,0.05)',
                       color: 'var(--brand-light)',
@@ -705,8 +707,9 @@ export default function ChatPanel({ reminders, setReminders, suggestions, setSug
                 <button
                   key={cmd.name}
                   onClick={() => {
-                    if (cmd.name === 'Create event' || cmd.name === 'Schedule meeting' || cmd.name === 'Plan my day' || cmd.name === 'Reschedule') {
+                    if (cmd.name === 'Create event' || cmd.name === 'Schedule meeting' || cmd.name === 'Add tasks for the day' || cmd.name === 'Reschedule') {
                       if (cmd.name === 'Reschedule') setIsRescheduling(true)
+                      setModalMode(cmd.name === 'Add tasks for the day' ? 'task' : 'event')
                       setShowWeekModal(true)
                       setShowCommands(false)
                       return
@@ -755,11 +758,13 @@ export default function ChatPanel({ reminders, setReminders, suggestions, setSug
 
       {/* Input bar */}
       <div style={{ padding: '0 20px 20px' }}>
-        <div style={{ display: 'flex', gap: 8, alignItems: 'flex-end',
-                      background: 'var(--surface-2)', border: '1px solid var(--border)',
-                      borderRadius: 16, padding: '8px 8px 8px 12px',
-                      transition: 'border-color 0.2s' }}
-             onFocus={() => {}} >
+        <div style={{
+          display: 'flex', gap: 8, alignItems: 'flex-end',
+          background: 'var(--surface-2)', border: '1px solid var(--border)',
+          borderRadius: 16, padding: '8px 8px 8px 12px',
+          transition: 'border-color 0.2s'
+        }}
+          onFocus={() => { }} >
           <button
             onClick={() => setShowCommands(!showCommands)}
             style={{
@@ -777,8 +782,8 @@ export default function ChatPanel({ reminders, setReminders, suggestions, setSug
             {imageBase64 && (
               <div style={{ position: 'relative', width: 60, height: 60 }}>
                 <img src={imageBase64} alt="Attached" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: 8, border: '1px solid var(--border)' }} />
-                <button 
-                  onClick={() => setImageBase64(null)} 
+                <button
+                  onClick={() => setImageBase64(null)}
                   style={{ position: 'absolute', top: -6, right: -6, background: '#ef4444', color: 'white', borderRadius: '50%', width: 18, height: 18, fontSize: 10, border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                 >
                   ✕
@@ -813,12 +818,12 @@ export default function ChatPanel({ reminders, setReminders, suggestions, setSug
           >
             📎
           </button>
-          <input 
-            type="file" 
-            accept="image/*" 
-            ref={fileInputRef} 
-            style={{ display: 'none' }} 
-            onChange={handleFileChange} 
+          <input
+            type="file"
+            accept="image/*"
+            ref={fileInputRef}
+            style={{ display: 'none' }}
+            onChange={handleFileChange}
           />
 
           {/* Feature: Voice Commands 🎙️ */}
@@ -832,9 +837,9 @@ export default function ChatPanel({ reminders, setReminders, suggestions, setSug
               const recognition = new SpeechRecognition()
               recognition.lang = 'en-US'
               // Important: use interimResults = false to avoid duplication loops
-              recognition.interimResults = false 
+              recognition.interimResults = false
               recognition.continuous = false
-              
+
               recognition.onstart = () => setIsListening(true)
               recognition.onresult = (e: any) => {
                 // Since we only want the final result of this short utterance, just take the first final transcript
@@ -883,9 +888,9 @@ export default function ChatPanel({ reminders, setReminders, suggestions, setSug
         </p>
       </div>
       {showPalette && (
-        <CommandPalette 
-          isOpen={showPalette} 
-          onClose={() => setShowPalette(false)} 
+        <CommandPalette
+          isOpen={showPalette}
+          onClose={() => setShowPalette(false)}
           onSelect={(text, name) => {
             setShowPalette(false)
             if (name === 'Create Event' || name === 'Schedule Meeting' || name === 'Plan My Day') {
@@ -894,12 +899,12 @@ export default function ChatPanel({ reminders, setReminders, suggestions, setSug
             }
             setInput(text)
             setTimeout(() => document.getElementById('chat-input')?.focus(), 50)
-          }} 
+          }}
         />
       )}
 
       {showRoutineModal && (
-        <RoutineModal 
+        <RoutineModal
           onClose={() => setShowRoutineModal(false)}
           onSave={async (tasks) => {
             setShowRoutineModal(false)
@@ -920,6 +925,7 @@ export default function ChatPanel({ reminders, setReminders, suggestions, setSug
             setIsRescheduling(false)
           }}
           isRescheduleMode={isRescheduling}
+          mode={modalMode}
           onSelectEvent={(ev) => {
             setIsRescheduling(false)
             setShowWeekModal(false)
@@ -930,9 +936,10 @@ export default function ChatPanel({ reminders, setReminders, suggestions, setSug
             setShowWeekModal(false)
             setIsRescheduling(false)
             
-            let prompt = `Add an event called "${title}" on ${dateStr} at ${timeStr} for ${durationStr}`
+            const actionVerb = modalMode === 'task' ? 'Add a Google Task called' : 'Add an event called'
+            let prompt = `${actionVerb} "${title}" on ${dateStr} at ${timeStr} for ${durationStr}`
             if (description.trim()) {
-              prompt = `Add an event called "${title}" with description "${description.trim()}" on ${dateStr} at ${timeStr} for ${durationStr}`
+              prompt = `${actionVerb} "${title}" with description "${description.trim()}" on ${dateStr} at ${timeStr} for ${durationStr}`
             }
             if (recurrence !== 'One-time') {
               prompt += `, repeating ${recurrence.toLowerCase()}`

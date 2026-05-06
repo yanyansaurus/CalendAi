@@ -2,6 +2,7 @@ import { auth } from '@/lib/auth'
 import { getAuthClient } from '@/lib/googleCalendar'
 import { google } from 'googleapis'
 import { NextResponse } from 'next/server'
+import { getPreferences } from '@/lib/reminderEngine'
 
 export async function GET(req: Request) {
   const session = await auth()
@@ -50,9 +51,14 @@ export async function GET(req: Request) {
       status: e.status ?? 'confirmed'
     }))
 
+    // Fetch routine preferences
+    const userId = session?.user?.email || 'default'
+    const prefs = await getPreferences(userId)
+
     return NextResponse.json({ 
       events, 
-      weekStart: monday.toISOString() 
+      weekStart: monday.toISOString(),
+      prefs: prefs || { wakeTime: '00:00', sleepTime: '23:59' }
     })
   } catch (error: any) {
     console.error('Failed to fetch week schedule:', error)

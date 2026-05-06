@@ -41,6 +41,7 @@ ExecutiveVAi is your comprehensive AI-powered executive assistant designed to ha
   - **Primary:** Groq (Llama 3.3 70B, GPT-OSS 120B)
   - **Failover:** Google Gemini 3.1 Pro / Flash / Lite
 - **Database:** Redis Labs (Persistent KV)
+
 - **APIs:** Google Calendar, Gmail, Zoom
 - **Styling:** Vanilla CSS & Tailwind CSS
 
@@ -167,8 +168,8 @@ Fill in the following in your `.env.local`:
 - `GEMINI_API_KEY`
 - `GROQ_API_KEY`
 
-### 4. Database (Redis Labs)
-- `calend_ai_kv_REDIS_URL`: Your Redis connection string.
+### 4. Database (CalendAi Data Store)
+- `EXECUTIVEVAi_KV_URL`: Your Redis-compatible connection string.
 
 ### 5. NextAuth
 - `NEXTAUTH_SECRET`: Generate using `openssl rand -base64 32`.

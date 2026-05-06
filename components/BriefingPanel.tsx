@@ -3,8 +3,10 @@ import { useEffect, useState } from 'react'
 
 interface Reminder {
   time: string
+  endTime: string
   title: string
   type: string
+  duration: string
   urgency: string
 }
 
@@ -57,6 +59,12 @@ export default function BriefingPanel() {
   const [error, setError] = useState<string | null>(null)
   const [emailing, setEmailing] = useState(false)
   const [emailSent, setEmailSent] = useState(false)
+  const [currentTime, setCurrentTime] = useState(new Date())
+
+  useEffect(() => {
+    const timer = setInterval(() => setCurrentTime(new Date()), 1000)
+    return () => clearInterval(timer)
+  }, [])
 
   const sendEmailBriefing = async () => {
     if (!briefing) return
@@ -127,10 +135,25 @@ export default function BriefingPanel() {
       {/* Header with Refresh */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 28 }}>
         <div>
-          <h2 style={{ fontSize: 22, fontWeight: 700, marginBottom: 6 }}>{briefing.greeting}</h2>
-          <p style={{ fontSize: 13, color: 'var(--text-muted)' }}>
-            {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}
-          </p>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 4 }}>
+            <h2 style={{ fontSize: 22, fontWeight: 700 }}>{briefing.greeting}</h2>
+            <button
+              onClick={() => window.dispatchEvent(new CustomEvent('open-routine-setup'))}
+              style={{ background: 'transparent', border: 'none', color: 'var(--brand)', fontSize: 12, fontWeight: 700, cursor: 'pointer', padding: 0 }}
+            >
+              Full Detailed View →
+            </button>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <p style={{ fontSize: 13, color: 'var(--text-muted)' }}>
+              {currentTime.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
+            </p>
+            <div style={{ width: 1, height: 12, background: 'var(--border)' }} />
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: 'var(--brand-light)', fontWeight: 700, fontSize: 13 }}>
+              <span style={{ fontSize: 14 }}>🕒</span>
+              {currentTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+            </div>
+          </div>
         </div>
         <div style={{ display: 'flex', gap: 8 }}>
           <button
@@ -182,15 +205,27 @@ export default function BriefingPanel() {
             <h3 style={{ fontSize: 16, fontWeight: 700 }}>Today&apos;s Highlights</h3>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            {briefing.todayReminders.map((r, i) => (
-              <div key={i} className="glass" style={{ padding: 14, borderRadius: 12, display: 'flex', alignItems: 'center', gap: 12, borderLeft: `3px solid ${URGENCY_COLORS[r.urgency] ?? '#94a3b8'}` }}>
-                <div style={{ minWidth: 64, fontSize: 12, fontWeight: 600, color: URGENCY_COLORS[r.urgency] ?? 'var(--text-muted)' }}>{r.time}</div>
-                <div style={{ flex: 1 }}>
-                  <p style={{ fontSize: 13, fontWeight: 600 }}>{r.title}</p>
-                  <p style={{ fontSize: 11, color: 'var(--text-subtle)', textTransform: 'capitalize' }}>{r.type}</p>
+            {briefing.todayReminders.map((r, i) => {
+              const isRoutine = r.title.toLowerCase().includes('wake') || r.title.toLowerCase().includes('sleep')
+              return (
+                <div key={i} className="glass" style={{ padding: 14, borderRadius: 12, display: 'flex', alignItems: 'center', gap: 12, borderLeft: `3px solid ${URGENCY_COLORS[r.urgency] ?? '#94a3b8'}`, opacity: isRoutine ? 0.8 : 1 }}>
+                  <div style={{ minWidth: 90, textAlign: 'center' }}>
+                    <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text)' }}>{r.time}</div>
+                    {!isRoutine && <div style={{ fontSize: 10, color: 'var(--text-muted)', fontWeight: 500 }}>{r.endTime}</div>}
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <p style={{ fontSize: 14, fontWeight: 700, marginBottom: isRoutine ? 0 : 2 }}>{r.title}</p>
+                    {!isRoutine && (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                        <span style={{ fontSize: 11, color: 'var(--brand-light)', fontWeight: 600 }}>{r.duration}</span>
+                        <span style={{ color: 'var(--border)', fontSize: 10 }}>•</span>
+                        <span style={{ fontSize: 11, color: 'var(--text-subtle)', textTransform: 'capitalize' }}>{r.type}</span>
+                      </div>
+                    )}
+                  </div>
                 </div>
-              </div>
-            ))}
+              )
+            })}
           </div>
         </section>
       )}

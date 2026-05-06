@@ -312,9 +312,19 @@ export async function POST(req: Request) {
       const now     = new Date()
       const weekEnd = new Date(now)
       weekEnd.setDate(now.getDate() + 7)
+      
+      const { getPreferences } = await import('@/lib/reminderEngine')
+      const prefs = await getPreferences(userId)
+      
       const allBusy = await getFreeBusy(googleToken, { start: now.toISOString(), end: weekEnd.toISOString() }, timezone)
-      const slots: FreeSlot[] = computeFreeSlots(allBusy, now, weekEnd, action.duration ?? 60)
-        .slice(0, 3)
+      const slots: FreeSlot[] = computeFreeSlots(
+        allBusy, 
+        now, 
+        weekEnd, 
+        action.duration ?? 60,
+        prefs?.wakeTime ?? '09:00',
+        prefs?.sleepTime ?? '22:00'
+      ).slice(0, 3)
 
       return NextResponse.json({
         type:      'slots',
@@ -331,10 +341,27 @@ export async function POST(req: Request) {
         return NextResponse.json({ type: 'chat', text: action.naturalResponse })
       }
 
+      const { getPreferences } = await import('@/lib/reminderEngine')
+      const prefs = await getPreferences(userId)
+
       const todayBusy = await getFreeBusy(googleToken, 'today', timezone)
-      const todayFree = computeFreeSlots(todayBusy, new Date(), (() => {
-        const d = new Date(); d.setHours(20, 0, 0, 0); return d
-      })(), 15)
+      const todayFree = computeFreeSlots(
+        todayBusy, 
+        new Date(), 
+        (() => {
+          const d = new Date(); 
+          if (prefs?.sleepTime) {
+            const [h, m] = prefs.sleepTime.split(':').map(Number)
+            d.setHours(h, m, 0, 0)
+          } else {
+            d.setHours(20, 0, 0, 0); 
+          }
+          return d
+        })(), 
+        15,
+        prefs?.wakeTime ?? '09:00',
+        prefs?.sleepTime ?? '22:00'
+      )
 
       // Assign times to tasks from free slots
       const scheduled: ScheduleTask[] = []
