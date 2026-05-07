@@ -1,7 +1,9 @@
 'use client'
 
 import { useState, useEffect, useMemo, useCallback } from 'react'
+import confetti from 'canvas-confetti'
 import { useTheme } from '@/components/ThemeProvider'
+import { useSession } from 'next-auth/react'
 
 const getColor = (id: string) => {
   const colors: Record<string, string> = {
@@ -36,6 +38,7 @@ export default function OnboardingModal() {
   const [loadingEvents, setLoadingEvents] = useState(false)
   const [isIncomplete, setIsIncomplete] = useState(true)
   const { theme } = useTheme()
+  const { data: session } = useSession()
   
   const [profession, setProfession] = useState('Work')
   const [scope, setScope] = useState('Full Week')
@@ -45,8 +48,21 @@ export default function OnboardingModal() {
   const [dailyRoutines, setDailyRoutines] = useState<DailyRoutine[]>([])
 
   useEffect(() => {
-    const onboarded = localStorage.getItem('executive_vai_onboarded')
-    if (!onboarded) setIsOpen(true)
+    // Check onboarding status using the same user-specific key as HomePanel
+    const checkStatus = async () => {
+      try {
+        // We need to wait for a tick to ensure we have the session if needed, 
+        // but for now we'll look for any v11 key as a fallback
+        const keys = Object.keys(localStorage)
+        const hasV11 = keys.some(k => k.startsWith('executive_vai_onboarded_v11_'))
+        
+        if (!hasV11) {
+          setIsOpen(true)
+        }
+      } catch (e) {}
+    }
+    
+    checkStatus()
     
     try {
       const detected = Intl.DateTimeFormat().resolvedOptions().timeZone
@@ -241,8 +257,14 @@ export default function OnboardingModal() {
 
       if (res.ok) {
         const data = await res.json()
-        alert(`🎉 Successfully synced ${data.count} events across ${data.days} days!`)
-        localStorage.setItem('executive_vai_onboarded', 'true')
+        confetti({
+          particleCount: 150,
+          spread: 70,
+          origin: { y: 0.6 },
+          colors: ['#4f46e5', '#6366f1', '#10b981', '#ffffff']
+        })
+        const onboardedKey = `executive_vai_onboarded_v11_${session?.user?.email}`
+        localStorage.setItem(onboardedKey, 'true')
         window.dispatchEvent(new CustomEvent('routine-synced'))
         setIsOpen(false)
       } else {

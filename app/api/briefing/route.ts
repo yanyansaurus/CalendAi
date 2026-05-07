@@ -132,7 +132,7 @@ export async function GET(req: Request) {
     {
       "greeting": "A warm, personalized greeting",
       "urgentAlerts": [
-        { "type": "TIGHT_GAP | HEAVY_DAY | CONFLICT", "message": "Explicit warning", "suggestion": "Action to fix it" }
+        { "title": "Alert name (e.g. Tight Gap, Conflict)", "timeLeft": "Time until start (e.g. 5 mins, 1 hour)", "urgency": "high|medium|low" }
       ],
       "todayReminders": [
         { "time": "HH:MM", "endTime": "HH:MM", "title": "Task/Meeting name", "description": "1 sentence context", "duration": "X mins/hrs", "type": "calendar|task|email", "urgency": "high|medium|low" }
@@ -152,9 +152,9 @@ export async function GET(req: Request) {
     }
 
     RISK DETECTION RULES:
-    1. TIGHT_GAP: If gap between two meetings is < 15 mins. Suggest adding a buffer.
-    2. HEAVY_DAY: If total meeting time exceeds 5 hours. Suggest rescheduling low-priority items.
-    3. CONFLICT: If two events overlap. Flag immediately.
+    1. TIGHT_GAP: If gap between two meetings is < 10 mins. Use urgency: high.
+    2. HEAVY_DAY: If total meeting time exceeds 5 hours. Use urgency: medium.
+    3. CONFLICT: If two events overlap or an activity starts exactly at wake-up time. Use urgency: high.
     4. Focus on 'todayReminders' for the current day only.
     5. Ensure 'recommendedSchedule' suggests slots for focus or breaks based on the gaps in busy slots.
   `;

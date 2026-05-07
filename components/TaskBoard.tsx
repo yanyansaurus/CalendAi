@@ -127,11 +127,12 @@ export default function TaskBoard() {
         <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
           <button
             onClick={() => window.dispatchEvent(new CustomEvent('open-routine-setup'))}
-            className="btn-ghost"
+            className="btn-ghost clutch-glow"
             style={{
               fontSize: 11, fontWeight: 800, color: 'var(--brand)',
-              background: 'var(--surface-3)', padding: '6px 12px', borderRadius: 10,
-              display: 'flex', alignItems: 'center', gap: 6, border: '1px solid var(--border)'
+              background: 'white', padding: '6px 12px', borderRadius: 10,
+              display: 'flex', alignItems: 'center', gap: 6, border: '1px solid var(--border)',
+              boxShadow: '0 4px 12px rgba(99,102,241,0.1)'
             }}
           >
             ✨ Edit Schedule

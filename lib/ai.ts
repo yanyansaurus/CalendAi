@@ -1,8 +1,19 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import Groq from "groq-sdk";
+import { VertexAI } from '@google-cloud/vertexai';
 
 // Clients
 const genAI = process.env.GEMINI_API_KEY ? new GoogleGenerativeAI(process.env.GEMINI_API_KEY) : null;
+
+// Vertex AI Client (Google Cloud Enterprise)
+// Supports local ADC or Vercel Service Account Key via GCP_SERVICE_ACCOUNT_KEY env
+const vertexAI = process.env.GOOGLE_CLOUD_PROJECT ? new VertexAI({
+  project: process.env.GOOGLE_CLOUD_PROJECT,
+  location: process.env.GOOGLE_CLOUD_LOCATION || 'us-central1',
+  googleAuthOptions: process.env.GCP_SERVICE_ACCOUNT_KEY ? {
+    credentials: JSON.parse(process.env.GCP_SERVICE_ACCOUNT_KEY)
+  } : undefined
+}) : null;
 
 // Helper to get Groq client dynamically
 function getGroqClient() {
@@ -13,7 +24,7 @@ function getGroqClient() {
   return new Groq({ apiKey: process.env.GROQ_API_KEY });
 }
 
-export type AIProvider = "groq" | "gemini";
+export type AIProvider = "groq" | "gemini" | "vertex";
 
 export interface AIMessage {
   role: "system" | "user" | "assistant";
@@ -37,14 +48,26 @@ export interface AIOptions {
 
 /**
  * The Universal AI Adapter
+ * Priority: Vertex -> Groq -> Gemini (Legacy)
  */
 export async function getAIResponse(messages: AIMessage[], options: AIOptions = {}) {
-  const provider = options.provider || (process.env.GROQ_API_KEY ? "groq" : "gemini");
+  const provider = options.provider || (vertexAI ? "vertex" : (process.env.GROQ_API_KEY ? "groq" : "gemini"));
   let text = "";
-  if (provider === "groq") {
-    text = await callGroq(messages, options);
-  } else {
-    text = await callGemini(messages, options);
+  
+  try {
+    if (provider === "vertex") {
+      text = await callVertex(messages, options);
+    } else if (provider === "groq") {
+      text = await callGroq(messages, options);
+    } else {
+      text = await callGemini(messages, options);
+    }
+  } catch (err) {
+    console.error(`[AI Adapter] Primary provider ${provider} failed, falling back...`);
+    // Final desperate fallback if specific call failed
+    if (provider !== "groq" && process.env.GROQ_API_KEY) return callGroq(messages, options);
+    if (provider !== "gemini" && process.env.GEMINI_API_KEY) return callGemini(messages, options);
+    throw err;
   }
 
   if (options.jsonMode) {
@@ -56,7 +79,7 @@ export async function getAIResponse(messages: AIMessage[], options: AIOptions = 
   return text;
 }
 
-// ACTIVE MODELS ONLY (Last verified: 2024-05-07)
+// ACTIVE MODELS ONLY
 const GROQ_MODELS = [
   "llama-3.3-70b-versatile",
   "llama-3.1-8b-instant",
@@ -68,6 +91,43 @@ const GEMINI_MODELS = [
   "gemini-1.5-flash",
   "gemini-1.5-pro-latest"
 ];
+
+async function callVertex(messages: AIMessage[], options: AIOptions) {
+  if (!vertexAI) return callGroq(messages, options);
+
+  const modelName = options.model || "gemini-1.5-flash-002";
+  try {
+    const generativeModel = vertexAI.getGenerativeModel({
+      model: modelName,
+      generationConfig: {
+        maxOutputTokens: 2048,
+        temperature: options.temperature ?? 0.2,
+        responseMimeType: options.jsonMode ? "application/json" : "text/plain",
+      },
+    });
+
+    const systemMessage = messages.find(m => m.role === "system")?.content;
+    const history = messages
+      .filter(m => m.role !== "system")
+      .map(m => ({
+        role: m.role === "user" ? "user" : "model",
+        parts: typeof m.content === "string" ? [{ text: m.content }] : m.content.map(p => ({ text: p.text }))
+      }));
+
+    const result = await generativeModel.generateContent({
+      contents: history as any,
+      systemInstruction: typeof systemMessage === "string" ? {
+        role: 'system',
+        parts: [{ text: systemMessage }]
+      } : undefined,
+    });
+
+    return result.response.candidates?.[0]?.content?.parts?.[0]?.text || "";
+  } catch (error: any) {
+    console.warn(`[Vertex AI] Failed: ${error.message}. Falling back to Groq.`);
+    return callGroq(messages, options);
+  }
+}
 
 async function callGroq(messages: AIMessage[], options: AIOptions) {
   const client = getGroqClient();

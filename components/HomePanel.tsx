@@ -160,8 +160,12 @@ export default function HomePanel() {
       console.log('[Onboarding v12] Analysis - Timeline:', timeline.length, 'Total Items:', meetingCount + taskCount, 'IsSparse:', isSparse)
 
       const onboardedKey = `executive_vai_onboarded_v11_${session?.user?.email}`
-      if (!localStorage.getItem(onboardedKey) || isSparse) {
+      const neverOnboarded = !localStorage.getItem(onboardedKey)
+      
+      if (neverOnboarded) {
         setShowWelcome(true)
+      } else {
+        setShowWelcome(false)
       }
     }
   }, [timeline, stats, session])
@@ -226,6 +230,7 @@ export default function HomePanel() {
                     window.dispatchEvent(new CustomEvent('open-routine-setup'))
                   }, 100)
                 }}
+                className="clutch-glow"
                 style={{
                   padding: '12px 24px', borderRadius: 12, background: 'white', color: 'var(--brand)',
                   fontWeight: 800, border: 'none', cursor: 'pointer', fontSize: 14,
