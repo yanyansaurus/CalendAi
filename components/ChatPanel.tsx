@@ -209,6 +209,16 @@ interface ChatPanelProps {
   setSuggestions: (val: any[] | ((prev: any[]) => any[])) => void
 }
 
+function TypingIndicator() {
+  return (
+    <div className="bubble-ai animate-fade-up" style={{ padding: '12px 16px', display: 'flex', gap: 4, alignItems: 'center' }}>
+      <div className="typing-dot" style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--brand)', animation: 'pulse-typing 1.4s infinite ease-in-out' }} />
+      <div className="typing-dot" style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--brand)', animation: 'pulse-typing 1.4s infinite ease-in-out 0.2s' }} />
+      <div className="typing-dot" style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--brand)', animation: 'pulse-typing 1.4s infinite ease-in-out 0.4s' }} />
+    </div>
+  )
+}
+
 export default function ChatPanel({ reminders, setReminders, suggestions, setSuggestions }: ChatPanelProps) {
   const [messages, setMessages] = useState<ChatMessage[]>([WELCOME_MSG])
   const [input, setInput] = useState('')
@@ -483,8 +493,9 @@ export default function ChatPanel({ reminders, setReminders, suggestions, setSug
           </div>
         ))}
         {isTyping && (
-          <div className="bubble-ai animate-fade-up" style={{ alignSelf: 'flex-start', display: 'flex', gap: 5, alignItems: 'center', padding: '14px 18px' }}>
-            <div className="typing-dot" /><div className="typing-dot" /><div className="typing-dot" />
+          <div style={{ display: 'flex', gap: 8, alignItems: 'flex-end', alignSelf: 'flex-start' }}>
+            <img src="/logo.png" alt="AI" style={{ width: 24, height: 24, borderRadius: 6, flexShrink: 0, marginBottom: 4 }} className="hidden-mobile" />
+            <TypingIndicator />
           </div>
         )}
         <div ref={bottomRef} />
