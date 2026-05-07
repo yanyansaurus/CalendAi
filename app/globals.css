@@ -262,6 +262,10 @@ body {
 }
 
 /* ─── Mobile Utility Classes ─── */
+.mobile-nav {
+  display: none;
+}
+
 @media (max-width: 1024px) {
   .hidden-mobile {
     display: none !important;

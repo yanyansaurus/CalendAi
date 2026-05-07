@@ -837,7 +837,7 @@ export default function ChatPanel({ reminders, setReminders, suggestions, setSug
       </div>
 
       {/* Input bar */}
-      <div style={{ padding: '0 20px 20px' }}>
+      <div style={{ padding: '0 20px clamp(20px, 12vh, 100px)', paddingBottom: 'calc(env(safe-area-inset-bottom, 20px) + 80px)' }}>
         <div style={{
           display: 'flex', gap: 8, alignItems: 'flex-end',
           background: 'var(--surface-2)', border: '1px solid var(--border)',

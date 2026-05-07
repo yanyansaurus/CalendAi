@@ -102,7 +102,7 @@ export default function Dashboard({ session }: DashboardProps) {
   ]
 
   // Show 5 most important tabs in mobile bottom nav
-  const mobileNavItems = navItems.filter(i => !['settings'].includes(i.id))
+  const mobileNavItems = navItems.filter(i => !['settings', 'emails'].includes(i.id))
 
   return (
     <div style={{ display: 'flex', height: '100vh', overflow: 'hidden', position: 'relative' }}>
