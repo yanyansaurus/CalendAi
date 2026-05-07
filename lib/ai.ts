@@ -68,11 +68,9 @@ export async function getAIResponse(messages: AIMessage[], options: AIOptions = 
 // ACTIVE MODELS ONLY
 const GROQ_MODELS = [
   "llama-3.3-70b-versatile",
-  "llama-3.1-70b-versatile",
-  "llama3-70b-8192",
-  "mixtral-8x7b-32768",
   "llama-3.1-8b-instant",
-  "gemma2-9b-it"
+  "qwen/qwen3-32b",
+  "meta-llama/llama-4-scout-17b-16e-instruct"
 ];
 
 const GEMINI_MODELS = [
@@ -88,11 +86,13 @@ async function callGroq(messages: AIMessage[], options: AIOptions) {
   if (!client) return callGemini(messages, options);
 
   const hasImages = messages.some(m => Array.isArray(m.content) && m.content.some(p => p.type === "image_url"));
-  if (hasImages) console.log("[Groq] Image detected in request. Using vision models.");
+  if (hasImages) {
+    console.log("[Groq] Vision request detected, but no Groq vision models found in active list. Pivoting to Gemini.");
+    return callGemini(messages, options);
+  }
 
-  const VISION_MODELS = ["llama-3.2-11b-vision-preview", "llama-3.2-90b-vision-preview"];
   const modelsToTry = options.model ? [options.model, ...GROQ_MODELS] : GROQ_MODELS;
-  const filteredModels = hasImages ? VISION_MODELS : Array.from(new Set(modelsToTry));
+  const filteredModels = Array.from(new Set(modelsToTry));
 
   for (const modelName of filteredModels) {
     try {
