@@ -74,11 +74,13 @@ const GROQ_MODELS = [
 ];
 
 const GEMINI_MODELS = [
-  "gemini-2.0-flash-exp",
-  "gemini-1.5-pro-latest",
-  "gemini-1.5-flash-latest",
-  "gemini-1.5-flash",
+  "gemini-3.1-pro",
+  "gemini-3.1-flash-lite",
+  "gemini-2.5-pro",
+  "gemini-2.5-flash",
+  "gemini-2.0-flash",
   "gemini-1.5-pro",
+  "gemini-1.5-flash"
 ];
 
 async function callGroq(messages: AIMessage[], options: AIOptions) {
@@ -121,11 +123,11 @@ async function callGemini(messages: AIMessage[], options: AIOptions) {
   if (!genAI) throw new Error("Gemini API key is missing.");
 
   const hasImages = messages.some(m => Array.isArray(m.content) && m.content.some(p => p.type === "image_url"));
-  const filteredModels = hasImages ? GEMINI_MODELS.filter(m => m.includes("1.5") || m.includes("flash") || m.includes("2.0")) : GEMINI_MODELS;
+  const filteredModels = hasImages ? GEMINI_MODELS.filter(m => m.includes("1.5") || m.includes("2.0") || m.includes("2.5") || m.includes("3.1")) : GEMINI_MODELS;
 
   for (const currentModelName of filteredModels) {
     try {
-      if (hasImages && !currentModelName.includes("1.5") && !currentModelName.includes("flash") && !currentModelName.includes("2.0")) {
+      if (hasImages && !currentModelName.includes("1.5") && !currentModelName.includes("2.0") && !currentModelName.includes("2.5") && !currentModelName.includes("3.1")) {
         continue; // double check
       }
       const model = genAI.getGenerativeModel({ model: currentModelName });
