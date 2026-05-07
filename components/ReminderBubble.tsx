@@ -1,5 +1,6 @@
 'use client'
 import type { Reminder } from '@/types'
+import { IconBell } from '@/components/Icons'
 
 interface Props {
   reminder: Reminder
@@ -11,7 +12,7 @@ export default function ReminderBubble({ reminder, onDismiss }: Props) {
     <div className="reminder-bubble animate-fade-up">
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12 }}>
         <div style={{ display: 'flex', gap: 10 }}>
-          <span style={{ fontSize: 20, flexShrink: 0 }}>⏰</span>
+          <span style={{ flexShrink: 0, display: 'inline-flex' }}><IconBell size={20} color="#fbbf24" /></span>
           <p style={{ fontSize: 13, lineHeight: 1.5, color: 'var(--text)' }}>
             {reminder.message}
           </p>

@@ -101,7 +101,7 @@ export async function POST(req: Request) {
     console.error('[ExecutiveVAi] AI Error:', err.message)
     return NextResponse.json({
       type: 'chat',
-      text: `⚠️ AI Service Error: ${err.message}. Please try again in a moment.`,
+      text: `AI Service Error: ${err.message}. Please try again in a moment.`,
     })
   }
 
@@ -249,7 +249,7 @@ export async function POST(req: Request) {
         }
 
         if (!googleToken) {
-          return NextResponse.json({ type: 'chat', text: '⚠️ Google Calendar is not connected. Please sign out and sign back in to reconnect.' })
+          return NextResponse.json({ type: 'chat', text: 'Google Calendar is not connected. Please sign out and sign back in to reconnect.' })
         }
 
         let startTime = new Date(Date.now() + 5 * 60000).toISOString()
@@ -278,7 +278,7 @@ export async function POST(req: Request) {
 
           return NextResponse.json({
             type: 'chat',
-            text: action.naturalResponse ?? `✅ Done! I've added "${title}" to your calendar.`,
+            text: action.naturalResponse ?? `Done! I've added "${title}" to your calendar.`,
             action: { ...action, eventId: ev.eventId },
             suggestedAnswers: action?.suggestedAnswers || []
           })
@@ -289,13 +289,13 @@ export async function POST(req: Request) {
           if (err.code === 401 || err.status === 401) {
             return NextResponse.json({
               type: 'chat',
-              text: '⚠️ Your Google session has expired. Please **sign out and sign back in** to refresh your connection.',
+              text: 'Your Google session has expired. Please sign out and sign back in to refresh your connection.',
             })
           }
 
           return NextResponse.json({
             type: 'chat',
-            text: `⚠️ Failed to create the event: ${err.message ?? 'Unknown error'}`,
+            text: `Failed to create the event: ${err.message ?? 'Unknown error'}`,
           })
         }
       }
@@ -329,7 +329,7 @@ export async function POST(req: Request) {
           }
         } catch (err: any) {
           console.error('Routine analysis error:', err)
-          return NextResponse.json({ type: 'chat', text: '⚠️ Error analyzing routine: ' + err.message })
+          return NextResponse.json({ type: 'chat', text: 'Error analyzing routine: ' + err.message })
         }
       }
 
@@ -553,7 +553,7 @@ export async function POST(req: Request) {
         if (emails.length === 0) {
           return NextResponse.json({
             type: 'chat',
-            text: "📭 You have no new unread emails in your Primary inbox.",
+            text: "You have no new unread emails in your Primary inbox.",
             emails: []
           })
         }
@@ -574,9 +574,9 @@ IMPORTANT RULES:
 Respond with ONLY a CHAT: message. Example:
 CHAT: You have 3 unread emails. Here's what needs attention:
 
-📌 **Meeting request** from John — wants to schedule a call for Friday. Want me to set it up?
-📧 **Project update** from Sarah — FYI, no action needed.
-⏰ **Deadline reminder** from Prof. Garcia — Assignment due May 5th.`
+- **Meeting request** from John — wants to schedule a call for Friday. Want me to set it up?
+- **Project update** from Sarah — FYI, no action needed.
+- **Deadline reminder** from Prof. Garcia — Assignment due May 5th.`
 
         try {
           const analysisText = await getAIResponse([
@@ -600,7 +600,7 @@ CHAT: You have 3 unread emails. Here's what needs attention:
           // Fallback to basic summary if AI analysis fails
           return NextResponse.json({
             type: 'chat',
-            text: `📧 You have ${emails.length} unread emails. Check them below:`,
+            text: `You have ${emails.length} unread emails. Check them below:`,
             action,
             emails
           })
@@ -730,7 +730,7 @@ Keep the formatting clean using markdown bolding. No code blocks.
 
     return NextResponse.json({
       type: 'chat',
-      text: `⚠️ I ran into an issue trying to do that: *${errMsg}*. Please check your inputs or try again.`
+      text: `I ran into an issue trying to do that: ${errMsg}. Please check your inputs or try again.`
     })
   }
 }

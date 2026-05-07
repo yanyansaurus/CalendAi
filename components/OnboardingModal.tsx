@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useMemo, useCallback } from 'react'
 import { useTheme } from '@/components/ThemeProvider'
+import { IconCalendar, IconSparkles, IconAlertTriangle, IconInfo } from '@/components/Icons'
 
 const getColor = (id: string) => {
   const colors: Record<string, string> = {
@@ -226,7 +227,7 @@ export default function OnboardingModal() {
 
       if (res.ok) {
         const data = await res.json()
-        alert(`🎉 Successfully synced ${data.count} events across ${data.days} days!`)
+        alert(`Successfully synced ${data.count} events across ${data.days} days!`)
         localStorage.setItem('executive_vai_onboarded', 'true')
         window.dispatchEvent(new CustomEvent('routine-synced'))
         setIsOpen(false)
@@ -297,7 +298,7 @@ export default function OnboardingModal() {
               ))}
             </div>
             <button disabled={loadingEvents} onClick={startArchitecting} className="btn-brand" style={{ width: '100%', padding: 16, borderRadius: 16, fontWeight: 800 }}>
-              {loadingEvents ? '⌛ Fetching Calendar...' : 'Start Building →'}
+              {loadingEvents ? 'Fetching Calendar...' : 'Start Building →'}
             </button>
           </div>
         )}
@@ -309,11 +310,15 @@ export default function OnboardingModal() {
                 <h2 style={{ fontSize: 24, fontWeight: 900 }}>Daily Architect</h2>
                 <div style={{ padding: '4px 12px', background: 'var(--brand)', color: '#fff', borderRadius: 20, fontSize: 10, fontWeight: 800 }}>DAY {currentDayIndex + 1} OF {dailyRoutines.length}</div>
               </div>
-              <p style={{ color: 'var(--brand)', fontWeight: 800, marginBottom: 24, fontSize: 14 }}>📅 {currentRoutine.formattedDate}</p>
+              <p style={{ color: 'var(--brand)', fontWeight: 800, marginBottom: 24, fontSize: 14, display: 'flex', alignItems: 'center', gap: 6 }}>
+                <IconCalendar size={14} /> {currentRoutine.formattedDate}
+              </p>
               
               {currentDayIndex > 0 && (
                 <div style={{ marginBottom: 20 }}>
-                  <label style={{ fontSize: 10, fontWeight: 800, color: 'var(--text-subtle)', display: 'block', marginBottom: 8 }}>✨ COPY FROM MEMORY</label>
+                  <label style={{ fontSize: 10, fontWeight: 800, color: 'var(--text-subtle)', display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8 }}>
+                    <IconSparkles size={10} color="var(--brand-light)" /> COPY FROM MEMORY
+                  </label>
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
                     {dailyRoutines.slice(0, currentDayIndex).map((r, idx) => (
                       <button 
@@ -386,7 +391,7 @@ export default function OnboardingModal() {
 
               {hasOverlap && (
                 <div style={{ marginTop: 16, padding: 12, background: 'rgba(239,68,68,0.1)', color: '#ef4444', borderRadius: 12, fontSize: 12, fontWeight: 700 }}>
-                   ⚠️ Conflict detected on {currentRoutine.formattedDate}.
+                   Conflict detected on {currentRoutine.formattedDate}.
                 </div>
               )}
 
@@ -398,7 +403,7 @@ export default function OnboardingModal() {
               </div>
               {timelineItems.length < 6 && (
                 <div style={{ marginTop: 12, padding: 12, background: 'rgba(59,130,246,0.1)', color: 'var(--brand)', borderRadius: 12, fontSize: 11, fontWeight: 700 }}>
-                   ℹ️ Minimum 6 tasks required ({timelineItems.length}/6)
+                   Minimum 6 tasks required ({timelineItems.length}/6)
                 </div>
               )}
             </div>
@@ -454,7 +459,7 @@ export default function OnboardingModal() {
                 Back to Architect
               </button>
               <button disabled={syncing} onClick={handleFinish} className="btn-brand" style={{ flex: 2, padding: 18, borderRadius: 18, fontWeight: 800, opacity: syncing ? 0.7 : 1 }}>
-                {syncing ? '⌛ Syncing...' : 'Push to Google Calendar →'}
+                {syncing ? 'Syncing...' : 'Push to Google Calendar →'}
               </button>
             </div>
           </div>

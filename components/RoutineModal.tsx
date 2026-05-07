@@ -1,5 +1,6 @@
 "use client";
 import { useState } from "react";
+import { IconTrash, IconCheckCircle, IconArrowRight } from '@/components/Icons'
 
 interface RoutineInput {
   wakeUp: string;
@@ -110,7 +111,7 @@ export default function RoutineModal({ onClose, onSave }: { onClose: () => void;
           <div className="flex justify-end mt-8 gap-3">
             <button onClick={onClose} className="px-4 py-2 border border-[var(--border)] text-[var(--text)] rounded-lg hover:bg-[var(--surface-2)] transition-colors">Skip</button>
             <button onClick={generateSchedule} disabled={isGenerating} className="btn-brand flex-1 flex justify-center py-2">
-              {isGenerating ? "Generating..." : "Generate Schedule 🚀"}
+              {isGenerating ? "Generating..." : "Generate Schedule"}
             </button>
           </div>
         </div>
@@ -134,7 +135,7 @@ export default function RoutineModal({ onClose, onSave }: { onClose: () => void;
                 <input type="number" value={task.duration} className="border border-[var(--border)] bg-[var(--bg)] p-1 rounded w-16 text-sm outline-none text-[var(--text)]" onChange={e => setGeneratedTasks(prev => prev.map(t => t.id === task.id ? {...t, duration: +e.target.value} : t))} />
                 <span className="text-xs text-[var(--text-muted)]">min</span>
               </div>
-              <button onClick={() => setGeneratedTasks(prev => prev.filter(t => t.id !== task.id))} className="text-red-400 hover:text-red-500 transition-colors ml-1" title="Remove">🗑️</button>
+              <button onClick={() => setGeneratedTasks(prev => prev.filter(t => t.id !== task.id))} className="text-red-400 hover:text-red-500 transition-colors ml-1" title="Remove"><IconTrash size={15} /></button>
             </div>
           ))}
         </div>
@@ -152,7 +153,7 @@ export default function RoutineModal({ onClose, onSave }: { onClose: () => void;
             const acceptedTasks = generatedTasks.filter(t => t.accepted);
             onSave(acceptedTasks);
           }} className="btn-brand px-6 py-2">
-            Save to Calendar ✅
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>Save to Calendar <IconCheckCircle size={14} /></span>
           </button>
         </div>
       </div>

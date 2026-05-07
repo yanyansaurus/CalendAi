@@ -1,5 +1,9 @@
 'use client'
 import { useEffect, useState } from 'react'
+import {
+  IconClock, IconCalendar, IconTrendingUp, IconMail,
+  IconLightbulb, IconRefresh, IconSparkles
+} from '@/components/Icons'
 
 interface Reminder {
   time: string
@@ -123,7 +127,7 @@ export default function BriefingPanel() {
     return (
       <div style={{ padding: 40, textAlign: 'center' }}>
         <p style={{ color: 'var(--danger)', marginBottom: 16 }}>{error}</p>
-        <button className="btn-brand" onClick={() => loadBriefing()}>🔄 Retry</button>
+        <button className="btn-brand" onClick={() => loadBriefing()}>Retry</button>
       </div>
     )
   }
@@ -150,7 +154,7 @@ export default function BriefingPanel() {
             </p>
             <div style={{ width: 1, height: 12, background: 'var(--border)' }} />
             <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: 'var(--brand-light)', fontWeight: 700, fontSize: 13 }}>
-              <span style={{ fontSize: 14 }}>🕒</span>
+              <IconClock size={14} color="var(--brand-light)" />
               {currentTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
             </div>
           </div>
@@ -162,7 +166,7 @@ export default function BriefingPanel() {
             className="btn-brand"
             style={{ fontSize: 13, padding: '6px 14px', borderRadius: 8, transition: 'all 0.2s', display: 'flex', alignItems: 'center', gap: 6 }}
           >
-            {emailSent ? '✅ Sent!' : emailing ? 'Sending...' : '📧 Email Me'}
+            {emailSent ? 'Sent!' : emailing ? 'Sending...' : 'Email Me'}
           </button>
           <button
             onClick={() => loadBriefing(true)}
@@ -171,7 +175,7 @@ export default function BriefingPanel() {
             style={{ fontSize: 16, padding: '6px 10px', borderRadius: 8, opacity: refreshing ? 0.5 : 1, transition: 'all 0.2s' }}
             title="Refresh briefing"
           >
-            {refreshing ? '⏳' : '🔄'}
+            {refreshing ? <IconRefresh size={14} /> : <IconRefresh size={14} />}
           </button>
         </div>
       </div>
@@ -181,7 +185,7 @@ export default function BriefingPanel() {
       {briefing.todayReminders?.length > 0 && (
         <section style={{ marginBottom: 28 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
-            <span style={{ fontSize: 18 }}>📅</span>
+            <IconCalendar size={17} color="var(--brand-light)" />
             <h3 style={{ fontSize: 16, fontWeight: 700 }}>Today&apos;s Highlights</h3>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
@@ -214,7 +218,7 @@ export default function BriefingPanel() {
       {briefing.weeklyAnalysis && (
         <section style={{ marginBottom: 28 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
-            <span style={{ fontSize: 18 }}>📈</span>
+            <IconTrendingUp size={17} color="var(--brand-light)" />
             <h3 style={{ fontSize: 16, fontWeight: 700 }}>Weekly Performance</h3>
           </div>
           <div className="glass" style={{ padding: 20, borderRadius: 20, background: 'var(--surface-2)' }}>
@@ -243,7 +247,7 @@ export default function BriefingPanel() {
       {briefing.emailInsights?.length > 0 && (
         <section style={{ marginBottom: 28 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
-            <span style={{ fontSize: 18 }}>📧</span>
+            <IconMail size={17} color="var(--brand-light)" />
             <h3 style={{ fontSize: 16, fontWeight: 700 }}>Email Actions</h3>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
@@ -254,7 +258,7 @@ export default function BriefingPanel() {
                   <span style={{ fontSize: 10, padding: '2px 8px', borderRadius: 10, background: `${URGENCY_COLORS[e.priority]}20`, color: URGENCY_COLORS[e.priority], fontWeight: 700 }}>{e.priority.toUpperCase()}</span>
                 </div>
                 <p style={{ fontSize: 12, color: 'var(--brand-light)', fontWeight: 500, marginBottom: 4 }}>{e.subject}</p>
-                <p style={{ fontSize: 12, color: 'var(--text-muted)' }}>💡 {e.action}</p>
+                <p style={{ fontSize: 12, color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: 4 }}><IconLightbulb size={12} /> {e.action}</p>
               </div>
             ))}
           </div>
@@ -264,7 +268,7 @@ export default function BriefingPanel() {
       {/* Motivational Note */}
       {briefing.motivationalNote && (
         <div className="glass" style={{ padding: 20, borderRadius: 16, textAlign: 'center', background: 'linear-gradient(135deg, rgba(99,102,241,0.05), rgba(79,70,229,0.02))', border: '1px solid var(--border)' }}>
-          <p style={{ fontSize: 13, fontStyle: 'italic', color: 'var(--text-muted)', lineHeight: 1.6 }}>✨ {briefing.motivationalNote}</p>
+          <p style={{ fontSize: 13, fontStyle: 'italic', color: 'var(--text-muted)', lineHeight: 1.6 }}>{briefing.motivationalNote}</p>
         </div>
       )}
     </div>

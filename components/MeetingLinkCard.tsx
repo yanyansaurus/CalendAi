@@ -28,7 +28,7 @@ export default function MeetingLinkCard({ meeting }: Props) {
     }}>
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
-        <span style={{ fontSize: 20 }}>{isZoom ? '📹' : '🎥'}</span>
+        <span style={{ display: 'flex', alignItems: 'center' }}><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={isZoom ? '#2d8cff' : 'var(--meeting-color)'} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><polygon points="23 7 16 12 23 17 23 7" /><rect x="1" y="5" width="15" height="14" rx="2" ry="2" /></svg></span>
         <div>
           <p style={{ fontWeight: 600, fontSize: 14, color: 'var(--text)' }}>
             {meeting.title}
@@ -74,7 +74,7 @@ export default function MeetingLinkCard({ meeting }: Props) {
           className="btn-brand"
           style={{ flex: 1, justifyContent: 'center', padding: '8px 16px', fontSize: 13 }}
         >
-          {copied ? '✅ Copied!' : '📋 Copy Link'}
+          {copied ? 'Copied!' : 'Copy Link'}
         </button>
         <a
           href={link}
@@ -83,7 +83,7 @@ export default function MeetingLinkCard({ meeting }: Props) {
           className="btn-ghost"
           style={{ flex: 1, justifyContent: 'center', textDecoration: 'none', padding: '8px 16px', fontSize: 13 }}
         >
-          🚀 Join Now
+          Join Now
         </a>
       </div>
     </div>

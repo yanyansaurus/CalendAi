@@ -94,7 +94,7 @@ export default function WeekScheduleModal({ onClose, onSelectSlot, onSelectEvent
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <div>
               <h2 style={{ fontSize: 20, fontWeight: 800 }}>
-                {isRescheduleMode ? '🔄 Select Event to Reschedule' : mode === 'task' ? '📝 Draft New Task' : '📅 Draft New Event'}
+                {isRescheduleMode ? 'Select Event to Reschedule' : mode === 'task' ? 'Draft New Task' : 'Draft New Event'}
               </h2>
               <p style={{ fontSize: 13, color: 'var(--text-muted)' }}>
                 {isRescheduleMode

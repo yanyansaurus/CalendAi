@@ -1,5 +1,9 @@
 'use client'
 import { useEffect, useState, useCallback } from 'react'
+import { 
+  IconUser, IconMail, IconTrash, IconCopy, 
+  IconCheck, IconPlus, IconX, IconAlertCircle 
+} from '@/components/Icons'
 
 interface Contact {
   id: string
@@ -108,7 +112,7 @@ function ContactsSection() {
           onClick={() => { setShowAdd(!showAdd); setError(null) }}
           style={{ fontSize: 13, padding: '8px 16px', flexShrink: 0 }}
         >
-          {showAdd ? '✕ Cancel' : '+ Add Contact'}
+          {showAdd ? <><IconX size={14} /> Cancel</> : <><IconPlus size={14} /> Add Contact</>}
         </button>
       </div>
 
@@ -158,11 +162,13 @@ function ContactsSection() {
               disabled={saving}
               style={{ fontSize: 13, padding: '9px 20px', alignSelf: 'flex-end', flexShrink: 0 }}
             >
-              {saving ? '⏳ Saving…' : 'Save'}
+              {saving ? 'Saving…' : 'Save'}
             </button>
           </div>
           {error && (
-            <p style={{ fontSize: 12, color: '#f87171', marginTop: 8 }}>⚠️ {error}</p>
+            <p style={{ fontSize: 12, color: '#f87171', marginTop: 8, display: 'flex', alignItems: 'center', gap: 4 }}>
+              <IconAlertCircle size={14} /> {error}
+            </p>
           )}
         </div>
       )}
@@ -180,7 +186,9 @@ function ContactsSection() {
           </div>
         ) : contacts.length === 0 ? (
           <div style={{ padding: 40, textAlign: 'center' }}>
-            <div style={{ fontSize: 36, marginBottom: 10 }}>👤</div>
+            <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 12 }}>
+              <IconUser size={48} color="var(--text-subtle)" />
+            </div>
             <p style={{ color: 'var(--text-muted)', fontSize: 14, marginBottom: 4 }}>No contacts saved yet</p>
             <p style={{ color: 'var(--text-subtle)', fontSize: 12 }}>
               Add contacts to email them by name — e.g. &ldquo;Email Sarah about the report&rdquo;
@@ -256,7 +264,7 @@ function ContactsSection() {
                       fontSize: 14, transition: 'all 0.15s',
                     }}
                   >
-                    {copiedId === contact.id ? '✓' : '📋'}
+                    {copiedId === contact.id ? <IconCheck size={14} /> : <IconCopy size={14} />}
                   </button>
 
                   {/* Quick email via chat */}
@@ -279,7 +287,7 @@ function ContactsSection() {
                     onMouseEnter={e => { (e.currentTarget.style.background = 'rgba(99,102,241,0.15)'); (e.currentTarget.style.color = 'var(--brand-light)') }}
                     onMouseLeave={e => { (e.currentTarget.style.background = 'var(--surface-3)'); (e.currentTarget.style.color = 'var(--text-muted)') }}
                   >
-                    ✉️
+                    <IconMail size={14} />
                   </button>
 
                   {/* Delete */}
@@ -297,7 +305,7 @@ function ContactsSection() {
                     onMouseEnter={e => { (e.currentTarget.style.background = 'rgba(248,113,113,0.12)'); (e.currentTarget.style.color = '#f87171') }}
                     onMouseLeave={e => { (e.currentTarget.style.background = 'var(--surface-3)'); (e.currentTarget.style.color = 'var(--text-subtle)') }}
                   >
-                    🗑️
+                    <IconTrash size={14} />
                   </button>
                 </div>
               </div>

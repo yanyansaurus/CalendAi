@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import type { AgentAction } from '@/types'
+import { IconCalendar, IconRefresh, IconUsers, IconPencil } from '@/components/Icons'
 
 interface DraftEventCardProps {
   action: AgentAction
@@ -101,7 +102,7 @@ export default function DraftEventCard({ action, onConfirm, onCancel, onShuffle 
               onClick={onShuffle}
               style={{ background: 'rgba(255,255,255,0.1)', border: 'none', borderRadius: 20, color: '#fff', fontSize: 10, padding: '2px 10px', cursor: 'pointer' }}
             >
-              🔄 Shuffle Time
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}><IconRefresh size={11} /> Shuffle Time</span>
             </button>
           )}
         </div>
@@ -125,7 +126,7 @@ export default function DraftEventCard({ action, onConfirm, onCancel, onShuffle 
       {/* Details */}
       <div style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: 14 }}>
         <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
-          <div style={{ fontSize: 20 }}>📅</div>
+          <div style={{ display: 'flex', alignItems: 'center' }}><IconCalendar size={18} color="var(--brand-light)" /></div>
           <div style={{ flex: 1 }}>
             <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text)' }}>{dateStr}</div>
             <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>{timeStr} ({action.duration ?? 60} mins)</div>
@@ -135,7 +136,7 @@ export default function DraftEventCard({ action, onConfirm, onCancel, onShuffle 
 
         {action.platform && (
           <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
-            <div style={{ fontSize: 20 }}>📹</div>
+            <div style={{ display: 'flex', alignItems: 'center' }}><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--brand-light)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><polygon points="23 7 16 12 23 17 23 7" /><rect x="1" y="5" width="15" height="14" rx="2" ry="2" /></svg></div>
             <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text)' }}>
               {action.platform === 'zoom' ? 'Zoom Meeting' : 'Google Meet'}
             </div>
@@ -143,7 +144,7 @@ export default function DraftEventCard({ action, onConfirm, onCancel, onShuffle 
         )}
 
         <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
-          <div style={{ fontSize: 20 }}>👥</div>
+          <div style={{ display: 'flex', alignItems: 'center' }}><IconUsers size={18} color="var(--text-muted)" /></div>
           <div style={{ flex: 1 }}>
             <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-muted)', marginBottom: 4 }}>Attendees</div>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, marginBottom: 8 }}>
@@ -199,7 +200,7 @@ export default function DraftEventCard({ action, onConfirm, onCancel, onShuffle 
         </div>
 
         <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
-          <div style={{ fontSize: 20 }}>📝</div>
+          <div style={{ display: 'flex', alignItems: 'center' }}><IconPencil size={18} color="var(--text-muted)" /></div>
           <div style={{ flex: 1 }}>
             <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-muted)', marginBottom: 4 }}>Description / Agenda</div>
             <textarea 

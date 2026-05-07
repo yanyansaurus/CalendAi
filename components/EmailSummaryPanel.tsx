@@ -1,5 +1,9 @@
 'use client'
 import { useEffect, useState } from 'react'
+import { 
+  IconMail, IconClock, IconLightbulb, IconRefresh, 
+  IconCheckCircle, IconXCircle, IconChevronRight, IconChevronDown 
+} from '@/components/Icons'
 
 interface ActionItem {
   from: string
@@ -82,7 +86,7 @@ export default function EmailSummaryPanel() {
     return (
       <div style={{ padding: 40, textAlign: 'center' }}>
         <p style={{ color: 'var(--danger)', marginBottom: 16 }}>{error}</p>
-        <button className="btn-brand" onClick={() => loadSummary()}>🔄 Retry</button>
+        <button className="btn-brand" onClick={() => loadSummary()}>Retry</button>
       </div>
     )
   }
@@ -94,7 +98,9 @@ export default function EmailSummaryPanel() {
       {/* Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 24 }}>
         <div>
-          <h2 style={{ fontSize: 22, fontWeight: 700, marginBottom: 6 }}>📧 Email Summary</h2>
+          <h2 style={{ fontSize: 22, fontWeight: 700, marginBottom: 6, display: 'flex', alignItems: 'center', gap: 10 }}>
+            <IconMail size={24} color="var(--brand)" /> Email Summary
+          </h2>
           <p style={{ fontSize: 13, color: 'var(--text-muted)' }}>{summary.overview}</p>
         </div>
         <button
@@ -104,7 +110,7 @@ export default function EmailSummaryPanel() {
           style={{ fontSize: 16, padding: '6px 10px', borderRadius: 8, opacity: refreshing ? 0.5 : 1 }}
           title="Refresh"
         >
-          {refreshing ? '⏳' : '🔄'}
+          {refreshing ? <IconRefresh size={16} /> : <IconRefresh size={16} />}
         </button>
       </div>
 
@@ -131,7 +137,7 @@ export default function EmailSummaryPanel() {
       {summary.actionItems?.length > 0 && (
         <section style={{ marginBottom: 28 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
-            <span style={{ fontSize: 16 }}>⚡</span>
+            <span style={{ display: 'flex', alignItems: 'center' }}><IconLightbulb size={16} color="var(--brand-light)" /></span>
             <h3 style={{ fontSize: 15, fontWeight: 700 }}>Needs Your Attention</h3>
             <span style={{ fontSize: 11, color: 'var(--text-subtle)' }}>({summary.actionItems.length})</span>
           </div>
@@ -144,7 +150,9 @@ export default function EmailSummaryPanel() {
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6, flexWrap: 'wrap', gap: 4 }}>
                   <span style={{ fontSize: 13, fontWeight: 700 }}>{item.from}</span>
                   <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
-                    <span style={{ fontSize: 10, color: 'var(--text-subtle)' }}>⏱️ {item.timeEstimate}</span>
+                    <span style={{ fontSize: 10, color: 'var(--text-subtle)', display: 'flex', alignItems: 'center', gap: 4 }}>
+                      <IconClock size={10} /> {item.timeEstimate}
+                    </span>
                     <span style={{
                       fontSize: 9, padding: '2px 8px', borderRadius: 10, fontWeight: 700, textTransform: 'uppercase',
                       background: `${PRIORITY_COLORS[item.priority] ?? '#94a3b8'}20`,
@@ -160,7 +168,7 @@ export default function EmailSummaryPanel() {
                   background: 'rgba(99,102,241,0.1)', padding: '4px 10px', borderRadius: 8,
                   marginBottom: 10,
                 }}>
-                  💡 {item.suggestedAction}
+                  <IconLightbulb size={12} /> {item.suggestedAction}
                 </div>
                 {/* Action Buttons */}
                 <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
@@ -181,7 +189,7 @@ export default function EmailSummaryPanel() {
                       } : prev)
                     }}
                   >
-                    ✅ Accept & Draft Reply
+                    Accept & Draft Reply
                   </button>
                   <button
                     className="btn-ghost"
@@ -194,7 +202,7 @@ export default function EmailSummaryPanel() {
                       } : prev)
                     }}
                   >
-                    ✕ Dismiss
+                    Dismiss
                   </button>
                 </div>
               </div>
@@ -213,11 +221,11 @@ export default function EmailSummaryPanel() {
               display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12, width: '100%',
             }}
           >
-            <span style={{ fontSize: 16 }}>📬</span>
+            <span style={{ display: 'flex', alignItems: 'center' }}><IconMail size={16} color="var(--text-muted)" /></span>
             <h3 style={{ fontSize: 15, fontWeight: 700, color: 'var(--text)' }}>Can Wait</h3>
             <span style={{ fontSize: 11, color: 'var(--text-subtle)' }}>({summary.lowPriority.length})</span>
             <span style={{ fontSize: 12, color: 'var(--text-subtle)', marginLeft: 'auto' }}>
-              {showLowPriority ? '▼' : '▶'}
+              {showLowPriority ? <IconChevronDown size={14} /> : <IconChevronRight size={14} />}
             </span>
           </button>
           {showLowPriority && (

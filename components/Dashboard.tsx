@@ -11,6 +11,11 @@ import TaskBoard from '@/components/TaskBoard'
 import { useTheme } from '@/components/ThemeProvider'
 import OnboardingModal from '@/components/OnboardingModal'
 import { signOut } from 'next-auth/react'
+import {
+  IconHome, IconChat, IconBrain, IconClipboard,
+  IconMail, IconWallet, IconSettings,
+  IconSun, IconMoon, IconLogOut
+} from '@/components/Icons'
 
 interface DashboardProps {
   session: any
@@ -18,10 +23,21 @@ interface DashboardProps {
 
 type TabId = 'home' | 'chat' | 'briefing' | 'planner' | 'emails' | 'finances' | 'settings'
 
+const NAV_ICON_MAP: Record<TabId, React.FC<{ size?: number; color?: string }>> = {
+  home: IconHome,
+  chat: IconChat,
+  briefing: IconBrain,
+  planner: IconClipboard,
+  emails: IconMail,
+  finances: IconWallet,
+  settings: IconSettings,
+}
+
 export default function Dashboard({ session }: DashboardProps) {
   const [activeTab, setActiveTab] = useState<TabId>('home')
   const [reminders, setReminders] = useState<any[]>([])
   const [suggestions, setSuggestions] = useState<any[]>([])
+  const [plannerMode, setPlannerMode] = useState<'normal' | 'maximized'>('normal')
   const { theme, toggleTheme } = useTheme()
 
   // Global Poller for Reminders and Insights
@@ -84,14 +100,14 @@ export default function Dashboard({ session }: DashboardProps) {
   const hasGoogle = !!session?.googleAccessToken
   const hasZoom = true  // Zoom uses Server-to-Server OAuth — always available if configured
 
-  const navItems: { id: TabId; icon: string; label: string }[] = [
-    { id: 'home', icon: '🏠', label: 'Home' },
-    { id: 'chat', icon: '💬', label: 'Chat' },
-    { id: 'briefing', icon: '🧠', label: 'AI Briefing' },
-    { id: 'planner', icon: '📋', label: 'Planner' },
-    { id: 'emails', icon: '📧', label: 'Emails' },
-    { id: 'finances', icon: '💰', label: 'Finances' },
-    { id: 'settings', icon: '⚙️', label: 'Settings' },
+  const navItems: { id: TabId; label: string }[] = [
+    { id: 'home', label: 'Home' },
+    { id: 'chat', label: 'Chat' },
+    { id: 'briefing', label: 'AI Briefing' },
+    { id: 'planner', label: 'Planner' },
+    { id: 'emails', label: 'Emails' },
+    { id: 'finances', label: 'Finances' },
+    { id: 'settings', label: 'Settings' },
   ]
 
   // Show 5 most important tabs in mobile bottom nav
@@ -100,61 +116,71 @@ export default function Dashboard({ session }: DashboardProps) {
   return (
     <div style={{ display: 'flex', height: '100vh', overflow: 'hidden', background: 'var(--bg)' }}>
       <OnboardingModal />
-      {/* Sidebar - Hidden on mobile */}
+      
+      {/* Sidebar - Visible on Desktop */}
       <aside className="hidden-mobile" style={{
         width: 240, flexShrink: 0, borderRight: '1px solid var(--border)',
         background: 'var(--surface)', display: 'flex', flexDirection: 'column',
-        padding: '20px 16px',
+        padding: '20px 12px',
       }}>
         {/* Logo */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 32 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 32, padding: '0 8px' }}>
           <img src="/logo.png" alt="ExecutiveVAi Logo" style={{
-            width: 36, height: 36, borderRadius: 8,
+            width: 32, height: 32, borderRadius: 8,
             objectFit: 'contain'
           }} />
-          <span style={{ fontWeight: 700, fontSize: 16, letterSpacing: '-0.01em' }}>ExecutiveVAi</span>
+          <span style={{ fontWeight: 700, fontSize: 15, letterSpacing: '-0.02em' }}>ExecutiveVAi</span>
         </div>
 
         {/* User Info */}
-        <div className="glass" style={{ padding: '12px 14px', marginBottom: 24 }}>
-          <p style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)' }}>{session.user?.name ?? 'CEO'}</p>
+        <div style={{
+          padding: '10px 12px', marginBottom: 24, borderRadius: 10,
+          background: 'var(--surface-2)', border: '1px solid var(--border)',
+        }}>
+          <p style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)', lineHeight: 1.3 }}>{session.user?.name ?? 'CEO'}</p>
           <p style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 2 }}>{session.user?.email}</p>
         </div>
 
         {/* Nav links */}
         <nav style={{
-          display: 'flex', flexDirection: 'column', gap: 6, flex: 1,
+          display: 'flex', flexDirection: 'column', gap: 2, flex: 1,
           overflowY: 'auto', minHeight: 0, paddingRight: 4, marginBottom: 16
         }}>
-          {navItems.map((item) => (
-            <div
-              key={item.id}
-              onClick={() => setActiveTab(item.id)}
-              style={{
-                display: 'flex', alignItems: 'center', gap: 12,
-                padding: '10px 14px', borderRadius: 10, cursor: 'pointer',
-                background: activeTab === item.id ? 'var(--brand-glow)' : 'transparent',
-                color: activeTab === item.id ? 'var(--brand-light)' : 'var(--text-muted)',
-                fontSize: 14, fontWeight: activeTab === item.id ? 600 : 500,
-                border: activeTab === item.id ? '1px solid rgba(99,102,241,0.3)' : '1px solid transparent',
-                transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
-                flexShrink: 0,
-              }}
-              onMouseEnter={e => {
-                if (activeTab !== item.id) {
-                  e.currentTarget.style.background = 'rgba(255,255,255,0.03)'
-                }
-              }}
-              onMouseLeave={e => {
-                if (activeTab !== item.id) {
-                  e.currentTarget.style.background = 'transparent'
-                }
-              }}
-            >
-              <span style={{ fontSize: 18 }}>{item.icon}</span>
-              <span>{item.label}</span>
-            </div>
-          ))}
+          {navItems.map((item) => {
+            const Icon = NAV_ICON_MAP[item.id]
+            const isActive = activeTab === item.id
+            return (
+              <div
+                key={item.id}
+                onClick={() => setActiveTab(item.id)}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: 10,
+                  padding: '9px 12px', borderRadius: 8, cursor: 'pointer',
+                  background: isActive ? 'var(--brand-glow)' : 'transparent',
+                  color: isActive ? 'var(--brand-light)' : 'var(--text-muted)',
+                  fontSize: 13, fontWeight: isActive ? 600 : 500,
+                  border: isActive ? '1px solid rgba(99,102,241,0.2)' : '1px solid transparent',
+                  transition: 'all 0.15s ease',
+                  flexShrink: 0,
+                }}
+                onMouseEnter={e => {
+                  if (!isActive) {
+                    e.currentTarget.style.background = 'rgba(255,255,255,0.03)'
+                    e.currentTarget.style.color = 'var(--text)'
+                  }
+                }}
+                onMouseLeave={e => {
+                  if (!isActive) {
+                    e.currentTarget.style.background = 'transparent'
+                    e.currentTarget.style.color = 'var(--text-muted)'
+                  }
+                }}
+              >
+                <Icon size={17} color={isActive ? 'var(--brand-light)' : 'var(--text-muted)'} />
+                <span>{item.label}</span>
+              </div>
+            )
+          })}
         </nav>
 
         {/* Theme Toggle */}
@@ -162,23 +188,24 @@ export default function Dashboard({ session }: DashboardProps) {
           onClick={toggleTheme}
           style={{
             display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-            width: '100%', padding: '8px 12px', borderRadius: 10,
+            width: '100%', padding: '8px 12px', borderRadius: 8,
             background: 'var(--surface-2)', border: '1px solid var(--border)',
             cursor: 'pointer', marginBottom: 8, transition: 'all 0.2s',
           }}
         >
-          <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>
-            {theme === 'dark' ? '🌙 Dark' : '☀️ Light'}
+          <span style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, color: 'var(--text-muted)', fontWeight: 500 }}>
+            {theme === 'dark' ? <IconMoon size={14} /> : <IconSun size={14} />}
+            {theme === 'dark' ? 'Dark' : 'Light'}
           </span>
           <div style={{
-            width: 40, height: 22, borderRadius: 11, position: 'relative',
+            width: 36, height: 20, borderRadius: 10, position: 'relative',
             background: theme === 'dark' ? 'var(--surface-3)' : 'var(--brand)',
             transition: 'background 0.3s',
           }}>
             <div style={{
-              width: 16, height: 16, borderRadius: '50%',
+              width: 14, height: 14, borderRadius: '50%',
               background: '#fff', position: 'absolute', top: 3,
-              left: theme === 'dark' ? 3 : 21,
+              left: theme === 'dark' ? 3 : 19,
               transition: 'left 0.3s ease',
               boxShadow: '0 1px 3px rgba(0,0,0,0.2)',
             }} />
@@ -188,66 +215,88 @@ export default function Dashboard({ session }: DashboardProps) {
         {/* Sign Out */}
         <button
           onClick={() => signOut({ callbackUrl: '/landing' })}
-          className="btn-ghost"
-          style={{ width: '100%', justifyContent: 'center', fontSize: 13, marginBottom: 12 }}
+          style={{
+            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+            width: '100%', padding: '8px 12px', borderRadius: 8,
+            background: 'transparent', border: '1px solid var(--border)',
+            cursor: 'pointer', color: 'var(--text-muted)', fontSize: 12,
+            fontWeight: 500, transition: 'all 0.15s', marginBottom: 8,
+          }}
+          onMouseEnter={e => {
+            e.currentTarget.style.borderColor = 'var(--danger)'
+            e.currentTarget.style.color = 'var(--danger)'
+          }}
+          onMouseLeave={e => {
+            e.currentTarget.style.borderColor = 'var(--border)'
+            e.currentTarget.style.color = 'var(--text-muted)'
+          }}
         >
+          <IconLogOut size={14} />
           Sign Out
         </button>
       </aside>
 
-      {/* Mobile Bottom Nav */}
+      {/* Bottom Nav - Visible on Mobile */}
       <nav className="show-mobile" style={{
         display: 'none', position: 'fixed', bottom: 0, left: 0, right: 0,
-        height: 64, background: 'var(--surface)', borderTop: '1px solid var(--border)',
+        height: 50, background: 'var(--surface)', borderTop: '1px solid var(--border)',
         zIndex: 100, padding: '0 8px',
       }}>
         <div style={{ display: 'flex', height: '100%', alignItems: 'center', justifyContent: 'space-around' }}>
-          {mobileNavItems.map((item) => (
-            <div
-              key={item.id}
-              onClick={() => setActiveTab(item.id)}
-              style={{
-                display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3,
-                padding: '6px 4px', cursor: 'pointer', flex: 1,
-                color: activeTab === item.id ? 'var(--brand-light)' : 'var(--text-muted)',
-                transition: 'all 0.15s',
-              }}
-            >
-              <span style={{ fontSize: 18 }}>{item.icon}</span>
-              <span style={{ fontSize: 9, fontWeight: activeTab === item.id ? 600 : 400 }}>{item.label}</span>
-            </div>
-          ))}
+          {mobileNavItems.map((item) => {
+            const Icon = NAV_ICON_MAP[item.id]
+            const isActive = activeTab === item.id
+            return (
+              <div
+                key={item.id}
+                onClick={() => setActiveTab(item.id)}
+                style={{
+                  display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1,
+                  padding: '4px 0', cursor: 'pointer', flex: 1,
+                  color: isActive ? 'var(--brand-light)' : 'var(--text-muted)',
+                }}
+              >
+                <Icon size={18} color={isActive ? 'var(--brand-light)' : 'var(--text-muted)'} />
+                <span style={{ fontSize: 9, fontWeight: isActive ? 600 : 400 }}>{item.label}</span>
+              </div>
+            )
+          })}
         </div>
       </nav>
 
       {/* Main content */}
       <main style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', paddingBottom: 'env(safe-area-inset-bottom)' }}>
         <header style={{
-          height: 60, borderBottom: '1px solid var(--border)',
+          height: 56, borderBottom: '1px solid var(--border)',
           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-          padding: '0 16px', flexShrink: 0,
+          padding: '0 20px', flexShrink: 0,
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            <img src="/logo.png" alt="Logo" className="show-mobile" style={{ display: 'none', width: 24, height: 24, objectFit: 'contain' }} />
-            <h1 style={{ fontSize: 15, fontWeight: 700, lineHeight: 1 }}>
+            <h1 style={{ fontSize: 14, fontWeight: 600, lineHeight: 1, letterSpacing: '-0.01em' }}>
               {navItems.find(i => i.id === activeTab)?.label}
             </h1>
           </div>
-          <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+          <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
             {/* Connection Indicators */}
             {[
-              { label: 'G', active: hasGoogle },
-              { label: 'Z', active: hasZoom }
+              { label: 'Google', short: 'G', active: hasGoogle },
+              { label: 'Zoom', short: 'Z', active: hasZoom }
             ].map(ind => (
-              <div key={ind.label} style={{ display: 'flex', alignItems: 'center', gap: 4, opacity: ind.active ? 1 : 0.4 }}>
-                <span style={{ width: 5, height: 5, borderRadius: '50%', background: ind.active ? '#10b981' : '#94a3b8' }} />
-                <span style={{ fontSize: 10, fontWeight: 600, color: ind.active ? 'var(--text)' : 'var(--text-muted)' }}>{ind.label}</span>
+              <div key={ind.short} style={{
+                display: 'flex', alignItems: 'center', gap: 5,
+                opacity: ind.active ? 1 : 0.4,
+                padding: '4px 10px', borderRadius: 6,
+                background: ind.active ? 'rgba(16,185,129,0.08)' : 'transparent',
+                border: `1px solid ${ind.active ? 'rgba(16,185,129,0.2)' : 'var(--border)'}`,
+              }}>
+                <span style={{ width: 6, height: 6, borderRadius: '50%', background: ind.active ? '#10b981' : '#94a3b8' }} />
+                <span style={{ fontSize: 11, fontWeight: 500, color: ind.active ? 'var(--text)' : 'var(--text-muted)' }}>{ind.short}</span>
               </div>
             ))}
           </div>
         </header>
 
-        <div style={{ flex: 1, overflow: 'hidden', marginBottom: 64 /* space for mobile nav */ }} className="content-area">
+        <div style={{ flex: 1, overflow: 'hidden', marginBottom: 50 }} className="content-area">
           {activeTab === 'home' && <HomePanel />}
           <div style={{ display: activeTab === 'chat' ? 'block' : 'none', height: '100%' }}>
             <ChatPanel
@@ -260,11 +309,49 @@ export default function Dashboard({ session }: DashboardProps) {
           {activeTab === 'briefing' && <BriefingPanel />}
           {activeTab === 'planner' && (
             <div style={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
-              <div style={{ flex: 1.2, overflowY: 'auto', borderBottom: '1px solid var(--border)' }}>
+              <div 
+                onScroll={(e) => {
+                  if (e.currentTarget.scrollTop > 50 && plannerMode === 'normal') {
+                    setPlannerMode('maximized')
+                  } else if (e.currentTarget.scrollTop <= 0 && plannerMode === 'maximized') {
+                    setPlannerMode('normal')
+                  }
+                }}
+                style={{ 
+                  flex: plannerMode === 'maximized' ? 1 : 2.5, 
+                  overflowY: 'auto', 
+                  borderBottom: '1px solid var(--border)',
+                  transition: 'flex 0.4s cubic-bezier(0.4, 0, 0.2, 1)' 
+                }}
+              >
                 <WeekSchedule />
               </div>
-              <div style={{ flex: 1, overflowY: 'auto', padding: 20, background: 'var(--surface-2)' }}>
-                <TaskBoard />
+              <div style={{ 
+                flex: plannerMode === 'maximized' ? 0 : 1, 
+                minHeight: plannerMode === 'maximized' ? 36 : 0,
+                maxHeight: plannerMode === 'maximized' ? 36 : '100%',
+                overflow: 'hidden', 
+                background: 'var(--surface-2)',
+                transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
+                borderTop: plannerMode === 'maximized' ? '1px solid var(--border)' : 'none',
+                position: 'relative'
+              }}>
+                {plannerMode === 'maximized' ? (
+                  <div 
+                    onClick={() => setPlannerMode('normal')}
+                    style={{ 
+                      height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', 
+                      cursor: 'pointer', gap: 8, color: 'var(--text-muted)', fontSize: 10, fontWeight: 700,
+                      textTransform: 'uppercase', letterSpacing: '0.05em'
+                    }}
+                  >
+                    <IconClipboard size={12} /> Show Task Board
+                  </div>
+                ) : (
+                  <div style={{ height: '100%', overflowY: 'auto', padding: 20 }}>
+                    <TaskBoard />
+                  </div>
+                )}
               </div>
             </div>
           )}

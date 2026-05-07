@@ -1,5 +1,10 @@
 'use client'
-import { useEffect, useState, useCallback, useRef } from 'react'
+import { useEffect, useState, useCallback, useRef, ReactNode } from 'react'
+import {
+  IconTarget, IconArrowDownCircle, IconArrowUpCircle,
+  IconPiggyBank, IconCheckCircle, IconAlertTriangle,
+  IconDollarSign, IconBarChart
+} from '@/components/Icons'
 
 interface Transaction {
   id: string
@@ -46,11 +51,7 @@ const CATEGORY_COLORS: Record<string, string> = {
   Housing: '#fb923c', Savings: '#22d3ee', Other: '#94a3b8',
 }
 
-const CATEGORY_ICONS: Record<string, string> = {
-  Food: '🍔', Transport: '🚗', Utilities: '💡', Entertainment: '🎬',
-  Shopping: '🛍️', Health: '💊', Education: '📚', Subscriptions: '📱',
-  Housing: '🏠', Savings: '💰', Other: '📦',
-}
+// Category icons removed — using colored dots instead for a clean look
 
 export default function FinanceDashboard() {
   const [data, setData] = useState<BudgetData | null>(null)
@@ -117,12 +118,12 @@ export default function FinanceDashboard() {
 
       if (result.success && result.items?.length) {
         setScanPreview(result.items)
-        setScanResult(`📋 Found ${result.itemsExtracted} items — review below before saving`)
+        setScanResult(`[INFO] Found ${result.itemsExtracted} items — review below before saving`)
       } else {
-        setScanResult(`❌ ${result.error || 'No items found'}`)
+        setScanResult(`[ERROR] ${result.error || 'No items found'}`)
       }
     } catch {
-      setScanResult('❌ Failed to scan receipt')
+      setScanResult('[ERROR] Failed to scan receipt')
     } finally {
       setScanning(false)
       if (fileRef.current) fileRef.current.value = ''
@@ -162,7 +163,7 @@ export default function FinanceDashboard() {
     }
 
     setScanPreview(null)
-    setScanResult(`✅ Saved ${scanPreview.length} items to expenses`)
+    setScanResult(`[OK] Saved ${scanPreview.length} items to expenses`)
     setSavingScan(false)
     loadBudget()
   }
@@ -272,7 +273,7 @@ export default function FinanceDashboard() {
             disabled={scanning}
             style={{ fontSize: 13, padding: '8px 16px' }}
           >
-            {scanning ? '⏳ Scanning…' : '📸 Scan Receipt'}
+            {scanning ? 'Scanning…' : 'Scan Receipt'}
           </button>
           <button
             className="btn-brand"
@@ -287,7 +288,7 @@ export default function FinanceDashboard() {
       {scanResult && (
         <div className="glass" style={{
           padding: 12, marginBottom: 16, fontSize: 13,
-          borderLeft: scanResult.startsWith('✅') ? '3px solid #34d399' : scanResult.startsWith('📋') ? '3px solid #818cf8' : '3px solid #f87171',
+          borderLeft: scanResult.startsWith('[OK]') ? '3px solid #34d399' : scanResult.startsWith('[INFO]') ? '3px solid #818cf8' : '3px solid #f87171',
         }}>
           {scanResult}
           <button onClick={() => { setScanResult(null); setScanPreview(null) }} style={{ marginLeft: 12, background: 'none', border: 'none', color: 'var(--text-subtle)', cursor: 'pointer' }}>✕</button>
@@ -298,7 +299,7 @@ export default function FinanceDashboard() {
       {scanPreview && scanPreview.length > 0 && (
         <div className="glass" style={{ padding: 20, marginBottom: 24, borderRadius: 16, border: '1px solid rgba(129,140,248,0.25)' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-            <h3 style={{ fontSize: 15, fontWeight: 700, color: '#818cf8' }}>📋 Review Scanned Items</h3>
+            <h3 style={{ fontSize: 15, fontWeight: 700, color: '#818cf8' }}>Review Scanned Items</h3>
             <span style={{ fontSize: 12, color: 'var(--text-subtle)' }}>Edit amounts or categories before saving</span>
           </div>
 
@@ -342,7 +343,7 @@ export default function FinanceDashboard() {
                   }}
                 >
                   {CATEGORIES.filter(c => c !== 'Savings').map(c => (
-                    <option key={c} value={c}>{CATEGORY_ICONS[c]} {c}</option>
+                    <option key={c} value={c}>{c}</option>
                   ))}
                 </select>
                 <button
@@ -373,7 +374,7 @@ export default function FinanceDashboard() {
               disabled={savingScan}
               style={{ fontSize: 13, padding: '8px 20px' }}
             >
-              {savingScan ? '⏳ Saving…' : `✅ Confirm & Save ${scanPreview.length} Items`}
+              {savingScan ? 'Saving…' : `Confirm & Save ${scanPreview.length} Items`}
             </button>
           </div>
         </div>
@@ -395,7 +396,7 @@ export default function FinanceDashboard() {
                   color: formType === t ? (t === 'expense' ? '#f87171' : t === 'income' ? '#34d399' : '#22d3ee') : 'var(--text-muted)',
                 }}
               >
-                {t === 'expense' ? '💸 Expense' : t === 'income' ? '💵 Income' : '💰 Savings'}
+                {t === 'expense' ? 'Expense' : t === 'income' ? 'Income' : 'Savings'}
               </button>
             ))}
           </div>
@@ -428,7 +429,7 @@ export default function FinanceDashboard() {
                     color: 'var(--text)', outline: 'none',
                   }}
                 >
-                  {CATEGORIES.filter(c => c !== 'Savings').map(c => <option key={c} value={c}>{CATEGORY_ICONS[c]} {c}</option>)}
+                  {CATEGORIES.filter(c => c !== 'Savings').map(c => <option key={c} value={c}>{c}</option>)}
                 </select>
               </div>
             )}
@@ -462,16 +463,16 @@ export default function FinanceDashboard() {
         marginBottom: 28 
       }}>
         {[
-          { label: 'Budget', value: fmt(data?.monthlyLimit ?? 0), color: '#818cf8', icon: '🎯' },
-          { label: 'Expenses', value: fmt(totalExpenses), color: '#f87171', icon: '💸' },
-          { label: 'Income', value: fmt(totalIncome), color: '#34d399', icon: '💵' },
-          { label: 'Savings', value: fmt(totalSavings), color: '#22d3ee', icon: '💰' },
-          { label: 'Left', value: fmt(remaining), color: remaining >= 0 ? '#34d399' : '#f87171', icon: remaining >= 0 ? '✅' : '⚠️' },
+          { label: 'Budget', value: fmt(data?.monthlyLimit ?? 0), color: '#818cf8', icon: <IconTarget size={18} color="#818cf8" /> },
+          { label: 'Expenses', value: fmt(totalExpenses), color: '#f87171', icon: <IconArrowDownCircle size={18} color="#f87171" /> },
+          { label: 'Income', value: fmt(totalIncome), color: '#34d399', icon: <IconArrowUpCircle size={18} color="#34d399" /> },
+          { label: 'Savings', value: fmt(totalSavings), color: '#22d3ee', icon: <IconPiggyBank size={18} color="#22d3ee" /> },
+          { label: 'Left', value: fmt(remaining), color: remaining >= 0 ? '#34d399' : '#f87171', icon: remaining >= 0 ? <IconCheckCircle size={18} color="#34d399" /> : <IconAlertTriangle size={18} color="#f87171" /> },
         ].map((card, i) => (
           <div key={i} className="glass" style={{ padding: 16, borderRadius: 14 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
               <span style={{ fontSize: 10, color: 'var(--text-subtle)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>{card.label}</span>
-              <span style={{ fontSize: 14 }}>{card.icon}</span>
+              <span style={{ display: 'flex', alignItems: 'center' }}>{card.icon}</span>
             </div>
             <p style={{ fontSize: 18, fontWeight: 700, color: card.color }}>{card.value}</p>
           </div>
@@ -498,7 +499,7 @@ export default function FinanceDashboard() {
       {/* ── EXPENSES SECTION ────────────────────────────────────── */}
       <div style={{ marginBottom: 32 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
-          <div style={{ width: 32, height: 32, borderRadius: 8, background: 'rgba(248,113,113,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16 }}>💸</div>
+          <div style={{ width: 32, height: 32, borderRadius: 8, background: 'rgba(248,113,113,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><IconArrowDownCircle size={16} color="#f87171" /></div>
           <h3 style={{ fontSize: 17, fontWeight: 700 }}>Expenses</h3>
           <span style={{ fontSize: 13, color: '#f87171', fontWeight: 600, marginLeft: 'auto' }}>
             {fmt(totalExpenses)} this month
@@ -513,7 +514,7 @@ export default function FinanceDashboard() {
               return (
                 <div key={cat} className="glass" style={{ minWidth: 160, padding: 14, borderRadius: 12, flexShrink: 0 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8 }}>
-                    <span>{CATEGORY_ICONS[cat] ?? '📦'}</span>
+                    <span style={{ width: 8, height: 8, borderRadius: '50%', background: CATEGORY_COLORS[cat] ?? '#94a3b8', flexShrink: 0 }} />
                     <span style={{ fontSize: 12, fontWeight: 600 }}>{cat}</span>
                   </div>
                   <div style={{ fontSize: 16, fontWeight: 700, color: CATEGORY_COLORS[cat] ?? '#94a3b8', marginBottom: 6 }}>{fmt(amount)}</div>
@@ -541,7 +542,7 @@ export default function FinanceDashboard() {
                 borderLeft: '3px solid #f87171',
               }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                  <span style={{ fontSize: 18 }}>{CATEGORY_ICONS[t.category] ?? '📦'}</span>
+                  <span style={{ width: 10, height: 10, borderRadius: '50%', background: CATEGORY_COLORS[t.category] ?? '#94a3b8', flexShrink: 0 }} />
                   <div>
                     <div style={{ fontSize: 13, fontWeight: 600 }}>{t.description}</div>
                     <div style={{ fontSize: 11, color: 'var(--text-subtle)' }}>
@@ -559,7 +560,7 @@ export default function FinanceDashboard() {
       {/* ── INCOME SECTION ──────────────────────────────────────── */}
       <div style={{ marginBottom: 32 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
-          <div style={{ width: 32, height: 32, borderRadius: 8, background: 'rgba(52,211,153,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16 }}>💵</div>
+          <div style={{ width: 32, height: 32, borderRadius: 8, background: 'rgba(52,211,153,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><IconArrowUpCircle size={16} color="#34d399" /></div>
           <h3 style={{ fontSize: 17, fontWeight: 700 }}>Income</h3>
           <span style={{ fontSize: 13, color: '#34d399', fontWeight: 600, marginLeft: 'auto' }}>
             {fmt(totalIncome)} this month
@@ -579,7 +580,7 @@ export default function FinanceDashboard() {
                 borderLeft: '3px solid #34d399',
               }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                  <span style={{ fontSize: 18 }}>💵</span>
+                  <span style={{ width: 10, height: 10, borderRadius: '50%', background: '#34d399', flexShrink: 0 }} />
                   <div>
                     <div style={{ fontSize: 13, fontWeight: 600 }}>{t.description}</div>
                     <div style={{ fontSize: 11, color: 'var(--text-subtle)' }}>
@@ -597,7 +598,7 @@ export default function FinanceDashboard() {
       {/* ── SAVINGS SECTION ─────────────────────────────────────── */}
       <div style={{ marginBottom: 32 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
-          <div style={{ width: 32, height: 32, borderRadius: 8, background: 'rgba(34,211,238,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16 }}>💰</div>
+          <div style={{ width: 32, height: 32, borderRadius: 8, background: 'rgba(34,211,238,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><IconPiggyBank size={16} color="#22d3ee" /></div>
           <h3 style={{ fontSize: 17, fontWeight: 700 }}>Savings</h3>
           <span style={{ fontSize: 13, color: '#22d3ee', fontWeight: 600, marginLeft: 'auto' }}>
             {fmt(totalSavings)} this month
@@ -617,7 +618,7 @@ export default function FinanceDashboard() {
                 borderLeft: '3px solid #22d3ee',
               }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                  <span style={{ fontSize: 18 }}>💰</span>
+                  <span style={{ width: 10, height: 10, borderRadius: '50%', background: '#22d3ee', flexShrink: 0 }} />
                   <div>
                     <div style={{ fontSize: 13, fontWeight: 600 }}>{t.description}</div>
                     <div style={{ fontSize: 11, color: 'var(--text-subtle)' }}>

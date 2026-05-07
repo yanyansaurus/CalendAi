@@ -1,14 +1,18 @@
 'use client'
 import { useRouter } from 'next/navigation'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, ReactNode } from 'react'
 import { useTheme } from '@/components/ThemeProvider'
+import {
+  IconCalendar, IconMail, IconWallet, IconBrain,
+  IconTarget, IconSun, IconMoon, IconSparkles
+} from '@/components/Icons'
 
-const FEATURES = [
-  { icon: '📅', title: 'Smart Scheduling', desc: 'Create events, find free slots, and manage your calendar using natural conversation.' },
-  { icon: '📧', title: 'Email Intelligence', desc: 'Triage your inbox, summarize threads, and draft replies — all powered by AI.' },
-  { icon: '💰', title: 'Budget Tracker', desc: 'Log expenses in plain English and get instant spending insights.' },
-  { icon: '🤖', title: 'AI Chief of Staff', desc: 'One chat interface to manage your entire professional life.' },
-  { icon: '🔒', title: 'Private & Secure', desc: 'Your data stays yours. We only access what you explicitly allow.' },
+const FEATURES: { icon: ReactNode; title: string; desc: string }[] = [
+  { icon: <IconCalendar size={26} color="var(--brand-light)" />, title: 'Smart Scheduling', desc: 'Create events, find free slots, and manage your calendar using natural conversation.' },
+  { icon: <IconMail size={26} color="var(--brand-light)" />, title: 'Email Intelligence', desc: 'Triage your inbox, summarize threads, and draft replies — all powered by AI.' },
+  { icon: <IconWallet size={26} color="var(--brand-light)" />, title: 'Budget Tracker', desc: 'Log expenses in plain English and get instant spending insights.' },
+  { icon: <IconBrain size={26} color="var(--brand-light)" />, title: 'AI Chief of Staff', desc: 'One chat interface to manage your entire professional life.' },
+  { icon: <IconTarget size={26} color="var(--brand-light)" />, title: 'Private & Secure', desc: 'Your data stays yours. We only access what you explicitly allow.' },
 ]
 
 const STEPS = [
@@ -21,7 +25,7 @@ const CHAT_DEMO = [
   { role: 'user', text: 'Move my budget meeting to tomorrow' },
   { role: 'ai', text: "Done! I've moved your Budget Planning to Thursday at 1 PM. Should I notify the attendees?" },
   { role: 'user', text: 'Yes, and block 2 hours for deep work after' },
-  { role: 'ai', text: "✅ Notifications sent! I've also blocked 3:00–5:00 PM for Deep Work. Your afternoon is protected." },
+  { role: 'ai', text: "Done! Notifications sent. I've also blocked 3:00-5:00 PM for Deep Work. Your afternoon is protected." },
 ]
 
 
@@ -76,7 +80,7 @@ export default function LandingPage() {
               }}
               title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
             >
-              {theme === 'dark' ? '☀️' : '🌙'}
+              {theme === 'dark' ? <IconSun size={16} /> : <IconMoon size={16} />}
             </button>
             <button
               onClick={() => router.push('/login')}
@@ -102,7 +106,7 @@ export default function LandingPage() {
           {/* Left — Copy */}
           <div style={{ flex: '1 1 500px', textAlign: 'left' }} className="hero-copy">
             <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: 'var(--brand-glow)', border: '1px solid var(--brand)', borderRadius: 100, padding: '8px 20px', fontSize: 13, color: 'var(--brand)', marginBottom: 32, fontWeight: 700 }}>
-              <span style={{ fontSize: 14 }}>✨</span> AI Chief of Staff
+              <IconSparkles size={14} color="var(--brand)" /> AI Chief of Staff
             </div>
             <h1 style={{ fontSize: 'clamp(44px, 8vw, 72px)', fontWeight: 1000, lineHeight: 0.95, letterSpacing: '-0.05em', marginBottom: 28 }}>
               Precision scheduling<br />
@@ -131,7 +135,7 @@ export default function LandingPage() {
                       display: 'flex', alignItems: 'center', justifyContent: 'center',
                       fontSize: 14
                     }}>
-                      {['👤', '👨‍💼', '👩‍💼', '🚀'][i - 1]}
+                      {['E', 'V', 'A', 'i'][i - 1]}
                     </div>
                   ))}
                 </div>

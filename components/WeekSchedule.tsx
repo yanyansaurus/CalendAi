@@ -1,5 +1,6 @@
 'use client'
 import { useEffect, useState, useCallback } from 'react'
+import { IconRefresh, IconCalendar, IconGlobe } from '@/components/Icons'
 
 interface CalendarEvent {
   id: string
@@ -121,7 +122,7 @@ export default function WeekSchedule() {
     return (
       <div style={{ padding: 40, textAlign: 'center' }}>
         <p style={{ color: 'var(--danger)', marginBottom: 16 }}>{error}</p>
-        <button className="btn-brand" onClick={() => loadWeek(offsetWeeks)}>🔄 Retry</button>
+        <button className="btn-brand" onClick={() => loadWeek(offsetWeeks)} style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}><IconRefresh size={14} /> Retry</button>
       </div>
     )
   }
@@ -157,9 +158,9 @@ export default function WeekSchedule() {
         display: 'flex', gap: 16, padding: '10px 24px', borderBottom: '1px solid var(--border)',
         fontSize: 12, color: 'var(--text-muted)', flexShrink: 0,
       }}>
-        <span>📅 {events.filter(e => !e.isAllDay).length} timed events</span>
-        <span>🌐 {events.filter(e => e.isAllDay).length} all-day events</span>
-        <span>🔗 {events.filter(e => e.meetLink).length} with meeting links</span>
+        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}><IconCalendar size={13} /> {events.filter(e => !e.isAllDay).length} timed events</span>
+        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}><IconGlobe size={13} /> {events.filter(e => e.isAllDay).length} all-day events</span>
+        <span>{events.filter(e => e.meetLink).length} with meeting links</span>
       </div>
 
       {/* ── Grid: Time slots ───────────────────────────────────────── */}
@@ -294,7 +295,7 @@ export default function WeekSchedule() {
                   return (
                     <div
                       key={ev.id}
-                      title={`${ev.title}\n${startTime}${ev.location ? `\n📍 ${ev.location}` : ''}`}
+                      title={`${ev.title}\n${startTime}${ev.location ? `\n${ev.location}` : ''}`}
                       style={{
                         position: 'absolute',
                         top, left: 2, right: 2,

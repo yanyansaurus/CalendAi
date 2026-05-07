@@ -10,39 +10,43 @@ import CommandPalette from '@/components/CommandPalette'
 import RoutineModal from '@/components/RoutineModal'
 import WeekScheduleModal from '@/components/WeekScheduleModal'
 import { saveTasksToCalendar } from '@/app/actions/saveTasks.action'
+import {
+  IconCheckCircle, IconSend, IconMail, IconPencil, IconCalendar,
+  IconVideo, IconFileText, IconClipboard
+} from '@/components/Icons'
 
 const COMMAND_CATEGORIES = [
   {
-    label: '📅 Calendar',
+    label: 'Calendar',
     commands: [
-      { icon: '📅', name: 'Create event', text: 'Add an event called "Project Planning" tomorrow at 2 PM for 1 hour' },
-      { icon: '🤝', name: 'Schedule meeting', text: 'Schedule a Zoom meeting with sarah@example.com next Friday at 10 AM' },
-      { icon: '📋', name: 'Add tasks for the day', text: 'I need to plan my day. I have a dentist appointment at 3 PM and need to review code.' },
-      { icon: '☀️', name: 'Daily briefing', text: 'Good morning! What\'s on my plate today?' },
-      { icon: '🔄', name: 'Reschedule', text: 'Reschedule my "Budget Review" meeting to Thursday at 1 PM' },
-      { icon: '❌', name: 'Cancel event', text: 'Cancel my afternoon sync today' },
+      { icon: null, name: 'Create event', text: 'Add an event called "Project Planning" tomorrow at 2 PM for 1 hour' },
+      { icon: null, name: 'Schedule meeting', text: 'Schedule a Zoom meeting with sarah@example.com next Friday at 10 AM' },
+      { icon: null, name: 'Add tasks for the day', text: 'I need to plan my day. I have a dentist appointment at 3 PM and need to review code.' },
+      { icon: null, name: 'Daily briefing', text: 'Good morning! What\'s on my plate today?' },
+      { icon: null, name: 'Reschedule', text: 'Reschedule my "Budget Review" meeting to Thursday at 1 PM' },
+      { icon: null, name: 'Cancel event', text: 'Cancel my afternoon sync today' },
     ],
   },
   {
-    label: '📧 Email',
+    label: 'Email',
     commands: [
-      { icon: '📨', name: 'Check inbox', text: 'Check my unread emails and tell me if anything is urgent' },
-      { icon: '✉️', name: 'Send email', text: 'Send an email to john@example.com letting him know I am running 5 minutes late' },
-      { icon: '✍️', name: 'Draft reply', text: 'Draft a polite decline reply to the latest investor email' },
+      { icon: null, name: 'Check inbox', text: 'Check my unread emails and tell me if anything is urgent' },
+      { icon: null, name: 'Send email', text: 'Send an email to john@example.com letting him know I am running 5 minutes late' },
+      { icon: null, name: 'Draft reply', text: 'Draft a polite decline reply to the latest investor email' },
     ],
   },
   {
-    label: '💰 Finance',
+    label: 'Finance',
     commands: [
-      { icon: '💸', name: 'Log expense', text: 'Log expense: $14.50 for airport coffee on a business trip' },
-      { icon: '📊', name: 'Check budget', text: 'How much have I spent on Food this month?' },
+      { icon: null, name: 'Log expense', text: 'Log expense: $14.50 for airport coffee on a business trip' },
+      { icon: null, name: 'Check budget', text: 'How much have I spent on Food this month?' },
     ],
   },
   {
-    label: '📊 Analysis',
+    label: 'Analysis',
     commands: [
-      { icon: '⏱️', name: 'Time analysis', text: 'Analyse how I spent my time this week. How many hours were in meetings?' },
-      { icon: '🧠', name: 'Check routine', text: 'Analyze my weekly routine, assume my calendar is empty' },
+      { icon: null, name: 'Time analysis', text: 'Analyse how I spent my time this week. How many hours were in meetings?' },
+      { icon: null, name: 'Check routine', text: 'Analyze my weekly routine, assume my calendar is empty' },
     ],
   },
 ]
@@ -52,7 +56,7 @@ function SuggestionBubble({ suggestion, onDismiss, onAccept }: { suggestion: any
     <div className="reminder-bubble animate-fade-up" style={{ width: 280, borderLeft: '4px solid var(--brand)', background: 'var(--surface)' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
         <span style={{ fontSize: 10, fontWeight: 700, color: 'var(--brand-light)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-          ✨ Suggested Action
+          Suggested Action
         </span>
         <button onClick={() => onDismiss(suggestion.id)} style={{ border: 'none', background: 'none', cursor: 'pointer', color: 'var(--text-subtle)', padding: 0 }}>✕</button>
       </div>
@@ -64,7 +68,7 @@ function SuggestionBubble({ suggestion, onDismiss, onAccept }: { suggestion: any
           style={{ flex: 1, padding: '6px', fontSize: 11, borderRadius: 6 }}
           onClick={() => onAccept(suggestion)}
         >
-          ✅ Yes, do it
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}><IconCheckCircle size={13} /> Confirm</span>
         </button>
         <button
           className="btn-ghost"
@@ -171,7 +175,7 @@ function DraftEmailCard({ action, onSend }: { action: any, onSend: (to: string, 
           background: 'rgba(52, 211, 153, 0.08)', border: '1px solid rgba(52, 211, 153, 0.25)',
           display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap',
         }}>
-          <span style={{ fontSize: 16 }}>📅</span>
+          <span style={{ display: 'flex', alignItems: 'center' }}><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#34d399" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" /><line x1="16" y1="2" x2="16" y2="6" /><line x1="8" y1="2" x2="8" y2="6" /><line x1="3" y1="10" x2="21" y2="10" /></svg></span>
           <div style={{ flex: 1, minWidth: 150 }}>
             <div style={{ fontSize: 12, fontWeight: 700, color: '#34d399' }}>
               Meeting Detected
@@ -191,7 +195,7 @@ function DraftEmailCard({ action, onSend }: { action: any, onSend: (to: string, 
           style={{ flex: 1, padding: '10px', fontSize: 13, display: 'flex', justifyContent: 'center', gap: 6 }}
           onClick={() => onSend(to, subject, body)}
         >
-          🚀 Send Email Now
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}><IconSend size={14} /> Send Email Now</span>
         </button>
         {hasMeeting && (
           <>
@@ -206,7 +210,7 @@ function DraftEmailCard({ action, onSend }: { action: any, onSend: (to: string, 
                 window.dispatchEvent(new CustomEvent('send-chat', { detail: { message: cmd } }))
               }}
             >
-              📹 Create Meeting
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}><IconVideo size={14} /> Create Meeting</span>
             </button>
             <button
               className="btn-ghost"
@@ -224,7 +228,7 @@ function DraftEmailCard({ action, onSend }: { action: any, onSend: (to: string, 
                 }))
               }}
             >
-              🗓️ Add to Calendar
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}><IconCalendar size={14} /> Add to Calendar</span>
             </button>
           </>
         )}
@@ -236,7 +240,7 @@ function DraftEmailCard({ action, onSend }: { action: any, onSend: (to: string, 
 const WELCOME_MSG: ChatMessage = {
   id: 'welcome',
   role: 'assistant',
-  content: 'Good day! I\'m ExecutiveVAi, your AI Executive Assistant. Here\'s what I can do:\n\n📅 Schedule meetings, find free slots, plan your day\n💰 Track expenses, check your budget\n📧 Read & send emails\n📊 Analyse your weekly time\n\nJust tell me what you need!',
+  content: 'Good day! I\'m ExecutiveVAi, your AI Executive Assistant. Here\'s what I can do:\n\n- Schedule meetings, find free slots, plan your day\n- Track expenses, check your budget\n- Read & send emails\n- Analyse your weekly time\n\nJust tell me what you need!',
   timestamp: new Date().toISOString(),
 }
 
@@ -439,7 +443,7 @@ export default function ChatPanel({ reminders, setReminders, suggestions, setSug
       setMessages((prev) => [...prev, {
         id: crypto.randomUUID(),
         role: 'assistant',
-        content: '⚠️ Something went wrong. Please try again.',
+        content: 'Something went wrong. Please try again.',
         timestamp: new Date().toISOString(),
       }])
     } finally {
@@ -533,14 +537,14 @@ export default function ChatPanel({ reminders, setReminders, suggestions, setSug
                     style={{ fontSize: 12, padding: '6px 12px', background: 'var(--surface-2)', border: '1px solid var(--border)' }}
                     onClick={() => sendMessage(`Draft an email to the attendees sharing this meeting link: ${msg.meetingResult?.joinUrl}`)}
                   >
-                    📧 Draft Email with Link
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}><IconMail size={13} /> Draft Email with Link</span>
                   </button>
                   <button
                     className="btn-ghost"
                     style={{ fontSize: 12, padding: '6px 12px', background: 'var(--surface-2)', border: '1px solid var(--border)' }}
                     onClick={() => sendMessage(`Prepare a meeting agenda for this call`)}
                   >
-                    📝 Draft Agenda
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}><IconClipboard size={13} /> Draft Agenda</span>
                   </button>
                   {msg.meetingResult.platform === 'zoom' && (
                     <button
@@ -548,7 +552,7 @@ export default function ChatPanel({ reminders, setReminders, suggestions, setSug
                       style={{ fontSize: 12, padding: '6px 12px', background: 'var(--surface-2)', border: '1px solid var(--border)' }}
                       onClick={() => sendMessage(`Add an event to my calendar for "${msg.meetingResult?.title}" on ${new Date(msg.meetingResult?.startTime || '').toLocaleString()} for ${msg.meetingResult?.duration} minutes`)}
                     >
-                      🗓️ Add to Calendar
+                      Add to Calendar
                     </button>
                   )}
                 </div>
@@ -615,21 +619,21 @@ export default function ChatPanel({ reminders, setReminders, suggestions, setSug
                         style={{ fontSize: 11, padding: '6px 12px', borderRadius: 6, flex: 1 }}
                         onClick={() => sendMessage(`Draft a professional reply to the email from ${email.from.split('<')[0].trim()} about "${email.subject}". The email body says: "${email.body.substring(0, 300)}". If this email mentions a meeting time, extract it into meetingDetails. Keep it brief and polite.`)}
                       >
-                        ✍️ Draft Reply
+                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}><IconPencil size={12} /> Draft Reply</span>
                       </button>
                       <button
                         className="btn-ghost"
                         style={{ fontSize: 11, padding: '6px 12px', borderRadius: 6, flex: 1 }}
                         onClick={() => sendMessage(`Schedule a follow-up meeting about "${email.subject}" with ${email.from.split('<')[0].trim()}`)}
                       >
-                        📅 Follow-up
+                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}><IconCalendar size={12} /> Follow-up</span>
                       </button>
                       <button
                         className="btn-ghost"
                         style={{ fontSize: 11, padding: '6px 12px', borderRadius: 6, flex: 1 }}
                         onClick={() => sendMessage(`Summarize the email from ${email.from.split('<')[0].trim()} about "${email.subject}" and tell me if I need to take any action`)}
                       >
-                        📝 Summarize
+                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}><IconFileText size={12} /> Summarize</span>
                       </button>
                     </div>
                   </div>
@@ -729,7 +733,7 @@ export default function ChatPanel({ reminders, setReminders, suggestions, setSug
                   onMouseEnter={e => (e.currentTarget.style.background = 'rgba(99,102,241,0.1)')}
                   onMouseLeave={e => (e.currentTarget.style.background = 'none')}
                 >
-                  <span style={{ fontSize: 16 }}>{cmd.icon}</span>
+                  <span style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--brand-light)', flexShrink: 0 }} />
                   <span>{cmd.name}</span>
                 </button>
               ))}
@@ -749,7 +753,7 @@ export default function ChatPanel({ reminders, setReminders, suggestions, setSug
                 onMouseEnter={e => (e.currentTarget.style.background = 'rgba(248,113,113,0.08)')}
                 onMouseLeave={e => (e.currentTarget.style.background = 'none')}
               >
-                <span style={{ fontSize: 16 }}>🗑️</span>
+                <span style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--danger)', flexShrink: 0 }} />
                 <span>Clear chat history</span>
               </button>
             </>
@@ -777,7 +781,7 @@ export default function ChatPanel({ reminders, setReminders, suggestions, setSug
             }}
             title="Show commands"
           >
-            ⚡
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" /></svg>
           </button>
           <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 8 }}>
             {imageBase64 && (
@@ -817,7 +821,7 @@ export default function ChatPanel({ reminders, setReminders, suggestions, setSug
             }}
             title="Attach Receipt or Image"
           >
-            📎
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48" /></svg>
           </button>
           <input
             type="file"
@@ -863,7 +867,7 @@ export default function ChatPanel({ reminders, setReminders, suggestions, setSug
             }}
             title="Voice input"
           >
-            {isListening ? '🛑' : '🎙️'}
+            {isListening ? <svg width="16" height="16" viewBox="0 0 24 24" fill="#f87171" stroke="none"><rect x="4" y="4" width="16" height="16" rx="2" /></svg> : <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3z" /><path d="M19 10v2a7 7 0 01-14 0v-2" /><line x1="12" y1="19" x2="12" y2="23" /><line x1="8" y1="23" x2="16" y2="23" /></svg>}
           </button>
           <button
             id="btn-send"

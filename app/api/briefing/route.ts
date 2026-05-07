@@ -63,8 +63,8 @@ export async function GET(req: Request) {
         const sleepTime = prefs?.sleepTime ?? '22:30'
 
         const todayStr = new Date().toISOString().split('T')[0]
-        if (!hasWake) busySlots.unshift({ title: '🌅 Wake Up', start: `${todayStr}T${wakeTime}:00Z`, end: `${todayStr}T${wakeTime}:15Z` })
-        if (!hasSleep) busySlots.push({ title: '🌙 Sleep', start: `${todayStr}T${sleepTime}:00Z`, end: `${todayStr}T23:59:59Z` })
+        if (!hasWake) busySlots.unshift({ title: 'Wake Up', start: `${todayStr}T${wakeTime}:00Z`, end: `${todayStr}T${wakeTime}:15Z` })
+        if (!hasSleep) busySlots.push({ title: 'Sleep', start: `${todayStr}T${sleepTime}:00Z`, end: `${todayStr}T23:59:59Z` })
       }
 
       console.log('[Briefing Debug] Today Slots (Unique):', busySlots.map(s => s.title))
@@ -154,6 +154,7 @@ export async function GET(req: Request) {
     - Focus on 'todayReminders' for the current day only.
     - Acknowledge any recently added schedule or routine updates for today or tomorrow.
     - Ensure 'recommendedSchedule' suggests slots for focus or breaks based on the gaps in busy slots.
+    - DO NOT use emojis. Maintain a professional, text-only corporate style.
   `;
 
   let briefing: any = null
@@ -197,7 +198,7 @@ export async function GET(req: Request) {
         topCategory: "Focus",
         productivityScore: 85
       },
-      motivationalNote: 'Stay focused and take it one task at a time! 💪'
+      motivationalNote: 'Stay focused and take it one task at a time.'
     }
   }
 

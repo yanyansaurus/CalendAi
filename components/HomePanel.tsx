@@ -1,11 +1,16 @@
 'use client'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, ReactNode } from 'react'
 import { useSession } from 'next-auth/react'
+import {
+  IconCalendar, IconCheckCircle, IconMail, IconClock,
+  IconRefresh, IconAlertTriangle, IconTrendingUp,
+  IconLightbulb, IconSparkles, IconArrowRight, IconLoader
+} from '@/components/Icons'
 
 interface HomeStat {
   label: string
   value: string | number
-  icon: string
+  iconType: 'calendar' | 'tasks' | 'emails'
   color: string
 }
 
@@ -36,9 +41,9 @@ const URGENCY_COLORS: Record<string, string> = {
 
 export default function HomePanel() {
   const [stats, setStats] = useState<HomeStat[]>([
-    { label: 'Meetings Today', value: '...', icon: '🗓️', color: 'var(--brand)' },
-    { label: 'Pending Tasks', value: '...', icon: '✅', color: '#10b981' },
-    { label: 'Email Insights', value: '...', icon: '📧', color: '#6366f1' },
+    { label: 'Meetings Today', value: '...', iconType: 'calendar', color: 'var(--brand)' },
+    { label: 'Pending Tasks', value: '...', iconType: 'tasks', color: '#10b981' },
+    { label: 'Email Insights', value: '...', iconType: 'emails', color: '#6366f1' },
   ])
   const [timeline, setTimeline] = useState<TimelineEvent[]>([])
   const [briefing, setBriefing] = useState<Briefing | null>(null)
@@ -116,9 +121,9 @@ export default function HomePanel() {
 
         // Map stats
         const newStats: HomeStat[] = [
-          { label: 'Meetings Today', value: b.todayReminders?.filter((r: any) => r.type === 'calendar').length || 0, icon: '🗓️', color: 'var(--brand)' },
-          { label: 'Pending Tasks', value: data.tasksCount || 0, icon: '✅', color: '#10b981' },
-          { label: 'Email Insights', value: data.emailsCount || 0, icon: '📧', color: '#6366f1' },
+          { label: 'Meetings Today', value: b.todayReminders?.filter((r: any) => r.type === 'calendar').length || 0, iconType: 'calendar', color: 'var(--brand)' },
+          { label: 'Pending Tasks', value: data.tasksCount || 0, iconType: 'tasks', color: '#10b981' },
+          { label: 'Email Insights', value: data.emailsCount || 0, iconType: 'emails', color: '#6366f1' },
         ]
 
         // Map timeline
@@ -183,7 +188,7 @@ export default function HomePanel() {
       {/* Top Status Bar (Clock & Sync) */}
       <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: 16, marginBottom: 12, marginTop: 10 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: 'var(--brand-light)', fontWeight: 700, fontSize: 14 }}>
-          <span style={{ fontSize: 16 }}>🕒</span>
+          <IconClock size={15} color="var(--brand-light)" />
           {currentTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
           <span style={{ opacity: 0.6, fontWeight: 500, fontSize: 12, marginLeft: 4 }}>
             {currentTime.toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' })}
@@ -197,7 +202,7 @@ export default function HomePanel() {
             fontSize: 12, fontWeight: 700, color: 'var(--brand)', background: 'var(--surface-2)'
           }}
         >
-          <span style={{ animation: loading ? 'spin 1s linear infinite' : 'none', display: 'inline-block' }}>🔄</span>
+          <span style={{ animation: loading ? 'spin 1s linear infinite' : 'none', display: 'inline-flex' }}><IconRefresh size={14} /></span>
           Sync
         </button>
       </div>
@@ -213,7 +218,7 @@ export default function HomePanel() {
           }}
         >
           <div style={{ position: 'relative', zIndex: 2 }}>
-            <h2 style={{ fontSize: 24, fontWeight: 800, marginBottom: 12 }}>Welcome, {session?.user?.name?.split(' ')[0] || 'User'}! 👋</h2>
+            <h2 style={{ fontSize: 24, fontWeight: 800, marginBottom: 12 }}>Welcome, {session?.user?.name?.split(' ')[0] || 'User'}</h2>
             <p style={{ fontSize: 16, opacity: 0.9, lineHeight: 1.6, maxWidth: 600 }}>
               I&apos;ve analyzed your schedule. {isIncomplete
                 ? "Your schedule looks a bit thin. I recommend setting up a planning template (Work, Sleep, Lunch, etc.) to keep your routine consistent. Wanna try?"
@@ -335,9 +340,9 @@ export default function HomePanel() {
         </div>
         <div style={{
           width: 48, height: 48, borderRadius: '50%', background: 'var(--brand)',
-          display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
         }}>
-          📅
+          <IconCalendar size={22} color="#fff" />
         </div>
       </button>
 
@@ -364,7 +369,7 @@ export default function HomePanel() {
             </div>
           ) : (!briefing?.greeting && timeline.length === 0) ? (
             <div style={{ padding: 40, textAlign: 'center', borderRadius: 24 }} className="glass">
-              <span style={{ fontSize: 32, display: 'block', marginBottom: 12 }}>✨</span>
+              <span style={{ display: 'flex', justifyContent: 'center', marginBottom: 12 }}><IconSparkles size={32} color="var(--brand-light)" /></span>
               <p style={{ color: 'var(--text-muted)', fontSize: 14 }}>Sync your schedule to generate a briefing.</p>
             </div>
           ) : (
@@ -374,7 +379,7 @@ export default function HomePanel() {
               {briefing?.urgentAlerts && briefing.urgentAlerts.length > 0 && (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <span style={{ fontSize: 16 }}>🚨</span>
+                    <IconAlertTriangle size={16} color="#f87171" />
                     <h4 style={{ fontSize: 14, fontWeight: 800, color: '#f87171', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Critical Radar</h4>
                   </div>
                   {briefing.urgentAlerts.map((a, i) => (
@@ -388,7 +393,7 @@ export default function HomePanel() {
               {/* 2. Timeline List */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <span style={{ fontSize: 16 }}>📅</span>
+                  <IconCalendar size={16} color="var(--brand-light)" />
                   <h4 style={{ fontSize: 14, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Timeline</h4>
                 </div>
                 {timeline.length === 0 ? (
@@ -444,7 +449,7 @@ export default function HomePanel() {
               {briefing?.emailInsights && briefing.emailInsights.length > 0 && (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <span style={{ fontSize: 16 }}>📧</span>
+                    <IconMail size={16} color="var(--brand-light)" />
                     <h4 style={{ fontSize: 14, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Email Actions</h4>
                   </div>
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 10 }}>
@@ -452,7 +457,7 @@ export default function HomePanel() {
                       <div key={i} className="glass" style={{ padding: 14, borderRadius: 14, borderLeft: `4px solid ${e.priority === 'high' ? '#f87171' : 'var(--brand)'}` }}>
                         <p style={{ fontSize: 13, fontWeight: 700, marginBottom: 2 }}>{e.from}</p>
                         <p style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 8 }}>{e.subject}</p>
-                        <p style={{ fontSize: 12, color: 'var(--brand-light)', fontWeight: 600 }}>💡 {e.action}</p>
+                        <p style={{ fontSize: 12, color: 'var(--brand-light)', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 4 }}><IconLightbulb size={13} /> {e.action}</p>
                       </div>
                     ))}
                   </div>
@@ -477,7 +482,7 @@ export default function HomePanel() {
           {briefing && briefing.weeklyAnalysis && (
             <div className="glass" style={{ padding: 24, borderRadius: 24, background: 'linear-gradient(135deg, var(--surface-2) 0%, var(--bg) 100%)', border: '1px solid var(--brand-glow)' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 20 }}>
-                <span style={{ fontSize: 18 }}>📈</span>
+                <IconTrendingUp size={17} color="var(--brand-light)" />
                 <h4 style={{ fontSize: 14, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Performance Scorecard</h4>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 16 }}>
@@ -519,7 +524,9 @@ export default function HomePanel() {
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                   fontSize: 20
                 }}>
-                  {stat.icon}
+                  {stat.iconType === 'calendar' && <IconCalendar size={20} color={stat.color} />}
+                  {stat.iconType === 'tasks' && <IconCheckCircle size={20} color={stat.color} />}
+                  {stat.iconType === 'emails' && <IconMail size={20} color={stat.color} />}
                 </div>
                 <div>
                   <div style={{ fontSize: 13, color: 'var(--text-muted)', marginBottom: 2 }}>{stat.label}</div>

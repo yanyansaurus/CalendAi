@@ -1,14 +1,16 @@
 'use client'
 import type { ScheduleTask } from '@/types'
+import { IconFocus, IconLightbulb, IconTarget, IconPencil, IconRefresh, IconX } from '@/components/Icons'
+import { ReactNode } from 'react'
 
 interface Props { task: ScheduleTask }
 
-const TYPE_CONFIG = {
-  focus:    { color: '#a78bfa', bg: 'rgba(167,139,250,0.08)', icon: '🧘', label: 'Focus' },
-  deep_work:{ color: '#60a5fa', bg: 'rgba(96,165,250,0.08)',  icon: '💡', label: 'Deep Work' },
-  meeting:  { color: '#34d399', bg: 'rgba(52,211,153,0.08)',  icon: '🎯', label: 'Meeting' },
-  admin:    { color: '#fbbf24', bg: 'rgba(251,191,36,0.08)',  icon: '📝', label: 'Admin' },
-} as const
+const TYPE_CONFIG: Record<string, { color: string; bg: string; icon: ReactNode; label: string }> = {
+  focus:    { color: '#a78bfa', bg: 'rgba(167,139,250,0.08)', icon: <IconFocus size={16} color="#a78bfa" />, label: 'Focus' },
+  deep_work:{ color: '#60a5fa', bg: 'rgba(96,165,250,0.08)',  icon: <IconLightbulb size={16} color="#60a5fa" />, label: 'Deep Work' },
+  meeting:  { color: '#34d399', bg: 'rgba(52,211,153,0.08)',  icon: <IconTarget size={16} color="#34d399" />, label: 'Meeting' },
+  admin:    { color: '#fbbf24', bg: 'rgba(251,191,36,0.08)',  icon: <IconPencil size={16} color="#fbbf24" />, label: 'Admin' },
+}
 
 const PRIORITY_COLORS: Record<string, string> = {
   high:   '#f87171',
@@ -31,7 +33,7 @@ export default function DayPlanCard({ task }: Props) {
       borderRadius: 10, padding: '10px 14px',
       display: 'flex', alignItems: 'center', gap: 12,
     }}>
-      <span style={{ fontSize: 18, flexShrink: 0 }}>{cfg.icon}</span>
+      <span style={{ flexShrink: 0, display: 'flex', alignItems: 'center' }}>{cfg.icon}</span>
 
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -74,24 +76,24 @@ export default function DayPlanCard({ task }: Props) {
           onClick={() => window.dispatchEvent(new CustomEvent('send-chat', { detail: { message: `Reschedule ${task.name}` } }))}
           style={{
             fontSize: 12, padding: '4px 6px', background: 'transparent', border: 'none', cursor: 'pointer',
-            opacity: 0.6, transition: 'opacity 0.2s', color: 'var(--text-muted)'
+            opacity: 0.6, transition: 'opacity 0.2s', color: 'var(--text-muted)', display: 'flex', alignItems: 'center',
           }}
           onMouseOver={e => (e.currentTarget.style.opacity = '1')}
           onMouseOut={e => (e.currentTarget.style.opacity = '0.6')}
         >
-          🔄
+          <IconRefresh size={14} />
         </button>
         <button
           title="Cancel"
           onClick={() => window.dispatchEvent(new CustomEvent('send-chat', { detail: { message: `Cancel ${task.name}` } }))}
           style={{
             fontSize: 12, padding: '4px 6px', background: 'transparent', border: 'none', cursor: 'pointer',
-            opacity: 0.6, transition: 'opacity 0.2s', color: '#ef4444'
+            opacity: 0.6, transition: 'opacity 0.2s', color: '#ef4444', display: 'flex', alignItems: 'center',
           }}
           onMouseOver={e => (e.currentTarget.style.opacity = '1')}
           onMouseOut={e => (e.currentTarget.style.opacity = '0.6')}
         >
-          ❌
+          <IconX size={14} />
         </button>
       </div>
     </div>

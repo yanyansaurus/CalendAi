@@ -1,6 +1,10 @@
 'use client'
 import { useEffect, useState, useCallback } from 'react'
 import confetti from 'canvas-confetti'
+import { 
+  IconCheck, IconPlus, IconX, IconTrash, 
+  IconCalendar, IconClipboard, IconTarget 
+} from '@/components/Icons'
 
 interface Task {
   id: string
@@ -13,10 +17,10 @@ interface Task {
 }
 
 const PRIORITY_CONFIG = {
-  high:         { label: '🔴 High Priority',   color: '#f87171', bg: 'rgba(248,113,113,0.1)' },
-  medium:       { label: '🟡 Medium Priority',  color: '#fbbf24', bg: 'rgba(251,191,36,0.1)' },
-  low:          { label: '🟢 Low Priority',     color: '#34d399', bg: 'rgba(52,211,153,0.1)' },
-  recreational: { label: '🎮 Recreational',     color: '#818cf8', bg: 'rgba(129,140,248,0.1)' },
+  high:         { label: 'High Priority',   color: '#f87171', bg: 'rgba(248,113,113,0.1)' },
+  medium:       { label: 'Medium Priority',  color: '#fbbf24', bg: 'rgba(251,191,36,0.1)' },
+  low:          { label: 'Low Priority',     color: '#34d399', bg: 'rgba(52,211,153,0.1)' },
+  recreational: { label: 'Recreational',     color: '#818cf8', bg: 'rgba(129,140,248,0.1)' },
 }
 
 const STATUS_LABELS = { todo: 'To Do', in_progress: 'In Progress', done: 'Done' }
@@ -132,8 +136,8 @@ export default function TaskBoard() {
             {tasks.length} tasks · {tasks.filter(t => t.status === 'done').length} completed
           </p>
         </div>
-        <button className="btn-brand" onClick={() => setShowAdd(!showAdd)} style={{ fontSize: 13, padding: '8px 18px' }}>
-          {showAdd ? '✕ Close' : '+ Add Task'}
+        <button className="btn-brand" onClick={() => setShowAdd(!showAdd)} style={{ fontSize: 13, padding: '8px 18px', display: 'flex', alignItems: 'center', gap: 6 }}>
+          {showAdd ? <><IconX size={14} /> Close</> : <><IconPlus size={14} /> Add Task</>}
         </button>
       </div>
 
@@ -169,10 +173,10 @@ export default function TaskBoard() {
                   padding: '8px 12px', color: 'var(--text)', fontSize: 13, outline: 'none',
                 }}
               >
-                <option value="high">🔴 High</option>
-                <option value="medium">🟡 Medium</option>
-                <option value="low">🟢 Low</option>
-                <option value="recreational">🎮 Recreational</option>
+                <option value="high">High</option>
+                <option value="medium">Medium</option>
+                <option value="low">Low</option>
+                <option value="recreational">Recreational</option>
               </select>
               <input
                 type="date"
@@ -205,7 +209,7 @@ export default function TaskBoard() {
               transition: 'all 0.15s',
             }}
           >
-            {f === 'all' ? '📋 All' : PRIORITY_CONFIG[f].label}
+            {f === 'all' ? <><IconClipboard size={14} /> All</> : PRIORITY_CONFIG[f].label}
           </button>
         ))}
       </div>
@@ -239,7 +243,7 @@ export default function TaskBoard() {
                       fontSize: 12, color: '#fff', flexShrink: 0, transition: 'all 0.15s',
                     }}
                   >
-                    {task.status === 'done' ? '✓' : task.status === 'in_progress' ? '◐' : ''}
+                    {task.status === 'done' ? <IconCheck size={14} /> : task.status === 'in_progress' ? <div style={{ width: 10, height: 10, borderRadius: '50%', border: `2px solid #fff`, borderRightColor: 'transparent', animation: 'spin 1s linear infinite' }} /> : ''}
                   </button>
 
                   {/* Task info */}
@@ -258,7 +262,7 @@ export default function TaskBoard() {
                       </span>
                       {task.dueDate && (
                         <span style={{ fontSize: 10, color: 'var(--text-subtle)' }}>
-                          📅 {new Date(task.dueDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                          <IconCalendar size={10} /> {new Date(task.dueDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                         </span>
                       )}
                     </div>
@@ -275,7 +279,7 @@ export default function TaskBoard() {
                     onMouseEnter={e => (e.target as HTMLElement).style.color = '#f87171'}
                     onMouseLeave={e => (e.target as HTMLElement).style.color = 'var(--text-subtle)'}
                   >
-                    🗑️
+                    <IconTrash size={14} />
                   </button>
                 </div>
               ))}
@@ -287,7 +291,9 @@ export default function TaskBoard() {
       {/* Empty state */}
       {filtered.length === 0 && (
         <div style={{ textAlign: 'center', padding: 40 }}>
-          <div style={{ fontSize: 40, marginBottom: 12 }}>📝</div>
+          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 16 }}>
+            <IconTarget size={48} color="var(--text-subtle)" />
+          </div>
           <p style={{ color: 'var(--text-muted)', fontSize: 14 }}>
             {filter === 'all' ? 'No tasks yet. Click "+ Add Task" to get started!' : `No ${filter} priority tasks.`}
           </p>

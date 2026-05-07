@@ -2,6 +2,7 @@
 import { signIn } from 'next-auth/react'
 import { useState } from 'react'
 import { useTheme } from '@/components/ThemeProvider'
+import { IconSun, IconMoon } from '@/components/Icons'
 
 
 
@@ -30,7 +31,7 @@ export default function LoginPage() {
         }}
         title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
       >
-        {theme === 'dark' ? '☀️' : '🌙'}
+        {theme === 'dark' ? <IconSun size={16} /> : <IconMoon size={16} />}
       </button>
 
       {/* Background orbs */}
@@ -117,7 +118,7 @@ export default function LoginPage() {
 
         {/* Feature pills */}
         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', justifyContent: 'center' }}>
-          {['📅 Smart Scheduling', '🤖 AI Assistant', '📧 Email Intelligence', '💰 Budget Tracking'].map((f) => (
+          {['Smart Scheduling', 'AI Assistant', 'Email Intelligence', 'Budget Tracking'].map((f) => (
             <span key={f} style={{
               background: 'var(--surface-2)', border: '1px solid var(--border)',
               borderRadius: 20, padding: '6px 12px', fontSize: 12, color: 'var(--text-muted)',
