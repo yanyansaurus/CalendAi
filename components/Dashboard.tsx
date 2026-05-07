@@ -262,7 +262,7 @@ export default function Dashboard({ session }: DashboardProps) {
       {/* Mobile Bottom Navigation */}
       <nav className="mobile-nav glass" style={{
         position: 'fixed', bottom: 0, left: 0, right: 0, height: 70,
-        display: 'none', justifyContent: 'space-around', alignItems: 'center',
+        justifyContent: 'space-around', alignItems: 'center',
         padding: '0 10px', zIndex: 100, borderTop: '1px solid var(--border)',
         background: 'rgba(10, 10, 15, 0.8)', backdropFilter: 'blur(20px)'
       }}>

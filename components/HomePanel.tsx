@@ -214,18 +214,18 @@ export default function HomePanel({ session, setActiveTab }: HomePanelProps) {
         <section
           className="glass"
           style={{
-            padding: 32, borderRadius: 24, marginBottom: 32, marginTop: 10,
+            padding: 'clamp(20px, 5vw, 32px)', borderRadius: 24, marginBottom: 32, marginTop: 10,
             background: 'linear-gradient(135deg, var(--brand) 0%, #4f46e5 100%)',
             color: 'white', border: 'none', position: 'relative', overflow: 'hidden'
           }}
         >
           <div style={{ position: 'relative', zIndex: 2 }}>
-            <h2 style={{ fontSize: 24, fontWeight: 800, marginBottom: 12 }}>Welcome, {session?.user?.name?.split(' ')[0] || 'Adriane'}! 👋</h2>
-            <p style={{ fontSize: 16, opacity: 0.9, lineHeight: 1.6, maxWidth: 600 }}>
+            <h2 style={{ fontSize: 'clamp(20px, 5vw, 24px)', fontWeight: 800, marginBottom: 12 }}>Welcome, {session?.user?.name?.split(' ')[0] || 'Adriane'}! 👋</h2>
+            <p style={{ fontSize: 'clamp(14px, 4vw, 16px)', opacity: 0.9, lineHeight: 1.6, maxWidth: 600 }}>
               I&apos;ve analyzed your schedule. Your schedule is looking sharp! You can refine, add, or delete events for today, tomorrow, next three days, weekend, weekdays, or your full week anytime.
             </p>
             
-            <div style={{ display: 'flex', gap: 12, marginTop: 24, alignItems: 'center' }}>
+            <div style={{ display: 'flex', gap: 12, marginTop: 24, alignItems: 'center', flexWrap: 'wrap' }}>
               <button
                 onClick={() => {
                   window.dispatchEvent(new CustomEvent('switch-tab', { detail: { tab: 'planner' } }))

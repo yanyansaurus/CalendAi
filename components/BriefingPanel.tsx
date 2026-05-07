@@ -171,7 +171,7 @@ export default function BriefingPanel() {
 
 
       {/* Main Content Grid */}
-      <div className="responsive-grid" style={{ gridTemplateColumns: 'minmax(0, 2fr) minmax(0, 1.2fr)', gap: 32, alignItems: 'start' }}>
+      <div className="responsive-grid" style={{ gap: 32, alignItems: 'start' }}>
         
         {/* Left Column: Schedule & Digest */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 32 }}>

@@ -297,55 +297,64 @@ export default function FinanceDashboard() {
             <span style={{ fontSize: 12, color: 'var(--text-subtle)' }}>Edit amounts or categories before saving</span>
           </div>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 16 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 16 }}>
             {scanPreview.map((item, i) => (
-              <div key={i} style={{
-                display: 'grid', gridTemplateColumns: '2fr 120px 1fr auto', gap: 8, alignItems: 'center',
-                padding: '8px 12px', background: 'var(--surface)', borderRadius: 10, border: '1px solid var(--border)',
+              <div key={i} className="glass" style={{
+                display: 'flex', flexWrap: 'wrap', gap: 10, alignItems: 'center',
+                padding: '12px', background: 'var(--surface)', borderRadius: 12, border: '1px solid var(--border)',
               }}>
-                <input
-                  type="text"
-                  value={item.description}
-                  onChange={e => updatePreviewItem(i, 'description', e.target.value)}
-                  style={{
-                    padding: '6px 10px', borderRadius: 6, fontSize: 13,
-                    background: 'var(--surface-2)', border: '1px solid var(--border)',
-                    color: 'var(--text)', outline: 'none',
-                  }}
-                />
-                <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                  <span style={{ color: 'var(--text-subtle)', fontSize: 13 }}>$</span>
+                <div style={{ flex: '1 1 200px' }}>
+                  <span style={{ fontSize: 10, color: 'var(--text-muted)', display: 'block', marginBottom: 4, fontWeight: 700 }}>ITEM</span>
                   <input
-                    type="number"
-                    step="0.01"
-                    value={item.amount}
-                    onChange={e => updatePreviewItem(i, 'amount', parseFloat(e.target.value) || 0)}
+                    type="text"
+                    value={item.description}
+                    onChange={e => updatePreviewItem(i, 'description', e.target.value)}
                     style={{
-                      width: '100%', padding: '6px 10px', borderRadius: 6, fontSize: 13,
+                      width: '100%', padding: '8px 10px', borderRadius: 8, fontSize: 13,
                       background: 'var(--surface-2)', border: '1px solid var(--border)',
-                      color: '#f87171', fontWeight: 600, outline: 'none',
+                      color: 'var(--text)', outline: 'none',
                     }}
                   />
                 </div>
-                <select
-                  value={item.category}
-                  onChange={e => updatePreviewItem(i, 'category', e.target.value)}
-                  style={{
-                    padding: '6px 10px', borderRadius: 6, fontSize: 12,
-                    background: 'var(--surface-2)', border: '1px solid var(--border)',
-                    color: 'var(--text)', outline: 'none',
-                  }}
-                >
-                  {CATEGORIES.filter(c => c !== 'Savings').map(c => (
-                    <option key={c} value={c}>{CATEGORY_ICONS[c]} {c}</option>
-                  ))}
-                </select>
+                <div style={{ flex: '1 1 100px' }}>
+                  <span style={{ fontSize: 10, color: 'var(--text-muted)', display: 'block', marginBottom: 4, fontWeight: 700 }}>AMOUNT</span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                    <span style={{ color: 'var(--text-subtle)', fontSize: 13 }}>$</span>
+                    <input
+                      type="number"
+                      step="0.01"
+                      value={item.amount}
+                      onChange={e => updatePreviewItem(i, 'amount', parseFloat(e.target.value) || 0)}
+                      style={{
+                        width: '100%', padding: '8px 10px', borderRadius: 8, fontSize: 13,
+                        background: 'var(--surface-2)', border: '1px solid var(--border)',
+                        color: '#f87171', fontWeight: 600, outline: 'none',
+                      }}
+                    />
+                  </div>
+                </div>
+                <div style={{ flex: '1 1 120px' }}>
+                  <span style={{ fontSize: 10, color: 'var(--text-muted)', display: 'block', marginBottom: 4, fontWeight: 700 }}>CATEGORY</span>
+                  <select
+                    value={item.category}
+                    onChange={e => updatePreviewItem(i, 'category', e.target.value)}
+                    style={{
+                      width: '100%', padding: '8px 10px', borderRadius: 8, fontSize: 12,
+                      background: 'var(--surface-2)', border: '1px solid var(--border)',
+                      color: 'var(--text)', outline: 'none',
+                    }}
+                  >
+                    {CATEGORIES.filter(c => c !== 'Savings').map(c => (
+                      <option key={c} value={c}>{CATEGORY_ICONS[c]} {c}</option>
+                    ))}
+                  </select>
+                </div>
                 <button
                   onClick={() => removePreviewItem(i)}
                   style={{
-                    width: 28, height: 28, borderRadius: 6, border: 'none', cursor: 'pointer',
+                    width: 32, height: 32, borderRadius: 8, border: 'none', cursor: 'pointer',
                     background: 'rgba(248,113,113,0.1)', color: '#f87171', fontSize: 14,
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', alignSelf: 'flex-end', marginBottom: 2
                   }}
                 >
                   ✕
