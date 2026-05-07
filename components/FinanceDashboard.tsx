@@ -226,61 +226,56 @@ export default function FinanceDashboard() {
     <div style={{ padding: '24px 28px', height: '100%', overflowY: 'auto' }}>
 
       {/* ── Top Action Bar ─────────────────────────────────────────── */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20, flexWrap: 'wrap', gap: 12 }}>
-        <h2 style={{ fontSize: 22, fontWeight: 700 }}>Track Finances</h2>
-        <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
-          {/* Currency selector */}
-          <select
-            value={currencyCode}
-            onChange={e => changeCurrency(e.target.value)}
-            style={{
-              padding: '7px 10px', borderRadius: 8, fontSize: 13,
-              background: 'var(--surface)', border: '1px solid var(--border)',
-              color: 'var(--text)', outline: 'none', cursor: 'pointer',
-            }}
-          >
-            {CURRENCIES.map(c => (
-              <option key={c.code} value={c.code}>{c.symbol} {c.code}</option>
-            ))}
-          </select>
-
-          {/* Budget input */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-            <span style={{ fontSize: 12, color: 'var(--text-subtle)' }}>Budget:</span>
-            <input
-              type="number"
-              value={data?.monthlyLimit ?? 0}
-              onChange={e => changeBudget(parseFloat(e.target.value) || 0)}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20, flexWrap: 'wrap', gap: 16 }}>
+        <h2 style={{ fontSize: 'clamp(18px, 5vw, 22px)', fontWeight: 700 }}>Track Finances</h2>
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap', width: '100%', justifyContent: 'space-between' }}>
+          <div style={{ display: 'flex', gap: 8, alignItems: 'center', flex: 1, minWidth: 250 }}>
+            <select
+              value={currencyCode}
+              onChange={e => changeCurrency(e.target.value)}
               style={{
-                width: 100, padding: '7px 10px', borderRadius: 8, fontSize: 13,
+                padding: '7px 10px', borderRadius: 8, fontSize: 13,
                 background: 'var(--surface)', border: '1px solid var(--border)',
-                color: 'var(--text)', outline: 'none',
+                color: 'var(--text)', outline: 'none', cursor: 'pointer',
               }}
-            />
-          </div>
+            >
+              {CURRENCIES.map(c => (
+                <option key={c.code} value={c.code}>{c.symbol} {c.code}</option>
+              ))}
+            </select>
 
-          <input
-            ref={fileRef}
-            type="file"
-            accept="image/*,.pdf"
-            style={{ display: 'none' }}
-            onChange={handleScanReceipt}
-          />
-          <button
-            className="btn-ghost"
-            onClick={() => fileRef.current?.click()}
-            disabled={scanning}
-            style={{ fontSize: 13, padding: '8px 16px' }}
-          >
-            {scanning ? '⏳ Scanning…' : '📸 Scan Receipt'}
-          </button>
-          <button
-            className="btn-brand"
-            onClick={() => setShowAddForm(!showAddForm)}
-            style={{ fontSize: 13, padding: '8px 16px' }}
-          >
-            + Add Transaction
-          </button>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 4, flex: 1 }}>
+              <span style={{ fontSize: 12, color: 'var(--text-subtle)', whiteSpace: 'nowrap' }}>Budget:</span>
+              <input
+                type="number"
+                value={data?.monthlyLimit ?? 0}
+                onChange={e => changeBudget(parseFloat(e.target.value) || 0)}
+                style={{
+                  width: '100%', maxWidth: 100, padding: '7px 10px', borderRadius: 8, fontSize: 13,
+                  background: 'var(--surface)', border: '1px solid var(--border)',
+                  color: 'var(--text)', outline: 'none',
+                }}
+              />
+            </div>
+          </div>
+          
+          <div style={{ display: 'flex', gap: 8, width: '100%' }}>
+            <button
+              className="btn-ghost"
+              onClick={() => fileRef.current?.click()}
+              disabled={scanning}
+              style={{ fontSize: 12, padding: '10px 12px', flex: 1 }}
+            >
+              {scanning ? '⏳ Scanning…' : '📸 Scan'}
+            </button>
+            <button
+              className="btn-brand"
+              onClick={() => setShowAddForm(!showAddForm)}
+              style={{ fontSize: 12, padding: '10px 12px', flex: 1 }}
+            >
+              + Transaction
+            </button>
+          </div>
         </div>
       </div>
 
@@ -381,57 +376,60 @@ export default function FinanceDashboard() {
 
       {/* ── Add Transaction Form ───────────────────────────────────── */}
       {showAddForm && (
-        <div className="glass" style={{ padding: 20, marginBottom: 24, borderRadius: 16 }}>
-          <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
+        <div className="glass" style={{ padding: 16, marginBottom: 24, borderRadius: 16 }}>
+          <div style={{ display: 'flex', gap: 6, marginBottom: 16, flexWrap: 'wrap' }}>
             {(['expense', 'income', 'savings'] as const).map(t => (
               <button
                 key={t}
                 onClick={() => setFormType(t)}
                 style={{
-                  padding: '6px 16px', borderRadius: 8, fontSize: 13, fontWeight: 600,
+                  padding: '6px 12px', borderRadius: 8, fontSize: 11, fontWeight: 700,
                   border: '1px solid', cursor: 'pointer', transition: 'all 0.15s',
                   background: formType === t ? (t === 'expense' ? 'rgba(248,113,113,0.15)' : t === 'income' ? 'rgba(52,211,153,0.15)' : 'rgba(34,211,238,0.15)') : 'transparent',
                   borderColor: formType === t ? (t === 'expense' ? '#f87171' : t === 'income' ? '#34d399' : '#22d3ee') : 'var(--border)',
                   color: formType === t ? (t === 'expense' ? '#f87171' : t === 'income' ? '#34d399' : '#22d3ee') : 'var(--text-muted)',
+                  flex: 1, minWidth: 80
                 }}
               >
-                {t === 'expense' ? '💸 Expense' : t === 'income' ? '💵 Income' : '💰 Savings'}
+                {t === 'expense' ? '💸 Exp' : t === 'income' ? '💵 Inc' : '💰 Sav'}
               </button>
             ))}
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 2fr auto', gap: 12, alignItems: 'end' }}>
-            <div>
-              <label style={{ fontSize: 11, color: 'var(--text-subtle)', display: 'block', marginBottom: 4 }}>Amount</label>
-              <input
-                type="number"
-                step="0.01"
-                placeholder="0.00"
-                value={formAmount}
-                onChange={e => setFormAmount(e.target.value)}
-                style={{
-                  width: '100%', padding: '8px 12px', borderRadius: 8, fontSize: 14,
-                  background: 'var(--surface)', border: '1px solid var(--border)',
-                  color: 'var(--text)', outline: 'none',
-                }}
-              />
-            </div>
-            {formType !== 'savings' && (
-              <div>
-                <label style={{ fontSize: 11, color: 'var(--text-subtle)', display: 'block', marginBottom: 4 }}>Category</label>
-                <select
-                  value={formCategory}
-                  onChange={e => setFormCategory(e.target.value)}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            <div style={{ display: 'flex', gap: 12 }}>
+              <div style={{ flex: 1 }}>
+                <label style={{ fontSize: 11, color: 'var(--text-subtle)', display: 'block', marginBottom: 4 }}>Amount</label>
+                <input
+                  type="number"
+                  step="0.01"
+                  placeholder="0.00"
+                  value={formAmount}
+                  onChange={e => setFormAmount(e.target.value)}
                   style={{
-                    width: '100%', padding: '8px 12px', borderRadius: 8, fontSize: 14,
+                    width: '100%', padding: '10px 12px', borderRadius: 8, fontSize: 14,
                     background: 'var(--surface)', border: '1px solid var(--border)',
                     color: 'var(--text)', outline: 'none',
                   }}
-                >
-                  {CATEGORIES.filter(c => c !== 'Savings').map(c => <option key={c} value={c}>{CATEGORY_ICONS[c]} {c}</option>)}
-                </select>
+                />
               </div>
-            )}
+              {formType !== 'savings' && (
+                <div style={{ flex: 1 }}>
+                  <label style={{ fontSize: 11, color: 'var(--text-subtle)', display: 'block', marginBottom: 4 }}>Category</label>
+                  <select
+                    value={formCategory}
+                    onChange={e => setFormCategory(e.target.value)}
+                    style={{
+                      width: '100%', padding: '10px 12px', borderRadius: 8, fontSize: 14,
+                      background: 'var(--surface)', border: '1px solid var(--border)',
+                      color: 'var(--text)', outline: 'none',
+                    }}
+                  >
+                    {CATEGORIES.filter(c => c !== 'Savings').map(c => <option key={c} value={c}>{CATEGORY_ICONS[c]} {c}</option>)}
+                  </select>
+                </div>
+              )}
+            </div>
             <div>
               <label style={{ fontSize: 11, color: 'var(--text-subtle)', display: 'block', marginBottom: 4 }}>Description</label>
               <input
@@ -441,14 +439,14 @@ export default function FinanceDashboard() {
                 onChange={e => setFormDesc(e.target.value)}
                 onKeyDown={e => e.key === 'Enter' && addTransaction()}
                 style={{
-                  width: '100%', padding: '8px 12px', borderRadius: 8, fontSize: 14,
+                  width: '100%', padding: '10px 12px', borderRadius: 8, fontSize: 14,
                   background: 'var(--surface)', border: '1px solid var(--border)',
                   color: 'var(--text)', outline: 'none',
                 }}
               />
             </div>
-            <button className="btn-brand" onClick={addTransaction} style={{ padding: '8px 20px', fontSize: 13 }}>
-              Add
+            <button className="btn-brand" onClick={addTransaction} style={{ padding: '12px', fontSize: 14, fontWeight: 700 }}>
+              Add Transaction
             </button>
           </div>
         </div>

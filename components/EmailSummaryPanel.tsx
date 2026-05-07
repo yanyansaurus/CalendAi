@@ -126,9 +126,9 @@ export default function EmailSummaryPanel() {
   return (
     <div style={{ overflowY: 'auto', height: '100%' }} className="container-padding">
       {/* Header */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 24 }}>
-        <div>
-          <h2 style={{ fontSize: 22, fontWeight: 700, marginBottom: 6 }}>📧 Email Summary</h2>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 24, flexWrap: 'wrap', gap: 16 }}>
+        <div style={{ flex: 1, minWidth: 200 }}>
+          <h2 style={{ fontSize: 'clamp(18px, 5vw, 22px)', fontWeight: 700, marginBottom: 6 }}>📧 Email Summary</h2>
           <p style={{ fontSize: 13, color: 'var(--text-muted)' }}>{summary.overview}</p>
         </div>
         <div style={{ display: 'flex', gap: 8 }}>
@@ -186,20 +186,22 @@ export default function EmailSummaryPanel() {
       )}
 
       {/* Stats Row */}
-      <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginBottom: 24 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(75px, 1fr))', gap: 12, marginBottom: 24 }}>
         <div className="glass" style={{
-          padding: '12px 20px', borderRadius: 12, textAlign: 'center', minWidth: 80,
+          padding: '12px 16px', borderRadius: 12, textAlign: 'center',
+          display: 'flex', flexDirection: 'column', justifyContent: 'center'
         }}>
-          <div style={{ fontSize: 24, fontWeight: 800, color: 'var(--brand-light)' }}>{summary.totalEmails}</div>
-          <div style={{ fontSize: 10, color: 'var(--text-muted)', fontWeight: 600 }}>UNREAD</div>
+          <div style={{ fontSize: 22, fontWeight: 800, color: 'var(--brand-light)' }}>{summary.totalEmails}</div>
+          <div style={{ fontSize: 9, color: 'var(--text-muted)', fontWeight: 600 }}>UNREAD</div>
         </div>
         {summary.categories?.map((cat, i) => (
           <div key={i} className="glass" style={{
-            padding: '12px 16px', borderRadius: 12, textAlign: 'center', minWidth: 70,
+            padding: '12px 10px', borderRadius: 12, textAlign: 'center',
+            display: 'flex', flexDirection: 'column', justifyContent: 'center'
           }}>
-            <div style={{ fontSize: 18, marginBottom: 2 }}>{cat.icon}</div>
-            <div style={{ fontSize: 16, fontWeight: 700 }}>{cat.count}</div>
-            <div style={{ fontSize: 9, color: 'var(--text-subtle)', fontWeight: 600 }}>{cat.name}</div>
+            <div style={{ fontSize: 16, marginBottom: 2 }}>{cat.icon}</div>
+            <div style={{ fontSize: 15, fontWeight: 700 }}>{cat.count}</div>
+            <div style={{ fontSize: 8, color: 'var(--text-subtle)', fontWeight: 600, textTransform: 'uppercase' }}>{cat.name}</div>
           </div>
         ))}
       </div>

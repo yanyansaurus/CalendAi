@@ -53,35 +53,33 @@ export default function LandingPage() {
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
             <div style={{
-              width: 38, height: 38, borderRadius: 10,
+              width: 32, height: 32, borderRadius: 8,
               boxShadow: '0 4px 12px var(--brand-glow)',
               overflow: 'hidden',
               background: '#0a0a0f'
             }}>
               <img src="/logo.png" alt="Logo" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
             </div>
-            <span style={{ fontWeight: 900, fontSize: 20, letterSpacing: '-0.04em' }}>
+            <span style={{ fontWeight: 900, fontSize: 'clamp(16px, 4vw, 20px)', letterSpacing: '-0.04em' }}>
               Executive<span style={{ color: 'var(--brand)' }}>VAi</span>
             </span>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-            <a href="#features" className="hidden-mobile" style={{ color: 'var(--text-muted)', fontSize: 14, textDecoration: 'none', fontWeight: 600 }}>Features</a>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
             <button
               onClick={toggleTheme}
               style={{
-                width: 38, height: 38, borderRadius: 12, border: '1px solid var(--border)',
+                width: 34, height: 34, borderRadius: 10, border: '1px solid var(--border)',
                 background: 'var(--surface-2)', cursor: 'pointer',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
-                fontSize: 16, transition: 'all 0.2s',
+                fontSize: 14, transition: 'all 0.2s',
               }}
-              title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
             >
               {theme === 'dark' ? '☀️' : '🌙'}
             </button>
             <button
               onClick={() => router.push('/login')}
               className="btn-brand"
-              style={{ fontSize: 14, padding: '10px 20px', fontWeight: 700, borderRadius: 12 }}
+              style={{ fontSize: 13, padding: '8px 16px', fontWeight: 700, borderRadius: 10 }}
             >
               Get Started
             </button>
@@ -91,34 +89,35 @@ export default function LandingPage() {
 
       {/* ═══ Hero Section ═══ */}
       <section style={{
-        paddingTop: 160, paddingBottom: 100,
+        paddingTop: 'clamp(100px, 15vh, 160px)', paddingBottom: 60,
         position: 'relative', overflow: 'hidden',
       }}>
         {/* Background Gradients */}
-        <div style={{ position: 'absolute', top: -200, right: -200, width: 600, height: 600, background: 'radial-gradient(circle, var(--brand-glow) 0%, transparent 70%)', zIndex: -1 }} />
-        <div style={{ position: 'absolute', bottom: -200, left: -200, width: 600, height: 600, background: 'radial-gradient(circle, rgba(96,165,250,0.05) 0%, transparent 70%)', zIndex: -1 }} />
+        <div style={{ position: 'absolute', top: -200, right: -200, width: '80vw', height: '80vw', background: 'radial-gradient(circle, var(--brand-glow) 0%, transparent 70%)', zIndex: -1 }} />
 
-        <div style={{ maxWidth: 1200, margin: '0 auto', padding: '0 24px', display: 'flex', alignItems: 'center', gap: 60, flexWrap: 'wrap' }}>
+        <div style={{ maxWidth: 1200, margin: '0 auto', padding: '0 20px', display: 'flex', alignItems: 'center', gap: 'clamp(20px, 5vw, 60px)', flexWrap: 'wrap' }}>
           {/* Left — Copy */}
-          <div style={{ flex: '1 1 500px', textAlign: 'left' }} className="hero-copy">
-            <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: 'var(--brand-glow)', border: '1px solid var(--brand)', borderRadius: 100, padding: '8px 20px', fontSize: 13, color: 'var(--brand)', marginBottom: 32, fontWeight: 700 }}>
+          <div style={{ flex: '1 1 320px', textAlign: 'left' }} className="hero-copy">
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: 'var(--brand-glow)', border: '1px solid var(--brand)', borderRadius: 100, padding: '6px 16px', fontSize: 12, color: 'var(--brand)', marginBottom: 24, fontWeight: 700 }}>
               <span style={{ fontSize: 14 }}>✨</span> AI Chief of Staff
             </div>
-            <h1 style={{ fontSize: 'clamp(44px, 8vw, 72px)', fontWeight: 1000, lineHeight: 0.95, letterSpacing: '-0.05em', marginBottom: 28 }}>
+            <h1 style={{ fontSize: 'clamp(38px, 10vw, 72px)', fontWeight: 1000, lineHeight: 0.95, letterSpacing: '-0.05em', marginBottom: 20 }}>
               Precision scheduling<br />
               <span className="gradient-text">for leaders.</span>
             </h1>
-            <p style={{ fontSize: 20, color: 'var(--text-muted)', lineHeight: 1.6, marginBottom: 44, maxWidth: 540, fontWeight: 500 }}>
+            <p style={{ fontSize: 'clamp(16px, 4vw, 20px)', color: 'var(--text-muted)', lineHeight: 1.6, marginBottom: 32, maxWidth: 540, fontWeight: 500 }}>
               Reclaim 10+ hours a week. ExecutiveVAi handles your calendar, emails, and deep work blocks with autonomous intelligence.
             </p>
-            <div style={{ display: 'flex', gap: 16, alignItems: 'center', flexWrap: 'wrap' }}>
+            <div style={{ display: 'flex', gap: 12, alignItems: 'center', flexWrap: 'wrap' }}>
               <button
                 onClick={() => router.push('/login')}
                 className="btn-brand"
-                style={{ fontSize: 16, padding: '14px 32px', borderRadius: 14, fontWeight: 700 }}
+                style={{ fontSize: 15, padding: '12px 28px', borderRadius: 12, fontWeight: 700, width: 'fit-content' }}
               >
                 Get Started Free →
               </button>
+            </div>
+          </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                 <div style={{ display: 'flex', alignItems: 'center' }}>
                   {[1, 2, 3, 4].map(i => (
@@ -144,35 +143,35 @@ export default function LandingPage() {
           </div>
 
           {/* Right — Chat Demo */}
-          <div style={{ flex: '1 1 400px', width: '100%' }}>
+          <div style={{ flex: '1 1 320px', width: '100%' }}>
             <div className="glass" style={{
-              padding: 24, borderRadius: 28, maxWidth: 460, margin: '0 auto',
+              padding: 'clamp(16px, 4vw, 24px)', borderRadius: 24, maxWidth: 460, margin: '0 auto',
               boxShadow: '0 30px 80px rgba(0,0,0,0.3)',
               border: '1px solid rgba(255,255,255,0.1)',
               background: theme === 'dark' ? 'rgba(20,20,30,0.6)' : 'rgba(255,255,255,0.8)'
             }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 20, paddingBottom: 16, borderBottom: '1px solid var(--border)' }}>
-                <div style={{ width: 32, height: 32, borderRadius: 8, background: 'linear-gradient(135deg, #6366f1, #4f46e5)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <img src="/logo.png" alt="Logo" style={{ width: 24, height: 24, objectFit: 'contain' }} />
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16, paddingBottom: 12, borderBottom: '1px solid var(--border)' }}>
+                <div style={{ width: 28, height: 28, borderRadius: 8, background: 'linear-gradient(135deg, #6366f1, #4f46e5)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <img src="/logo.png" alt="Logo" style={{ width: 20, height: 20, objectFit: 'contain' }} />
                 </div>
                 <div>
-                  <div style={{ fontWeight: 800, fontSize: 15, letterSpacing: '-0.02em' }}>ExecutiveVAi</div>
-                  <div style={{ fontSize: 11, color: '#10b981', display: 'flex', alignItems: 'center', gap: 4, fontWeight: 600 }}>
-                    <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#10b981' }} /> AI Online
+                  <div style={{ fontWeight: 800, fontSize: 14, letterSpacing: '-0.02em' }}>ExecutiveVAi</div>
+                  <div style={{ fontSize: 10, color: '#10b981', display: 'flex', alignItems: 'center', gap: 4, fontWeight: 600 }}>
+                    <span style={{ width: 5, height: 5, borderRadius: '50%', background: '#10b981' }} /> AI Online
                   </div>
                 </div>
               </div>
 
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 12, minHeight: 220 }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10, minHeight: 180 }}>
                 {CHAT_DEMO.slice(0, visibleMessages).map((msg, i) => (
                   <div key={i} className="animate-fade-up" style={{
                     alignSelf: msg.role === 'user' ? 'flex-end' : 'flex-start',
-                    maxWidth: '85%', padding: '10px 16px',
-                    borderRadius: msg.role === 'user' ? '18px 18px 4px 18px' : '18px 18px 18px 4px',
+                    maxWidth: '90%', padding: '8px 14px',
+                    borderRadius: msg.role === 'user' ? '16px 16px 4px 16px' : '16px 16px 16px 4px',
                     background: msg.role === 'user' ? 'linear-gradient(135deg, #6366f1, #4f46e5)' : 'var(--surface-2)',
-                    fontSize: 14, color: msg.role === 'user' ? '#fff' : 'var(--text)',
+                    fontSize: 13, color: msg.role === 'user' ? '#fff' : 'var(--text)',
                     boxShadow: msg.role === 'user' ? '0 4px 12px rgba(99,102,241,0.2)' : 'none',
-                    lineHeight: 1.5, fontWeight: 500
+                    lineHeight: 1.4, fontWeight: 500
                   }}>
                     {msg.text}
                   </div>
@@ -217,16 +216,16 @@ export default function LandingPage() {
       </section>
 
       {/* ═══ CTA Section ═══ */}
-      <section style={{ padding: '80px 16px', textAlign: 'center' }}>
+      <section style={{ padding: 'clamp(40px, 10vw, 80px) 16px', textAlign: 'center' }}>
         <div style={{
-          maxWidth: 800, margin: '0 auto', padding: '60px 40px', borderRadius: 32,
+          maxWidth: 800, margin: '0 auto', padding: 'clamp(40px, 8vw, 60px) clamp(20px, 5vw, 40px)', borderRadius: 32,
           background: 'linear-gradient(135deg, var(--brand-glow) 0%, rgba(79,70,229,0.05) 100%)',
           border: '1px solid var(--brand)',
           position: 'relative', overflow: 'hidden'
         }}>
-          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 24 }}>
+          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 20 }}>
             <div style={{
-              width: 48, height: 48, borderRadius: 12,
+              width: 42, height: 42, borderRadius: 12,
               boxShadow: '0 8px 24px var(--brand-glow)',
               overflow: 'hidden',
               background: '#0a0a0f'
@@ -234,16 +233,16 @@ export default function LandingPage() {
               <img src="/logo.png" alt="Logo" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
             </div>
           </div>
-          <h2 style={{ fontSize: 'clamp(28px, 5vw, 40px)', fontWeight: 900, marginBottom: 16, letterSpacing: '-0.04em' }}>
+          <h2 style={{ fontSize: 'clamp(24px, 6vw, 40px)', fontWeight: 900, marginBottom: 12, letterSpacing: '-0.04em' }}>
             Ready to reclaim your time?
           </h2>
-          <p style={{ fontSize: 18, color: 'var(--text-muted)', marginBottom: 32, maxWidth: 500, margin: '0 auto 32px', fontWeight: 500 }}>
+          <p style={{ fontSize: 'clamp(15px, 3vw, 18px)', color: 'var(--text-muted)', marginBottom: 24, maxWidth: 500, margin: '0 auto 24px', fontWeight: 500, lineHeight: 1.5 }}>
             Join 2,000+ high-performers who use ExecutiveVAi to automate their daily grind.
           </p>
           <button
             onClick={() => router.push('/login')}
             className="btn-brand"
-            style={{ fontSize: 16, padding: '14px 40px', borderRadius: 14, fontWeight: 700 }}
+            style={{ fontSize: 15, padding: '12px 32px', borderRadius: 12, fontWeight: 700 }}
           >
             Start Your Free Trial →
           </button>

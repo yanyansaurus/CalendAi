@@ -133,9 +133,9 @@ export default function Dashboard({ session }: DashboardProps) {
         </div>
 
         {/* User Card - Ultra Glass */}
-        <div className="glass-premium" style={{ padding: '16px', borderRadius: 16, marginBottom: 32 }}>
+        <div className="glass-premium" style={{ padding: '16px', borderRadius: 16, marginBottom: 24 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <div style={{ width: 32, height: 32, borderRadius: '50%', background: 'linear-gradient(135deg, #6366f1, #c084fc)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 700 }}>
+            <div style={{ width: 36, height: 36, borderRadius: '50%', background: 'linear-gradient(135deg, var(--brand), #c084fc)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, fontWeight: 800, color: 'white', boxShadow: '0 0 15px rgba(99,102,241,0.4)' }}>
               {session.user?.name?.[0] ?? 'C'}
             </div>
             <div style={{ overflow: 'hidden' }}>
@@ -145,114 +145,143 @@ export default function Dashboard({ session }: DashboardProps) {
           </div>
         </div>
 
+        {/* Daily Progress Widget - WOW Factor */}
+        <div className="glass-premium" style={{ padding: '14px', borderRadius: 16, marginBottom: 32, background: 'rgba(99, 102, 241, 0.05)', border: '1px solid rgba(99,102,241,0.2)' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+            <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-subtle)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Daily Focus</span>
+            <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--brand-light)' }}>75%</span>
+          </div>
+          <div style={{ height: 6, width: '100%', background: 'rgba(255,255,255,0.05)', borderRadius: 10, overflow: 'hidden', marginBottom: 12 }}>
+            <div style={{ height: '100%', width: '75%', background: 'linear-gradient(to right, var(--brand), #c084fc)', borderRadius: 10, boxShadow: '0 0 10px rgba(99,102,241,0.5)' }} />
+          </div>
+          <div style={{ display: 'flex', gap: 12 }}>
+            <div style={{ flex: 1 }}>
+              <p style={{ fontSize: 10, color: 'var(--text-muted)', marginBottom: 2 }}>Meetings</p>
+              <p style={{ fontSize: 12, fontWeight: 700, color: 'var(--text)' }}>4/6</p>
+            </div>
+            <div style={{ width: 1, background: 'var(--border)', height: 20, marginTop: 4 }} />
+            <div style={{ flex: 1 }}>
+              <p style={{ fontSize: 10, color: 'var(--text-muted)', marginBottom: 2 }}>Tasks</p>
+              <p style={{ fontSize: 12, fontWeight: 700, color: 'var(--text)' }}>12/15</p>
+            </div>
+          </div>
+        </div>
+
         {/* Nav links */}
         <nav style={{
-          display: 'flex', flexDirection: 'column', gap: 4, flex: 1,
-          overflowY: 'auto', minHeight: 0, paddingRight: 4, marginBottom: 16
+          display: 'flex', flexDirection: 'column', gap: 6, flex: 1,
         }}>
           {navItems.map((item) => (
-            <div
+            <button
               key={item.id}
               onClick={() => setActiveTab(item.id)}
-              className={`sidebar-item ${activeTab === item.id ? 'active' : ''}`}
+              className={activeTab === item.id ? 'btn-nav-active' : 'btn-nav'}
               style={{
-                display: 'flex', alignItems: 'center', gap: 12,
-                padding: '12px 14px', cursor: 'pointer',
-                fontSize: 14, fontWeight: activeTab === item.id ? 700 : 500,
+                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                position: 'relative',
+                overflow: 'hidden'
               }}
             >
-              <span style={{ fontSize: 20, opacity: activeTab === item.id ? 1 : 0.6 }}>{item.icon}</span>
-              <span>{item.label}</span>
-            </div>
+              <span style={{ fontSize: 18, transition: 'transform 0.3s' }}>{item.icon}</span>
+              <span style={{ fontWeight: activeTab === item.id ? 700 : 500 }}>{item.label}</span>
+              {activeTab === item.id && (
+                <div style={{ 
+                  position: 'absolute', 
+                  right: 0, 
+                  top: '15%', 
+                  height: '70%', 
+                  width: 3, 
+                  background: 'var(--brand)', 
+                  borderRadius: '4px 0 0 4px',
+                  boxShadow: '0 0 10px var(--brand)' 
+                }} />
+              )}
+            </button>
           ))}
         </nav>
 
-        {/* Footer Actions */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-          <button
-            onClick={toggleTheme}
-            className="glass"
-            style={{
-              display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-              width: '100%', padding: '10px 14px', borderRadius: 12,
-              cursor: 'pointer', transition: 'all 0.2s',
+        {/* Quick Actions / Integration Status */}
+        <div style={{ marginTop: 'auto', display: 'flex', flexDirection: 'column', gap: 16, paddingTop: 20, borderTop: '1px solid var(--border)' }}>
+          <div style={{ padding: '14px', borderRadius: 14, background: 'rgba(255,255,255,0.02)', border: '1px solid var(--border)', boxShadow: 'inset 0 0 20px rgba(255,255,255,0.01)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+              <span style={{ fontSize: 10, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Connected Units</span>
+              <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#34d399', boxShadow: '0 0 10px #34d399' }} />
+            </div>
+            <div style={{ display: 'flex', gap: 12 }}>
+              <div title="Google Workspace" style={{ 
+                width: 32, height: 32, borderRadius: 8, background: hasGoogle ? 'rgba(52,211,153,0.1)' : 'var(--surface-2)', 
+                display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16,
+                border: hasGoogle ? '1px solid rgba(52,211,153,0.3)' : '1px solid var(--border)',
+                filter: hasGoogle ? 'none' : 'grayscale(1)', opacity: hasGoogle ? 1 : 0.4
+              }}>📁</div>
+              <div title="Zoom Video" style={{ 
+                width: 32, height: 32, borderRadius: 8, background: hasZoom ? 'rgba(59,130,246,0.1)' : 'var(--surface-2)', 
+                display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16,
+                border: hasZoom ? '1px solid rgba(59,130,246,0.3)' : '1px solid var(--border)',
+                filter: hasZoom ? 'none' : 'grayscale(1)', opacity: hasZoom ? 1 : 0.4
+              }}>📹</div>
+              <div title="AI Engine" style={{ 
+                width: 32, height: 32, borderRadius: 8, background: 'rgba(168,85,247,0.1)', 
+                display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16,
+                border: '1px solid rgba(168,85,247,0.3)',
+                boxShadow: '0 0 10px rgba(168,85,247,0.2)'
+              }}>🧠</div>
+            </div>
+          </div>
+          
+          <button 
+            onClick={() => signOut()}
+            className="btn-ghost" 
+            style={{ 
+              width: '100%', justifyContent: 'center', fontSize: 12, padding: '12px',
+              borderRadius: 12, background: 'rgba(239, 68, 68, 0.05)',
+              border: '1px solid rgba(239, 68, 68, 0.2)', color: '#ef4444',
+              fontWeight: 700, transition: 'all 0.2s'
             }}
+            onMouseEnter={e => (e.currentTarget.style.background = 'rgba(239, 68, 68, 0.1)')}
+            onMouseLeave={e => (e.currentTarget.style.background = 'rgba(239, 68, 68, 0.05)')}
           >
-            <span style={{ fontSize: 12, color: 'var(--text-muted)', fontWeight: 600 }}>
-              {theme === 'dark' ? '🌙 Dark' : '☀️ Light'}
-            </span>
-            <div style={{ width: 10, height: 10, borderRadius: '50%', background: theme === 'dark' ? '#6366f1' : '#f59e0b', boxShadow: '0 0 10px currentColor' }} />
-          </button>
-
-          <button
-            onClick={() => signOut({ callbackUrl: '/landing' })}
-            className="btn-ghost"
-            style={{ width: '100%', justifyContent: 'center', fontSize: 12, borderRadius: 12, padding: '10px' }}
-          >
-            Sign Out
+            Terminate Session
           </button>
         </div>
       </aside>
 
-      {/* Main content - Dynamic Shadow */}
-      <main style={{ 
-        flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', 
-        position: 'relative', zIndex: 5, background: 'rgba(5, 5, 8, 0.2)' 
-      }}>
-        <header style={{
-          height: 70, borderBottom: '1px solid var(--border)',
-          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-          padding: '0 32px', flexShrink: 0, background: 'rgba(5, 5, 8, 0.4)',
-          backdropFilter: 'blur(10px)'
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-            <h1 className="gradient-text" style={{ fontSize: 20, letterSpacing: '-0.02em' }}>
-              {navItems.find(i => i.id === activeTab)?.label}
-            </h1>
-          </div>
-          <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
-            {/* Connection Badges */}
-            {[
-              { label: 'Google', active: hasGoogle, color: '#4285F4' },
-              { label: 'Zoom', active: hasZoom, color: '#2D8CFF' }
-            ].map(ind => (
-              <div key={ind.label} className="glass" style={{ 
-                padding: '4px 10px', borderRadius: 20, display: 'flex', alignItems: 'center', gap: 6,
-                opacity: ind.active ? 1 : 0.3, border: ind.active ? `1px solid ${ind.color}44` : '1px solid transparent'
-              }}>
-                <span style={{ width: 6, height: 6, borderRadius: '50%', background: ind.color }} />
-                <span style={{ fontSize: 10, fontWeight: 700, color: 'var(--text)' }}>{ind.label}</span>
-              </div>
-            ))}
-          </div>
-        </header>
-
-        <div style={{ flex: 1, overflow: 'hidden' }} className="content-area animate-in">
-          {activeTab === 'home' && <HomePanel />}
-          <div style={{ display: activeTab === 'chat' ? 'block' : 'none', height: '100%' }}>
-            <ChatPanel
-              reminders={reminders}
-              setReminders={setReminders}
-              suggestions={suggestions}
-              setSuggestions={setSuggestions}
-            />
-          </div>
+      {/* Main Content Area */}
+      <main style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0, position: 'relative', zIndex: 1 }}>
+        <div style={{ flex: 1, overflowY: 'auto', padding: 'clamp(16px, 4vw, 40px)', paddingBottom: '100px' }}>
+          {activeTab === 'home' && <HomePanel session={session} setActiveTab={setActiveTab} />}
+          {activeTab === 'chat' && <ChatPanel reminders={reminders} setReminders={setReminders} suggestions={suggestions} setSuggestions={setSuggestions} />}
           {activeTab === 'briefing' && <BriefingPanel />}
-          {activeTab === 'planner' && (
-            <div style={{ display: 'flex', height: '100%', overflow: 'hidden' }}>
-              <div style={{ flex: 1, overflowY: 'auto' }}>
-                <WeekSchedule />
-              </div>
-              <div className="hidden-mobile" style={{ width: 360, flexShrink: 0, overflowY: 'auto', borderLeft: '1px solid var(--border)' }}>
-                <TaskBoard />
-              </div>
-            </div>
-          )}
+          {activeTab === 'planner' && <TaskBoard />}
           {activeTab === 'emails' && <EmailSummaryPanel />}
           {activeTab === 'finances' && <FinanceDashboard />}
           {activeTab === 'settings' && <SettingsPanel />}
         </div>
       </main>
+
+      {/* Mobile Bottom Navigation */}
+      <nav className="mobile-nav glass" style={{
+        position: 'fixed', bottom: 0, left: 0, right: 0, height: 70,
+        display: 'none', justifyContent: 'space-around', alignItems: 'center',
+        padding: '0 10px', zIndex: 100, borderTop: '1px solid var(--border)',
+        background: 'rgba(10, 10, 15, 0.8)', backdropFilter: 'blur(20px)'
+      }}>
+        {mobileNavItems.map((item) => (
+          <button
+            key={item.id}
+            onClick={() => setActiveTab(item.id)}
+            style={{
+              display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4,
+              background: 'none', border: 'none', color: activeTab === item.id ? 'var(--brand-light)' : 'var(--text-muted)',
+              padding: '8px 12px', borderRadius: 12, transition: 'all 0.2s',
+              transform: activeTab === item.id ? 'scale(1.1)' : 'scale(1)'
+            }}
+          >
+            <span style={{ fontSize: 20 }}>{item.icon}</span>
+            <span style={{ fontSize: 10, fontWeight: 700 }}>{item.label}</span>
+          </button>
+        ))}
+      </nav>
     </div>
   )
 }
