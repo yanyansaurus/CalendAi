@@ -67,13 +67,16 @@ export default function WelcomeGuide() {
       position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
       background: 'rgba(0,0,0,0.8)', zIndex: 10000,
       display: 'flex', alignItems: 'center', justifyContent: 'center',
-      backdropFilter: 'blur(12px)', padding: 20
+      backdropFilter: 'blur(12px)', padding: '16px'
     }}>
       <div className="animate-fade-up glass" style={{
-        maxWidth: 550, width: '100%', borderRadius: 32, padding: '48px 40px',
+        maxWidth: 550, width: '100%', borderRadius: 32, padding: 'clamp(24px, 5vw, 48px) clamp(20px, 4vw, 40px)',
         textAlign: 'center', position: 'relative', overflow: 'hidden',
         border: '1px solid var(--glass-border)',
-        boxShadow: '0 40px 100px rgba(0,0,0,0.5)'
+        boxShadow: '0 40px 100px rgba(0,0,0,0.5)',
+        maxHeight: '90vh',
+        display: 'flex',
+        flexDirection: 'column'
       }}>
         {/* Progress Bar */}
         <div style={{
@@ -82,14 +85,14 @@ export default function WelcomeGuide() {
           background: 'var(--brand-gradient)', transition: 'width 0.4s ease'
         }} />
 
-        <div style={{ fontSize: 72, marginBottom: 24, filter: 'drop-shadow(0 10px 20px rgba(99,102,241,0.3))' }}>{steps[step].icon}</div>
+        <div style={{ fontSize: 'clamp(48px, 10vw, 72px)', marginBottom: 'clamp(12px, 3vw, 24px)', filter: 'drop-shadow(0 10px 20px rgba(99,102,241,0.3))' }}>{steps[step].icon}</div>
         
-        <h2 style={{ fontSize: 26, fontWeight: 900, marginBottom: 20, letterSpacing: '-0.02em' }}>{steps[step].title}</h2>
+        <h2 style={{ fontSize: 'clamp(20px, 5vw, 26px)', fontWeight: 900, marginBottom: 'clamp(12px, 3vw, 20px)', letterSpacing: '-0.02em' }}>{steps[step].title}</h2>
         
         <div style={{ 
-          maxHeight: 250, overflowY: 'auto', marginBottom: 40, 
+          maxHeight: 250, overflowY: 'auto', marginBottom: 'clamp(20px, 5vw, 40px)', 
           paddingRight: 8, textAlign: 'center', lineHeight: 1.7,
-          color: 'var(--text-muted)', fontSize: 16
+          color: 'var(--text-muted)', fontSize: 'clamp(14px, 3vw, 16px)'
         }} className="custom-scroll">
           {steps[step].content}
         </div>

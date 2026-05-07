@@ -53,12 +53,12 @@ export default function OnboardingModal() {
       try {
         // We need to wait for a tick to ensure we have the session if needed, 
         // but for now we'll look for any v11 key as a fallback
-        const keys = Object.keys(localStorage)
-        const hasV11 = keys.some(k => k.startsWith('executive_vai_onboarded_v11_'))
+        // const keys = Object.keys(localStorage)
+        // const hasV11 = keys.some(k => k.startsWith('executive_vai_onboarded_v11_'))
         
-        if (!hasV11) {
-          setIsOpen(true)
-        }
+        // if (!hasV11) {
+        //   setIsOpen(true)
+        // }
       } catch (e) {}
     }
     
