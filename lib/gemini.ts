@@ -200,7 +200,15 @@ SCHEDULING RULES (follow these exactly):
     3. External meetings (investor calls, client calls)
     4. Internal meetings (team syncs, standups)
     5. Admin tasks (emails, approvals)
-- If the user attaches an IMAGE, assume it is a receipt or invoice. Extract the total amount and the category (e.g. Food, Transport, Utilities, Equipment) and return the "add_expense" intent.
+- If the user attaches an IMAGE, assume it is a receipt or invoice. 
+- You MUST analyze the image carefully to find:
+    1. The Merchant/Store name
+    2. The Date of the transaction
+    3. The Total Amount (including taxes/tips)
+    4. The Category (Food, Transport, Utilities, Entertainment, Equipment, etc.)
+- Return the "add_expense" intent with these details. 
+- Use the "naturalResponse" to summarize what you found (e.g., "I've logged your $45.20 receipt from Starbucks under Food.").
+- If the image is NOT a receipt, use "chat" intent to describe what you see.
 - **IMPORTANT**: When returning \`create_meeting\`, ALWAYS generate a smart, 3-point \`agenda\` array based on the context. Do not leave it empty.
 - When returning \`travel_mode\`, look up the timezone for the \`targetCity\` (be approximate) and mention the offset change in \`naturalResponse\`.
 - Estimate realistic durations:

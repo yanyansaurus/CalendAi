@@ -76,10 +76,11 @@ const GROQ_MODELS = [
 ];
 
 const GEMINI_MODELS = [
+  "gemini-2.0-flash-exp",
   "gemini-1.5-pro-latest",
   "gemini-1.5-flash-latest",
-  "gemini-pro",
-  "gemini-flash"
+  "gemini-1.5-flash",
+  "gemini-1.5-pro",
 ];
 
 async function callGroq(messages: AIMessage[], options: AIOptions) {
@@ -87,9 +88,11 @@ async function callGroq(messages: AIMessage[], options: AIOptions) {
   if (!client) return callGemini(messages, options);
 
   const hasImages = messages.some(m => Array.isArray(m.content) && m.content.some(p => p.type === "image_url"));
+  if (hasImages) console.log("[Groq] Image detected in request. Using vision models.");
 
+  const VISION_MODELS = ["llama-3.2-11b-vision-preview", "llama-3.2-90b-vision-preview"];
   const modelsToTry = options.model ? [options.model, ...GROQ_MODELS] : GROQ_MODELS;
-  const filteredModels = hasImages ? ["llama-3.2-11b-vision-preview"] : Array.from(new Set(modelsToTry));
+  const filteredModels = hasImages ? VISION_MODELS : Array.from(new Set(modelsToTry));
 
   for (const modelName of filteredModels) {
     try {
@@ -97,7 +100,7 @@ async function callGroq(messages: AIMessage[], options: AIOptions) {
         messages: messages as any,
         model: modelName,
         temperature: options.temperature ?? 0.2,
-        response_format: options.jsonMode ? { type: "json_object" } : undefined,
+        response_format: (options.jsonMode && !hasImages) ? { type: "json_object" } : undefined,
       });
       return response.choices[0]?.message?.content || "";
     } catch (error: any) {
@@ -117,8 +120,14 @@ async function callGroq(messages: AIMessage[], options: AIOptions) {
 async function callGemini(messages: AIMessage[], options: AIOptions) {
   if (!genAI) throw new Error("Gemini API key is missing.");
 
-  for (const currentModelName of GEMINI_MODELS) {
+  const hasImages = messages.some(m => Array.isArray(m.content) && m.content.some(p => p.type === "image_url"));
+  const filteredModels = hasImages ? GEMINI_MODELS.filter(m => m.includes("1.5") || m.includes("flash") || m.includes("2.0")) : GEMINI_MODELS;
+
+  for (const currentModelName of filteredModels) {
     try {
+      if (hasImages && !currentModelName.includes("1.5") && !currentModelName.includes("flash") && !currentModelName.includes("2.0")) {
+        continue; // double check
+      }
       const model = genAI.getGenerativeModel({ model: currentModelName });
       let systemMessage = messages.find(m => m.role === "system")?.content;
 
@@ -137,6 +146,7 @@ async function callGemini(messages: AIMessage[], options: AIOptions) {
           if (typeof content === "string") {
             return { role: m.role === "user" ? "user" : "model", parts: [{ text: content }] };
           } else {
+            console.log("[Gemini] Image detected in message parts.");
             return {
               role: m.role === "user" ? "user" : "model",
               parts: content.map(part => {

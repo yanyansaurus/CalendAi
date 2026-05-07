@@ -70,8 +70,7 @@ ExecutiveVAi is a production-grade, all-in-one AI command center designed to rec
 #### **macOS & Linux**
 1. **Clone & Install**:
    ```bash
-   git clone https://github.com/yanyansaurus/CalendAi.git
-   cd CalendAi
+   git clone https://github.com/yanyansaurus/Dream-team-ExecutiveVAI
    npm install
    ```
 2. **Environment**:
@@ -86,8 +85,7 @@ ExecutiveVAi is a production-grade, all-in-one AI command center designed to rec
 #### **Windows**
 1. **Clone & Install**:
    ```cmd
-   git clone https://github.com/yanyansaurus/CalendAi.git
-   cd CalendAi
+   git clone https://github.com/yanyansaurus/Dream-team-ExecutiveVAI
    npm install
    ```
 2. **Environment**:
