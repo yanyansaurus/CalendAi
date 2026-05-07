@@ -1,6 +1,12 @@
 # ExecutiveVAi - All-in-One AI Assistant
 
-ExecutiveVAi is your comprehensive AI-powered executive assistant designed to handle scheduling, communication, and financial management. Originally built for the Codekada Hackathon, it transforms your daily workflow into a streamlined, high-integrity executive experience.
+ExecutiveVAi is a production-grade, all-in-one AI command center designed to reclaim the executive's most valuable asset: **Time**. By unifying scheduling, communication, and financial oversight into a single, high-performance interface, it transforms the modern "daily grind" into a streamlined, automated experience.
+
+---
+
+## 🔗 Live Experience
+**Experience the future of executive work live at:**
+[**executive-vai-azure.vercel.app**](https://executive-vai-azure.vercel.app/)
 
 ---
 
@@ -39,7 +45,7 @@ ExecutiveVAi is your comprehensive AI-powered executive assistant designed to ha
 - **Authentication:** NextAuth.js
 - **AI Intelligence:** 
   - **Primary:** Groq (Llama 3.3 70B, Llama 3.1 70B/8B, Gemma2 9B)
-  - **Failover:** Google Gemini 1.5 Pro / Flash
+  - **Failover:** Google Gemini Pro / Flash
 - **Database:** Redis Labs (Persistent KV with 2s hardened connection timeout)
 - **APIs:** Google Calendar, Gmail, Zoom
 - **Styling:** Vanilla CSS & Tailwind CSS
@@ -64,7 +70,8 @@ ExecutiveVAi is your comprehensive AI-powered executive assistant designed to ha
 #### **macOS & Linux**
 1. **Clone & Install**:
    ```bash
-   git clone https://github.com/yanyansaurus/Dream-team-ExecutiveVAI
+   git clone https://github.com/yanyansaurus/CalendAi.git
+   cd CalendAi
    npm install
    ```
 2. **Environment**:
@@ -79,7 +86,8 @@ ExecutiveVAi is your comprehensive AI-powered executive assistant designed to ha
 #### **Windows**
 1. **Clone & Install**:
    ```cmd
-   git clone https://github.com/yanyansaurus/Dream-team-ExecutiveVAI
+   git clone https://github.com/yanyansaurus/CalendAi.git
+   cd CalendAi
    npm install
    ```
 2. **Environment**:
