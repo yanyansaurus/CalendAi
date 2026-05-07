@@ -24,8 +24,6 @@ const CHAT_DEMO = [
   { role: 'ai', text: "✅ Notifications sent! I've also blocked 3:00–5:00 PM for Deep Work. Your afternoon is protected." },
 ]
 
-
-
 export default function LandingPage() {
   const router = useRouter()
   const [visibleMessages, setVisibleMessages] = useState(0)
@@ -108,7 +106,7 @@ export default function LandingPage() {
             <p style={{ fontSize: 'clamp(16px, 4vw, 20px)', color: 'var(--text-muted)', lineHeight: 1.6, marginBottom: 32, maxWidth: 540, fontWeight: 500 }}>
               Reclaim 10+ hours a week. ExecutiveVAi handles your calendar, emails, and deep work blocks with autonomous intelligence.
             </p>
-            <div style={{ display: 'flex', gap: 12, alignItems: 'center', flexWrap: 'wrap' }}>
+            <div style={{ display: 'flex', gap: 12, alignItems: 'center', flexWrap: 'wrap', marginBottom: 32 }}>
               <button
                 onClick={() => router.push('/login')}
                 className="btn-brand"
@@ -116,8 +114,6 @@ export default function LandingPage() {
               >
                 Get Started Free →
               </button>
-            </div>
-          </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                 <div style={{ display: 'flex', alignItems: 'center' }}>
                   {[1, 2, 3, 4].map(i => (
