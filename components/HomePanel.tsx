@@ -1,6 +1,5 @@
 'use client'
 import { useEffect, useState } from 'react'
-import { useSession } from 'next-auth/react'
 
 interface HomeStat {
   label: string
@@ -34,7 +33,12 @@ const URGENCY_COLORS: Record<string, string> = {
   low: '#34d399',
 }
 
-export default function HomePanel() {
+interface HomePanelProps {
+  session: any
+  setActiveTab: (tab: any) => void
+}
+
+export default function HomePanel({ session, setActiveTab }: HomePanelProps) {
   const [stats, setStats] = useState<HomeStat[]>([
     { label: 'Meetings Today', value: '...', icon: '🗓️', color: 'var(--brand)' },
     { label: 'Pending Tasks', value: '...', icon: '✅', color: '#10b981' },
@@ -46,7 +50,6 @@ export default function HomePanel() {
   const [showWelcome, setShowWelcome] = useState(false)
   const [isIncomplete, setIsIncomplete] = useState(false)
   const [currentTime, setCurrentTime] = useState(new Date())
-  const { data: session } = useSession()
 
   // Update clock every minute
   useEffect(() => {
