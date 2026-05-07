@@ -64,8 +64,7 @@ ExecutiveVAi is your comprehensive AI-powered executive assistant designed to ha
 #### **macOS & Linux**
 1. **Clone & Install**:
    ```bash
-   git clone https://github.com/yanyansaurus/CalendAi.git
-   cd CalendAi
+   git clone https://github.com/yanyansaurus/Dream-team-ExecutiveVAI
    npm install
    ```
 2. **Environment**:
@@ -80,8 +79,7 @@ ExecutiveVAi is your comprehensive AI-powered executive assistant designed to ha
 #### **Windows**
 1. **Clone & Install**:
    ```cmd
-   git clone https://github.com/yanyansaurus/CalendAi.git
-   cd CalendAi
+   git clone https://github.com/yanyansaurus/Dream-team-ExecutiveVAI
    npm install
    ```
 2. **Environment**:
