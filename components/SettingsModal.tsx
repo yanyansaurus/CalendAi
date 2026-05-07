@@ -51,14 +51,36 @@ export default function SettingsModal({ onClose, onSave }: Props) {
           <button onClick={onClose} style={{ background: 'none', border: 'none', color: 'var(--text)', cursor: 'pointer', fontSize: 20 }}>✕</button>
         </div>
 
-        <div style={{ 
-          padding: 32, 
-          display: 'flex', 
-          flexDirection: 'column', 
-          gap: 24,
-          maxHeight: '60vh',
-          overflowY: 'auto'
-        }}>
+        <div 
+          className="custom-scroll"
+          id="settings-content"
+          style={{ 
+            padding: 32, 
+            display: 'flex', 
+            flexDirection: 'column', 
+            gap: 24,
+            maxHeight: '60vh',
+            overflowY: 'auto',
+            position: 'relative'
+          }}
+        >
+          {/* Scroll Button */}
+          <button 
+            onClick={() => {
+              const el = document.getElementById('settings-content')
+              if (el) el.scrollTo({ top: el.scrollHeight, behavior: 'smooth' })
+            }}
+            style={{
+              position: 'sticky', top: 0, right: 0, marginLeft: 'auto',
+              width: 32, height: 32, borderRadius: 16, background: 'rgba(99,102,241,0.2)',
+              border: '1px solid rgba(99,102,241,0.3)', color: 'var(--brand-light)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              cursor: 'pointer', zIndex: 10, marginBottom: -32, transition: 'all 0.2s'
+            }}
+            title="Scroll to bottom"
+          >
+            ↓
+          </button>
           {/* Proactive Intelligence */}
           <div>
             <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 12, color: 'var(--brand-light)' }}>🧠 PROACTIVE INTELLIGENCE</div>

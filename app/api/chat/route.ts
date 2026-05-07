@@ -94,8 +94,7 @@ export async function POST(req: Request) {
   let rawResponse: string
   try {
     rawResponse = await getAIResponse(aiMessages, {
-      provider: 'groq',
-      model: 'llama-3.3-70b-versatile'
+      jsonMode: true
     })
   } catch (err: any) {
     console.error('[ExecutiveVAi] AI Error:', err.message)

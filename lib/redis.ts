@@ -16,7 +16,7 @@ export function getRedisClient() {
           if (retries > 5) return new Error('Too many retries')
           return Math.min(retries * 50, 1000)
         },
-        connectTimeout: 500, // Reduced from 10s to 500ms
+        connectTimeout: 2000, // Increased from 500ms to 2000ms for stability
       }
     })
 
@@ -41,7 +41,7 @@ export async function connectRedis() {
       // Very short timeout for the actual connection attempt
       await Promise.race([
         client.connect(),
-        new Promise((_, reject) => setTimeout(() => reject(new Error('Connection timeout')), 500))
+        new Promise((_, reject) => setTimeout(() => reject(new Error('Connection timeout')), 2000))
       ])
     } catch (err) {
       console.error('[Redis] Connection failed:', (err as Error).message)

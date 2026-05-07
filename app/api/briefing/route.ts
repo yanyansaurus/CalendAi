@@ -12,6 +12,11 @@ export async function GET(req: Request) {
   const userId = session.user.email
   const googleToken = session.googleAccessToken
   const timezone = req.headers.get('x-timezone') ?? 'UTC'
+  const now = new Date();
+  console.log(`[Briefing API] User Timezone: ${timezone}`);
+  console.log(`[Briefing API] Server Time (UTC): ${now.toISOString()}`);
+  const testLocal = now.toLocaleString('en-US', { timeZone: timezone });
+  console.log(`[Briefing API] Calculated Local Time: ${testLocal}`);
 
   // Gather context
   let emails: any[] = []
@@ -24,7 +29,6 @@ export async function GET(req: Request) {
     const allTasks = await getTasks(userId)
 
     // Filter tasks for today's context
-    const now = new Date()
     const parts = new Intl.DateTimeFormat('en-CA', {
       timeZone: timezone,
       year: 'numeric', month: '2-digit', day: '2-digit'
@@ -105,9 +109,11 @@ export async function GET(req: Request) {
   }
 
   // Build AI prompt for briefing with EXPLICIT local times to prevent hallucinations
-  const now = new Date()
   const localTimeStr = now.toLocaleString('en-US', { timeZone: timezone, hour: 'numeric', minute: '2-digit', hour12: true, month: 'short', day: 'numeric' })
-  const isEndOfDay = now.getHours() >= 17
+  
+  // Use a helper to get the local hour for greeting logic
+  const localHour = parseInt(now.toLocaleString('en-US', { timeZone: timezone, hour: 'numeric', hour12: false }))
+  const isEndOfDay = localHour >= 17
 
   const formatLocal = (slots: any[]) => slots.map(s => ({
     title: s.title || 'Busy',
@@ -118,6 +124,7 @@ export async function GET(req: Request) {
 
   const briefingPrompt = `
     You are ExecutiveVAi, generating a ${isEndOfDay ? 'reflective End-of-Day Digest' : 'Morning Daily Briefing'}.
+    User Name: ${session.user.name || 'Executive'}
     Current user local time: ${localTimeStr} (${timezone}).
     
     CRITICAL: Compare all events against the Current User Local Time above.
@@ -156,7 +163,7 @@ export async function GET(req: Request) {
     2. HEAVY_DAY: If total meeting time exceeds 5 hours. Use urgency: medium.
     3. CONFLICT: If two events overlap or an activity starts exactly at wake-up time. Use urgency: high.
     4. Focus on 'todayReminders' for the current day only.
-    5. Ensure 'recommendedSchedule' suggests slots for focus or breaks based on the gaps in busy slots.
+    6. GREETING_RULE: The greeting MUST match the Current user local time (${localTimeStr}). If it is after 12 PM, DO NOT say "Good morning". If it is after 5 PM, use an evening or reflective greeting.
   `;
 
   let briefing: any = null
@@ -173,7 +180,7 @@ export async function GET(req: Request) {
   } catch (err) {
     console.error('[Briefing] AI failed:', err)
     briefing = {
-      greeting: `Good ${new Date().getHours() < 12 ? 'morning' : 'afternoon'}!`,
+      greeting: `Good ${localHour < 12 ? 'morning' : localHour < 18 ? 'afternoon' : 'evening'}!`,
       urgentAlerts: [],
       todayReminders: busySlots.map(s => {
         const durMs = new Date(s.end).getTime() - new Date(s.start).getTime();

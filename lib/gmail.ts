@@ -9,6 +9,24 @@ function getAuthClient(accessToken: string) {
   return auth
 }
 
+// ─── Fetch Unread Email IDs (Efficient) ──────────────────────────────────────
+export async function getUnreadEmailIds(accessToken: string, maxResults = 100) {
+  const auth = getAuthClient(accessToken)
+  const gmail = google.gmail({ version: 'v1', auth })
+
+  try {
+    const res = await gmail.users.messages.list({
+      userId: 'me',
+      q: 'is:unread in:inbox',
+      maxResults,
+    })
+    return (res.data.messages || []).map(m => m.id!)
+  } catch (err: any) {
+    console.error('Gmail List Error:', err)
+    return []
+  }
+}
+
 // ─── Fetch Unread Emails (Inbox Triage) ──────────────────────────────────────
 export async function getUnreadEmails(accessToken: string, maxResults = 10) {
   const auth = getAuthClient(accessToken)
@@ -99,6 +117,46 @@ export async function sendEmail(accessToken: string, to: string, subject: string
     return { success: true, messageId: res.data.id }
   } catch (err: any) {
     console.error('Send Email Error:', err)
+    return { success: false, error: err.message }
+  }
+}
+// ─── Mark as Read ────────────────────────────────────────────────────────────
+export async function markEmailAsRead(accessToken: string, messageId: string) {
+  const auth = getAuthClient(accessToken)
+  const gmail = google.gmail({ version: 'v1', auth })
+
+  try {
+    await gmail.users.messages.batchModify({
+      userId: 'me',
+      requestBody: {
+        ids: [messageId],
+        removeLabelIds: ['UNREAD']
+      }
+    })
+    return { success: true }
+  } catch (err: any) {
+    console.error('Mark as Read Error:', err)
+    return { success: false, error: err.message }
+  }
+}
+
+// ─── Mark Multiple as Read ───────────────────────────────────────────────────
+export async function markMultipleAsRead(accessToken: string, messageIds: string[]) {
+  if (messageIds.length === 0) return { success: true };
+  const auth = getAuthClient(accessToken)
+  const gmail = google.gmail({ version: 'v1', auth })
+
+  try {
+    await gmail.users.messages.batchModify({
+      userId: 'me',
+      requestBody: {
+        ids: messageIds,
+        removeLabelIds: ['UNREAD']
+      }
+    })
+    return { success: true }
+  } catch (err: any) {
+    console.error('Mark All as Read Error:', err)
     return { success: false, error: err.message }
   }
 }

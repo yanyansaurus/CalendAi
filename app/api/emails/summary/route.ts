@@ -1,6 +1,7 @@
 import { auth } from '@/lib/auth'
 import { getAIResponse } from '@/lib/ai'
 import { getUnreadEmails } from '@/lib/gmail'
+import { kv } from '@/lib/kv'
 import { NextResponse } from 'next/server'
 
 export async function GET(req: Request) {
@@ -73,12 +74,14 @@ Generate a summary in this EXACT JSON format (no markdown, no code fences):
     {
       "from": "Sender name",
       "subject": "Subject",
-      "reason": "Why this is low priority (e.g. Newsletter, Promotion, Auto-notification)"
+      "reason": "Why this is low priority",
+      "index": 0
     }
   ]
 }
 
 Rules:
+- Include the "index" property in every actionItem and lowPriority item to match the input.
 - actionItems: top 5 most important emails that need attention
 - lowPriority: remaining emails that can wait
 - Be concise and actionable
@@ -91,12 +94,24 @@ Rules:
       { role: "system", content: "You are a specialized JSON generator for email summaries. Output ONLY valid JSON." },
       { role: "user", content: summaryPrompt }
     ], { 
-      jsonMode: true, 
-      provider: "groq", 
-      model: "llama-3.3-70b-versatile" 
+      jsonMode: true
     });
     
     summary = JSON.parse(text)
+    
+    // Map IDs back to items
+    if (summary.actionItems) {
+      summary.actionItems = summary.actionItems.map((item: any) => ({
+        ...item,
+        id: emails[item.index]?.id
+      }))
+    }
+    if (summary.lowPriority) {
+      summary.lowPriority = summary.lowPriority.map((item: any) => ({
+        ...item,
+        id: emails[item.index]?.id
+      }))
+    }
   } catch (err) {
     console.error('[EmailSummary] AI failed:', err)
     summary = {
@@ -111,11 +126,13 @@ Rules:
         suggestedAction: 'Read and respond',
         priority: 'medium',
         timeEstimate: '2 min',
+        id: e.id
       })),
       lowPriority: emails.slice(5).map(e => ({
         from: e.from?.split('<')[0]?.trim() ?? 'Unknown',
         subject: e.subject,
         reason: 'Lower priority',
+        id: e.id
       })),
     }
   }

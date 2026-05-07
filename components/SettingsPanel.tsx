@@ -363,7 +363,36 @@ export default function SettingsPanel() {
   }
 
   return (
-    <div style={{ maxWidth: 800, margin: '0 auto' }} className="container-padding">
+    <div 
+      className="container-padding custom-scroll" 
+      id="settings-panel"
+      style={{ 
+        maxWidth: 800, 
+        margin: '0 auto', 
+        height: '100%', 
+        overflowY: 'auto',
+        position: 'relative',
+        scrollPaddingBottom: 100
+      }}
+    >
+      {/* Scroll to Bottom Button */}
+      <button 
+        onClick={() => {
+          const el = document.getElementById('settings-panel')
+          if (el) el.scrollTo({ top: el.scrollHeight, behavior: 'smooth' })
+        }}
+        style={{
+          position: 'fixed', bottom: 40, right: 40,
+          width: 40, height: 40, borderRadius: 20, background: 'var(--brand)',
+          border: 'none', color: '#fff', boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          cursor: 'pointer', zIndex: 100, transition: 'all 0.2s',
+          fontSize: 20, fontWeight: 800
+        }}
+        title="Scroll to bottom"
+      >
+        ↓
+      </button>
       <header style={{ marginBottom: 32 }}>
         <h2 style={{ fontSize: 24, fontWeight: 700, marginBottom: 8 }}>Settings</h2>
         <p style={{ color: 'var(--text-muted)' }}>Manage your personal AI assistant and integrations.</p>
@@ -440,21 +469,6 @@ export default function SettingsPanel() {
           </div>
         </section>
 
-        {/* Notifications Section */}
-        <section>
-          <h3 style={{ fontSize: 18, fontWeight: 600, marginBottom: 16 }}>Reminders</h3>
-          <div className="glass" style={{ padding: 24 }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <div>
-                <p style={{ fontWeight: 500 }}>Upcoming Meeting Alerts</p>
-                <p style={{ fontSize: 13, color: 'var(--text-muted)' }}>Show a bubble reminder 10 minutes before events.</p>
-              </div>
-              <div style={{ width: 44, height: 24, background: 'var(--brand)', borderRadius: 12, position: 'relative', cursor: 'pointer' }}>
-                <div style={{ width: 18, height: 18, background: 'white', borderRadius: '50%', position: 'absolute', top: 3, right: 3 }} />
-              </div>
-            </div>
-          </div>
-        </section>
 
         {/* Danger Zone */}
         <section>

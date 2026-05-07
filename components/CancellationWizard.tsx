@@ -91,16 +91,24 @@ export default function CancellationWizard({ onClose, onComplete }: Props) {
         </div>
 
         {/* Content */}
-        <div style={{ flex: 1, padding: 32, overflowX: 'auto', display: 'flex', gap: 20 }}>
+        <div style={{ 
+          flex: 1, 
+          padding: '32px', 
+          overflowX: 'auto', 
+          display: 'grid', 
+          gridTemplateColumns: 'repeat(7, 240px)', 
+          gap: 24,
+          background: 'rgba(0,0,0,0.1)'
+        }}>
           {loading ? (
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', color: 'rgba(239,68,68,0.4)' }}>
+            <div style={{ gridColumn: '1 / -1', display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: 'rgba(239,68,68,0.4)' }}>
               Retrieving mission target list...
             </div>
           ) : (
             days.map((day, i) => {
               const dayEvents = events.filter(e => new Date(e.start).toDateString() === day.toDateString())
               return (
-                <div key={i} style={{ flex: '0 0 240px', display: 'flex', flexDirection: 'column', gap: 12 }}>
+                <div key={i} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                   <div style={{ borderBottom: '1px solid rgba(239,68,68,0.1)', paddingBottom: 8, marginBottom: 4 }}>
                     <div style={{ fontWeight: 800, color: '#fff', fontSize: 14 }}>{day.toLocaleDateString('en-US', { weekday: 'long' })}</div>
                     <div style={{ fontSize: 11, color: '#ef4444' }}>{day.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</div>

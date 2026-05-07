@@ -1,7 +1,9 @@
 'use client'
 import { useEffect, useState } from 'react'
+import confetti from 'canvas-confetti'
 
 interface ActionItem {
+  id: string
   from: string
   emailAddress?: string
   subject: string
@@ -12,6 +14,7 @@ interface ActionItem {
 }
 
 interface LowPriorityItem {
+  id: string
   from: string
   subject: string
   reason: string
@@ -43,10 +46,20 @@ export default function EmailSummaryPanel() {
   const [refreshing, setRefreshing] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [showLowPriority, setShowLowPriority] = useState(false)
+  const [loadingStep, setLoadingStep] = useState(0)
+  const [clearedMessage, setClearedMessage] = useState(false)
+  const loadingMessages = [
+    '🔍 Scanning unread headers...',
+    '🤖 Analyzing priorities with AI...',
+    '📂 Categorizing your requests...',
+    '⚡ Generating executive summaries...',
+    '✨ Finalizing your briefing...'
+  ]
 
   const loadSummary = async (isRefresh = false) => {
     if (isRefresh) setRefreshing(true)
     else setLoading(true)
+    setLoadingStep(0)
     setError(null)
     try {
       const res = await fetch('/api/emails/summary', {
@@ -65,15 +78,36 @@ export default function EmailSummaryPanel() {
 
   useEffect(() => { loadSummary() }, [])
 
+  useEffect(() => {
+    if (loading && !summary) {
+      const interval = setInterval(() => {
+        setLoadingStep(prev => (prev + 1) % loadingMessages.length)
+      }, 3000)
+      return () => clearInterval(interval)
+    }
+  }, [loading, summary])
+
   if (loading && !summary) {
     return (
-      <div style={{ padding: 40, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16 }}>
-        <div style={{ display: 'flex', gap: 6 }}>
-          <div className="typing-dot" style={{ width: 10, height: 10 }} />
-          <div className="typing-dot" style={{ width: 10, height: 10 }} />
-          <div className="typing-dot" style={{ width: 10, height: 10 }} />
+      <div style={{ padding: 60, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 24, textAlign: 'center' }}>
+        <div style={{ position: 'relative', width: 80, height: 80 }}>
+          <div className="pulse-ring" style={{ position: 'absolute', inset: 0, border: '2px solid var(--brand-light)', borderRadius: '50%', opacity: 0.3 }} />
+          <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 32 }}>📬</div>
         </div>
-        <p style={{ color: 'var(--text-muted)', fontSize: 13 }}>Scanning your inbox…</p>
+        
+        <div style={{ width: '100%', maxWidth: 240 }}>
+          <div style={{ 
+            height: 4, background: 'rgba(255,255,255,0.1)', borderRadius: 2, overflow: 'hidden', marginBottom: 12 
+          }}>
+            <div style={{ 
+              height: '100%', width: `${((loadingStep + 1) / loadingMessages.length) * 100}%`, 
+              background: 'var(--brand-gradient)', transition: 'width 0.5s ease' 
+            }} />
+          </div>
+          <p className="fade-in" key={loadingStep} style={{ color: 'var(--text-subtle)', fontSize: 13, fontWeight: 500, minHeight: 20 }}>
+            {loadingMessages[loadingStep]}
+          </p>
+        </div>
       </div>
     )
   }
@@ -97,16 +131,59 @@ export default function EmailSummaryPanel() {
           <h2 style={{ fontSize: 22, fontWeight: 700, marginBottom: 6 }}>📧 Email Summary</h2>
           <p style={{ fontSize: 13, color: 'var(--text-muted)' }}>{summary.overview}</p>
         </div>
-        <button
-          onClick={() => loadSummary(true)}
-          disabled={refreshing}
-          className="btn-ghost"
-          style={{ fontSize: 16, padding: '6px 10px', borderRadius: 8, opacity: refreshing ? 0.5 : 1 }}
-          title="Refresh"
-        >
-          {refreshing ? '⏳' : '🔄'}
-        </button>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <button
+            onClick={async () => {
+              if (confirm('Mark all unread emails as read?')) {
+                setRefreshing(true)
+                try {
+                  const res = await fetch('/api/emails/read-all', { method: 'POST' })
+                  if (res.ok) {
+                    confetti({
+                      particleCount: 150,
+                      spread: 70,
+                      origin: { y: 0.6 },
+                      colors: ['#6366f1', '#a855f7', '#3b82f6']
+                    })
+                    setClearedMessage(true)
+                    setTimeout(() => setClearedMessage(false), 5000)
+                    await loadSummary()
+                  }
+                } catch (err) {
+                  console.error('Failed to read all:', err)
+                } finally {
+                  setRefreshing(false)
+                }
+              }
+            }}
+            disabled={refreshing}
+            className="btn-ghost"
+            style={{ fontSize: 12, padding: '6px 12px', borderRadius: 8, opacity: refreshing ? 0.5 : 1, color: 'var(--brand-light)', fontWeight: 600 }}
+          >
+            {refreshing ? '⌛ Processing...' : '✅ Read All'}
+          </button>
+          <button
+            onClick={() => loadSummary(true)}
+            disabled={refreshing}
+            className="btn-ghost"
+            style={{ fontSize: 16, padding: '6px 10px', borderRadius: 8, opacity: refreshing ? 0.5 : 1 }}
+            title="Refresh"
+          >
+            {refreshing ? '⏳' : '🔄'}
+          </button>
+        </div>
       </div>
+
+      {clearedMessage && (
+        <div className="fade-in glass" style={{ 
+          padding: '12px 20px', borderRadius: 12, marginBottom: 24, 
+          background: 'rgba(52, 211, 153, 0.1)', border: '1px solid rgba(52, 211, 153, 0.2)',
+          display: 'flex', alignItems: 'center', gap: 12
+        }}>
+          <span style={{ fontSize: 18 }}>🎉</span>
+          <span style={{ fontSize: 14, fontWeight: 600, color: '#34d399' }}>Inbox cleared! You are all caught up.</span>
+        </div>
+      )}
 
       {/* Stats Row */}
       <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginBottom: 24 }}>
@@ -174,6 +251,16 @@ export default function EmailSummaryPanel() {
                       window.dispatchEvent(new CustomEvent('send-chat', { 
                         detail: { message: `Use the draft_email intent to draft a professional reply to ${item.emailAddress || item.from} about "${item.subject}". The suggested action is: ${item.suggestedAction}. The email summary says: "${item.summary}". If this email mentions a meeting time, extract it into meetingDetails. DO NOT send it, just draft it.` } 
                       }))
+                      
+                      // Persist dismissal in background
+                      if (item.id) {
+                        fetch('/api/emails/dismiss', {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({ messageId: item.id })
+                        }).catch(err => console.error('Failed to persist dismissal:', err))
+                      }
+
                       // Remove from list
                       setSummary(prev => prev ? {
                         ...prev,
@@ -186,15 +273,28 @@ export default function EmailSummaryPanel() {
                   <button
                     className="btn-ghost"
                     style={{ fontSize: 11, padding: '6px 14px', borderRadius: 8 }}
-                    onClick={() => {
+                    onClick={async () => {
+                      // Mark as read in background
+                      if (item.id) {
+                        try {
+                          await fetch('/api/emails/dismiss', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ messageId: item.id })
+                          })
+                        } catch (err) {
+                          console.error('Failed to mark as read:', err)
+                        }
+                      }
+
                       setSummary(prev => prev ? {
                         ...prev,
                         actionItems: prev.actionItems.filter((_, idx) => idx !== i),
-                        lowPriority: [...(prev.lowPriority ?? []), { from: item.from, subject: item.subject, reason: 'Dismissed' }],
+                        lowPriority: [...(prev.lowPriority ?? []), { id: item.id, from: item.from, subject: item.subject, reason: 'Read' }],
                       } : prev)
                     }}
                   >
-                    ✕ Dismiss
+                    ✕ Mark as Read
                   </button>
                 </div>
               </div>

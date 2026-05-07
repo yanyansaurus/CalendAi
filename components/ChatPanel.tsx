@@ -81,7 +81,7 @@ function SuggestionBubble({ suggestion, onDismiss, onAccept }: { suggestion: any
 
 
 
-function DraftEmailCard({ action, onSend }: { action: any, onSend: (to: string, subject: string, body: string) => void }) {
+function DraftEmailCard({ action, onSend, onCancel }: { action: any, onSend: (to: string, subject: string, body: string) => void, onCancel: () => void }) {
   const [body, setBody] = useState(action.emailBody || '')
   const [to, setTo] = useState(action.emailTo || '')
   const [subject, setSubject] = useState(action.emailSubject || '')
@@ -189,10 +189,17 @@ function DraftEmailCard({ action, onSend }: { action: any, onSend: (to: string, 
       <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
         <button
           className="btn-brand"
-          style={{ flex: 1, padding: '10px', fontSize: 13, display: 'flex', justifyContent: 'center', gap: 6 }}
+          style={{ flex: 2, padding: '10px', fontSize: 13, display: 'flex', justifyContent: 'center', gap: 6 }}
           onClick={() => onSend(to, subject, body)}
         >
           🚀 Send Email Now
+        </button>
+        <button
+          className="btn-ghost"
+          style={{ flex: 1, padding: '10px', fontSize: 13, display: 'flex', justifyContent: 'center' }}
+          onClick={onCancel}
+        >
+          Cancel
         </button>
         {hasMeeting && (
           <>
@@ -510,7 +517,7 @@ export default function ChatPanel({ reminders, setReminders, suggestions, setSug
               {msg.role === 'assistant' && (
                 <img src="/logo.png" alt="AI" style={{ width: 28, height: 28, borderRadius: 6, flexShrink: 0, marginBottom: 4 }} />
               )}
-              <div className={msg.role === 'user' ? 'bubble-user' : 'bubble-ai'} style={{ flex: 1 }}>
+              <div className={msg.role === 'user' ? 'bubble-user' : 'bubble-ai'}>
                 {msg.content}
               </div>
             </div>
@@ -663,6 +670,7 @@ export default function ChatPanel({ reminders, setReminders, suggestions, setSug
               <DraftEmailCard
                 action={msg.action}
                 onSend={(to, subject, body) => sendMessage(`Send this exact email directly to ${to} with subject "${subject}" and body:\n\n${body}`)}
+                onCancel={() => sendMessage("Cancel this email draft")}
               />
             )}
 
@@ -789,7 +797,7 @@ export default function ChatPanel({ reminders, setReminders, suggestions, setSug
       )}
 
       {/* Quick Actions Bar */}
-      <div style={{ padding: '0 20px 8px', display: 'flex', gap: 8 }}>
+      <div style={{ padding: '0 20px 8px', display: 'flex', gap: 8, alignItems: 'center' }}>
         <button
           onClick={() => { setModalMode('event'); setShowWeekModal(true) }}
           style={{
@@ -810,6 +818,9 @@ export default function ChatPanel({ reminders, setReminders, suggestions, setSug
         >
           📋 Add Task
         </button>
+        <span style={{ fontSize: 10, color: 'var(--text-subtle)', marginLeft: 'auto' }}>
+          💡 Click <span style={{ color: 'var(--brand-light)' }}>⚡ lightning</span> for shortcut responses
+        </span>
       </div>
 
       {/* Input bar */}

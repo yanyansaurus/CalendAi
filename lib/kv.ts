@@ -10,7 +10,10 @@ export const kv = {
     try {
       const redis = await connectRedis()
       if (redis) {
-        const val = await redis.get(key)
+        const val = await Promise.race([
+          redis.get(key),
+          new Promise<string | null>((_, reject) => setTimeout(() => reject(new Error('Redis Read Timeout')), 1000))
+        ])
         if (!val) return null
         try {
           return JSON.parse(val) as T
@@ -29,11 +32,10 @@ export const kv = {
     try {
       const redis = await connectRedis()
       if (redis) {
-        if (opts?.ex) {
-          await redis.set(key, val, { EX: opts.ex })
-        } else {
-          await redis.set(key, val)
-        }
+        await Promise.race([
+          opts?.ex ? redis.set(key, val, { EX: opts.ex }) : redis.set(key, val),
+          new Promise((_, reject) => setTimeout(() => reject(new Error('Redis Write Timeout')), 1000))
+        ])
         return
       }
     } catch (err) {

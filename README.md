@@ -9,28 +9,28 @@ ExecutiveVAi is your comprehensive AI-powered executive assistant designed to ha
 ### 1. Executive AI Chatbot (The Command Center)
 - **Context-Aware Conversations**: A high-performance assistant that remembers your schedule, recent emails, and financial goals.
 - **Natural Language Execution**: "Schedule a sync," "Check my budget," or "Draft a reply to John"—the AI parses intent and executes across multiple APIs.
-- **Proactive Suggestions**: Offers "Suggested Answers" and quick-actions based on the current context of the conversation.
+- **Resilience Bridge**: Optimized failover logic prioritizing Groq (Llama 3.3/3.1) for speed, with robust Gemini fallback to ensure 24/7 availability.
 
 ### 2. Routine Architect (AI Analyzer)
 - **Weekly Time Analysis**: Analyzes your entire week's calendar to determine productivity scores and identify time-wasters.
-- **Smart Routine Suggestions**: Scans for gaps in your schedule and suggests "Focus Blocks," "Deep Work," or "Administrative Time" to balance your routine.
-- **Habit-Forming Guidance**: Identifies if you're missing lunch breaks or working too many back-to-back meetings and offers corrections.
+- **Smart Routine Suggestions**: Scans for gaps in your schedule and suggests "Focus Blocks," "Deep Work," or "Administrative Time."
+- **Habit-Forming Guidance**: Identifies missing breaks or back-to-back meeting fatigue and offers corrections.
 
 ### 3. Smart Calendar & Scheduling
-- **Interactive Booking (Draft-First)**: Every scheduling request triggers an interactive UI card. Review, edit, and confirm titles or times before they hit your calendar.
-- **Smart Conflict Resolution**: If you try to double-book, the AI halts the action, warns you of the conflict, and scans your calendar to suggest the nearest vacant time slot.
-- **Timezone Precision**: Anchored to your specific local time (e.g., Asia/Manila). Daily briefings and free-slot calculations are accurate to your local 12 AM - 11:59 PM window.
-- **Platform Choice**: Automatically asks "Zoom or Google Meet?" for every meeting request and provides one-tap selection buttons.
+- **Interactive Booking (Draft-First)**: Every scheduling request triggers an interactive UI card. Review, edit, and confirm before they hit your calendar.
+- **Smart Conflict Resolution**: AI warns you of conflicts and scans your calendar to suggest the nearest vacant time slot.
+- **Timezone Precision**: Anchored to your local time (e.g., Asia/Manila) for accurate briefings and slot calculations.
 
 ### 4. Intelligent Communication (Gatekeeping)
-- **Inbox Triage**: AI-driven filter that sorts emails into categories like "Needs Immediate Action," "Read Later," and "Spam/Delegable."
-- **Interactive Email Drafting**: Auto-drafts replies based on your personal tone and email context. Renders an interactive UI card where you can freely edit the *To*, *Subject*, and *Body* before sending.
-- **Resilient Analysis**: Uses a multi-model failover system (Groq/Gemini) to ensure email summaries are always available, even under heavy API load.
+- **Inbox Triage**: Sorts emails into "Needs Immediate Attention," "Read Later," and "Can Wait."
+- **Mark as Read Sync**: "Dismissing" an email in the dashboard automatically marks it as **READ** in your actual Gmail inbox.
+- **Read All Button**: Clear your entire dashboard summary with a single click—batch-processing unread labels instantly with celebratory confetti feedback.
+- **Dynamic Scanning UI**: Real-time status updates ("Analyzing priorities...", "Categorizing requests...") make the AI analysis transparent and engaging.
 
 ### 5. Finance Engine (Track Finances)
 - **Intelligent Receipt Scanning**: Uses Gemini Vision to extract structured data from receipts and invoices.
 - **Human-in-the-Loop Verification**: Review, edit, and confirm extracted data before it persists to your budget.
-- **Comprehensive Dashboard**: Track income, expenses, and savings with real-time budget limit alerts and category breakdowns.
+- **Comprehensive Dashboard**: Track income, expenses, and savings with real-time budget limit alerts.
 
 ---
 
@@ -38,10 +38,9 @@ ExecutiveVAi is your comprehensive AI-powered executive assistant designed to ha
 - **Framework:** Next.js 14 (App Router)
 - **Authentication:** NextAuth.js
 - **AI Intelligence:** 
-  - **Primary:** Groq (Llama 3.3 70B, GPT-OSS 120B)
-  - **Failover:** Google Gemini 3.1 Pro / Flash / Lite
-- **Database:** Redis Labs (Persistent KV)
-
+  - **Primary:** Groq (Llama 3.3 70B, Llama 3.1 70B/8B, Gemma2 9B)
+  - **Failover:** Google Gemini 1.5 Pro / Flash
+- **Database:** Redis Labs (Persistent KV with 2s hardened connection timeout)
 - **APIs:** Google Calendar, Gmail, Zoom
 - **Styling:** Vanilla CSS & Tailwind CSS
 
@@ -57,53 +56,6 @@ ExecutiveVAi is your comprehensive AI-powered executive assistant designed to ha
 | **npm** | v9.0+ | *(included with Node.js)* |
 | **Git** | latest | [git-scm.com](https://git-scm.com/) |
 | **Redis** | — | [Redis Labs (cloud)](https://redis.com/try-free/) or local |
-
-#### Install Prerequisites by OS
-
-<details>
-<summary>🍎 <b>macOS</b></summary>
-
-```bash
-# Install Homebrew (if not installed)
-/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-
-# Install Node.js & Git
-brew install node git
-
-# Verify
-node -v && npm -v && git --version
-```
-</details>
-
-<details>
-<summary>🐧 <b>Linux (Ubuntu/Debian)</b></summary>
-
-```bash
-# Install Node.js via NodeSource
-curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
-sudo apt-get install -y nodejs git
-
-# Verify
-node -v && npm -v && git --version
-```
-</details>
-
-<details>
-<summary>🪟 <b>Windows</b></summary>
-
-```powershell
-# Option 1: Download installers
-# Node.js → https://nodejs.org/ (LTS recommended)
-# Git     → https://git-scm.com/download/win
-
-# Option 2: Install via winget (Windows 11)
-winget install OpenJS.NodeJS.LTS
-winget install Git.Git
-
-# Verify (restart terminal after install)
-node -v && npm -v && git --version
-```
-</details>
 
 ---
 
@@ -127,14 +79,12 @@ node -v && npm -v && git --version
 
 #### **Windows**
 1. **Clone & Install**:
-   Use Git Bash or Command Prompt:
    ```cmd
    git clone https://github.com/yanyansaurus/CalendAi.git
    cd CalendAi
    npm install
    ```
 2. **Environment**:
-   Manually copy `.env.example` to `.env.local` or use PowerShell:
    ```powershell
    copy .env.example .env.local
    ```
@@ -157,23 +107,22 @@ Fill in the following in your `.env.local`:
 
 ### 2. Zoom Integration (Server-to-Server OAuth)
 - Go to [marketplace.zoom.us](https://marketplace.zoom.us/) → Build App → **Server-to-Server OAuth**
-- Add scopes: `meeting:write:admin`
 - `ZOOM_CLIENT_ID`
 - `ZOOM_CLIENT_SECRET`
 - `ZOOM_ACCOUNT_ID`
 
-### 3. Gemini & Groq AI
-- Get your Gemini key from [Google AI Studio](https://aistudio.google.com/app/apikey).
-- Get your Groq key from [console.groq.com](https://console.groq.com/keys).
+### 3. AI Intelligence
+- Get Gemini key from [Google AI Studio](https://aistudio.google.com/app/apikey). (Ensure **Generative Language API** is enabled)
+- Get Groq key from [console.groq.com](https://console.groq.com/keys).
 - `GEMINI_API_KEY`
 - `GROQ_API_KEY`
 
-### 4. Database (CalendAi Data Store)
-- `EXECUTIVEVAi_KV_URL`: Your Redis-compatible connection string.
+### 4. Database (Redis)
+- `calend_ai_kv_REDIS_URL`: Your Redis-compatible connection string.
 
 ### 5. NextAuth
 - `NEXTAUTH_SECRET`: Generate using `openssl rand -base64 32`.
-- `NEXTAUTH_URL`: `http://localhost:3000` (Local) or your production domain.
+- `NEXTAUTH_URL`: `http://localhost:3000`
 
 ---
 
