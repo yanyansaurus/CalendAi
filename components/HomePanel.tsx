@@ -213,75 +213,46 @@ export default function HomePanel() {
           }}
         >
           <div style={{ position: 'relative', zIndex: 2 }}>
-            <h2 style={{ fontSize: 24, fontWeight: 800, marginBottom: 12 }}>Welcome, {session?.user?.name?.split(' ')[0] || 'User'}! 👋</h2>
+            <h2 style={{ fontSize: 24, fontWeight: 800, marginBottom: 12 }}>Welcome, {session?.user?.name?.split(' ')[0] || 'Adriane'}! 👋</h2>
             <p style={{ fontSize: 16, opacity: 0.9, lineHeight: 1.6, maxWidth: 600 }}>
-              I&apos;ve analyzed your schedule. {isIncomplete
-                ? "Your schedule looks a bit thin. I recommend setting up a planning template (Work, Sleep, Lunch, etc.) to keep your routine consistent. Wanna try?"
-                : "Your schedule is looking sharp! You can refine, add, or delete events for today, tomorrow, next three days, weekend, weekdays, or your full week anytime."}
+              I&apos;ve analyzed your schedule. Your schedule is looking sharp! You can refine, add, or delete events for today, tomorrow, next three days, weekend, weekdays, or your full week anytime.
             </p>
-            {isIncomplete ? (
-              <div style={{ display: 'flex', gap: 12, marginTop: 20 }}>
-                <button
-                  onClick={() => {
-                    localStorage.setItem(`executive_vai_onboarded_v11_${session?.user?.email}`, 'true')
-                    setShowWelcome(false)
-                    window.dispatchEvent(new CustomEvent('switch-tab', { detail: { tab: 'planner' } }))
-                    setTimeout(() => {
-                      window.dispatchEvent(new CustomEvent('open-routine-setup'))
-                    }, 100)
-                  }}
-                  style={{
-                    padding: '10px 24px', borderRadius: 12, background: 'white', color: 'var(--brand)',
-                    fontWeight: 700, border: 'none', cursor: 'pointer', fontSize: 14
-                  }}
-                >
-                  Wanna try?
-                </button>
-                <button
-                  onClick={() => {
-                    localStorage.setItem(`executive_vai_onboarded_v11_${session?.user?.email}`, 'true')
-                    setShowWelcome(false)
-                  }}
-                  style={{
-                    padding: '10px 20px', borderRadius: 12, background: 'rgba(255,255,255,0.2)', color: 'white',
-                    fontWeight: 600, border: 'none', cursor: 'pointer', fontSize: 14
-                  }}
-                >
-                  Maybe later
-                </button>
-              </div>
-            ) : (
-              <div style={{ display: 'flex', gap: 12, marginTop: 20 }}>
-                <button
-                  onClick={() => {
-                    window.dispatchEvent(new CustomEvent('switch-tab', { detail: { tab: 'planner' } }))
-                    setTimeout(() => {
-                      window.dispatchEvent(new CustomEvent('open-routine-setup'))
-                    }, 100)
-                  }}
-                  style={{
-                    padding: '10px 24px', borderRadius: 12, background: 'white', color: 'var(--brand)',
-                    fontWeight: 700, border: 'none', cursor: 'pointer', fontSize: 14
-                  }}
-                >
-                  Edit Schedule →
-                </button>
-              </div>
-            )}
-            {!isIncomplete && (
+            
+            <div style={{ display: 'flex', gap: 12, marginTop: 24, alignItems: 'center' }}>
+              <button
+                onClick={() => {
+                  window.dispatchEvent(new CustomEvent('switch-tab', { detail: { tab: 'planner' } }))
+                  setTimeout(() => {
+                    window.dispatchEvent(new CustomEvent('open-routine-setup'))
+                  }, 100)
+                }}
+                style={{
+                  padding: '12px 24px', borderRadius: 12, background: 'white', color: 'var(--brand)',
+                  fontWeight: 800, border: 'none', cursor: 'pointer', fontSize: 14,
+                  boxShadow: '0 4px 14px rgba(0,0,0,0.1)', transition: 'transform 0.2s'
+                }}
+                onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.05)'}
+                onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}
+              >
+                Edit Schedule →
+              </button>
+
               <button
                 onClick={() => {
                   localStorage.setItem(`executive_vai_onboarded_v11_${session?.user?.email}`, 'true')
                   setShowWelcome(false)
                 }}
                 style={{
-                  marginTop: 20, padding: '10px 20px', borderRadius: 12, background: 'white', color: 'var(--brand)',
-                  fontWeight: 700, border: 'none', cursor: 'pointer', fontSize: 14
+                  padding: '12px 24px', borderRadius: 12, background: 'rgba(255,255,255,0.15)', color: 'white',
+                  fontWeight: 700, border: '1px solid rgba(255,255,255,0.3)', cursor: 'pointer', fontSize: 14,
+                  backdropFilter: 'blur(10px)', transition: 'background 0.2s'
                 }}
+                onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.25)'}
+                onMouseLeave={e => e.currentTarget.style.background = 'rgba(255,255,255,0.15)'}
               >
                 Let&apos;s go
               </button>
-            )}
+            </div>
           </div>
           {/* Decorative Circle */}
           <div style={{

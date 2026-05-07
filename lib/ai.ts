@@ -6,7 +6,10 @@ const genAI = process.env.GEMINI_API_KEY ? new GoogleGenerativeAI(process.env.GE
 
 // Helper to get Groq client dynamically
 function getGroqClient() {
-  if (!process.env.GROQ_API_KEY) return null;
+  if (!process.env.GROQ_API_KEY) {
+    console.warn("[ExecutiveVAi] Groq Key MISSING from environment.");
+    return null;
+  }
   return new Groq({ apiKey: process.env.GROQ_API_KEY });
 }
 
@@ -32,8 +35,6 @@ export interface AIOptions {
   jsonMode?: boolean;
 }
 
-
-
 /**
  * The Universal AI Adapter
  */
@@ -55,12 +56,17 @@ export async function getAIResponse(messages: AIMessage[], options: AIOptions = 
   return text;
 }
 
-// Prioritized list of models (Highest quality to lowest)
+// ACTIVE MODELS ONLY (Last verified: 2024-05-07)
 const GROQ_MODELS = [
   "llama-3.3-70b-versatile",
-  "llama-3.1-70b-versatile",
-  "llama-3.2-90b-text-preview",
-  "llama3-70b-8192"
+  "llama-3.1-8b-instant",
+  "mixtral-8x7b-32768"
+];
+
+const GEMINI_MODELS = [
+  "gemini-1.5-flash-latest",
+  "gemini-1.5-flash",
+  "gemini-1.5-pro-latest"
 ];
 
 async function callGroq(messages: AIMessage[], options: AIOptions) {
@@ -73,8 +79,6 @@ async function callGroq(messages: AIMessage[], options: AIOptions) {
   const modelsToTry = options.model ? [options.model, ...GROQ_MODELS] : GROQ_MODELS;
   const filteredModels = hasImages ? ["llama-3.2-11b-vision-preview"] : Array.from(new Set(modelsToTry));
 
-  let lastError: any = null;
-
   for (const modelName of filteredModels) {
     try {
       const response = await client.chat.completions.create({
@@ -85,33 +89,23 @@ async function callGroq(messages: AIMessage[], options: AIOptions) {
       });
       return response.choices[0]?.message?.content || "";
     } catch (error: any) {
-      lastError = error;
-      const isRateLimit = error.message?.includes("429") || error.message?.includes("rate_limit") || error.message?.includes("quota") || error.message?.includes("not found") || error.message?.includes("404");
-      if (isRateLimit) {
-        console.warn(`[Groq] Model ${modelName} hit limit or not found. Rotating...`);
-        continue; // Try the next model
-      }
-      // If it's a different error, stop and failover to Gemini
+      const errorMsg = error.message || "";
+      console.warn(`[Groq] Model ${modelName} failover triggered: ${errorMsg.substring(0, 50)}...`);
+      const isRetryable = errorMsg.includes("429") || errorMsg.includes("rate_limit") || errorMsg.includes("quota") || errorMsg.includes("404") || errorMsg.includes("not found") || errorMsg.includes("400");
+      
+      if (isRetryable) continue;
       break;
     }
   }
 
-  console.error("[Groq] All models failed or exhausted. Failing over to Gemini.");
+  console.error("[Groq] All models failed. Failing over to Gemini.");
   return callGemini(messages, options);
 }
 
 async function callGemini(messages: AIMessage[], options: AIOptions) {
   if (!genAI) throw new Error("Gemini API key is missing.");
 
-  const geminiModels = [
-    "gemini-1.5-flash",
-    "gemini-1.5-flash-8b",
-    "gemini-1.5-pro",
-    "gemini-2.0-flash-exp",
-  ];
-  let lastError: any = null;
-
-  for (const currentModelName of geminiModels) {
+  for (const currentModelName of GEMINI_MODELS) {
     try {
       const model = genAI.getGenerativeModel({ model: currentModelName });
       let systemMessage = messages.find(m => m.role === "system")?.content;
@@ -144,6 +138,8 @@ async function callGemini(messages: AIMessage[], options: AIOptions) {
         });
 
       while (history.length > 0 && history[0].role !== 'user') history.shift();
+      if (history.length === 0) history.push({ role: "user", parts: [{ text: "Context summary requested." }] });
+      
       const userContent = history.pop()?.parts || [];
 
       const chat = model.startChat({
@@ -157,17 +153,14 @@ async function callGemini(messages: AIMessage[], options: AIOptions) {
       const result = await chat.sendMessage(userContent as any);
       return result.response.text();
     } catch (error: any) {
-      lastError = error;
       const errorMsg = error.message?.toLowerCase() || "";
+      console.warn(`[Gemini] Model ${currentModelName} failover triggered: ${errorMsg.substring(0, 50)}...`);
       const isRetryable = errorMsg.includes("429") || errorMsg.includes("rate_limit") || errorMsg.includes("quota") || errorMsg.includes("404") || errorMsg.includes("not found") || errorMsg.includes("400");
 
-      if (isRetryable) {
-        console.warn(`[Gemini] Model ${currentModelName} failed or throttled. Rotating...`);
-        continue;
-      }
+      if (isRetryable) continue;
       break;
     }
   }
 
-  throw lastError || new Error("All Gemini models failed.");
+  throw new Error("All AI failover options exhausted.");
 }

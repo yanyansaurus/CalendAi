@@ -442,7 +442,11 @@ export async function POST(req: Request) {
           scheduled.push({ ...task, startTime: start, endTime: end, taskId })
         }
 
-        await saveSchedule(userId, scheduled)
+        let saveDate = 'today'
+        if (scheduled.length > 0 && scheduled[0].startTime) {
+          saveDate = scheduled[0].startTime.split('T')[0]
+        }
+        await saveSchedule(userId, scheduled, saveDate)
         await scheduleRemindersForPlan(userId, scheduled)
 
         return NextResponse.json({
@@ -486,10 +490,32 @@ export async function POST(req: Request) {
           }
         }
 
+        // 🟢 Case A: Routine Task (Redis only)
+        if (task && !eventId) {
+          const updatedSchedule = todaySchedule.map(t => {
+            if (t.name.toLowerCase().includes(title ?? '')) {
+              const duration = action.duration ?? (t.estimatedMinutes || 60)
+              const newEnd = new Date(new Date(action.startTime!).getTime() + duration * 60000).toISOString()
+              return { ...t, startTime: action.startTime!, endTime: newEnd }
+            }
+            return t
+          })
+          await saveSchedule(userId, updatedSchedule)
+          return NextResponse.json({
+            type: 'schedule',
+            text: action.naturalResponse ?? `Moved "${task.name}" to ${new Date(action.startTime!).toLocaleTimeString()}.`,
+            action,
+            schedule: updatedSchedule,
+            suggestedAnswers: ['Looks good', 'Undo']
+          })
+        }
+
+        // 🔴 Case B: Missing Event
         if (!eventId) {
           return NextResponse.json({ type: 'chat', text: `I couldn't find a meeting named "${action.title}" to reschedule.` })
         }
 
+        // 🔵 Case C: Calendar Event
         const duration = action.duration ?? (task?.estimatedMinutes || 60)
         const end = new Date(new Date(action.startTime!).getTime() + duration * 60000).toISOString()
 
@@ -501,7 +527,8 @@ export async function POST(req: Request) {
         return NextResponse.json({
           type: 'chat',
           text: action.naturalResponse ?? `OK, I've moved your meeting to ${new Date(action.startTime!).toLocaleTimeString()}.`,
-          action
+          action,
+          suggestedAnswers: ['Confirm', 'Change time', 'Cancel']
         })
       }
 

@@ -147,7 +147,9 @@ Valid intents:
   morning_intake  – parse a task dump and plan the full day
   daily_briefing  – summarise today's calendar and priorities
   time_analysis   – analyse last week's calendar by category
-  reschedule      – move an existing meeting to a new time. If the user doesn't specify a NEW time, use 'show_week_modal' instead to let them pick from the schedule.
+  reschedule      – move an existing meeting or routine task (e.g. "🌙 Sleep", "Wake Up") to a new time. 
+                     **SEARCH RULE**: Extract the exact name of the item from {todaySchedule} or {weekEvents}. If the user says "Sleep", the title MUST be "🌙 Sleep".
+                     If the user doesn't specify a NEW time, use 'show_week_modal' instead to let them pick from the schedule.
   cancel          – cancel an existing meeting. **SEARCH RULE**: If the user wants to cancel, look at both {busySlots} and {weekEvents} to identify the event.
   list_today      – list what's on the calendar today
   reminder_ack    – user acknowledged a reminder

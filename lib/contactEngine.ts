@@ -1,4 +1,4 @@
-import { connectRedis } from './redis'
+import { kv } from './kv'
 
 export interface Contact {
   id: string
@@ -13,11 +13,10 @@ function contactKey(userId: string) {
 
 export async function getContacts(userId: string): Promise<Contact[]> {
   try {
-    const redis = await connectRedis()
-    const raw = await redis.get(contactKey(userId))
-    return raw ? JSON.parse(raw) : []
+    const raw = await kv.get<Contact[]>(contactKey(userId))
+    return raw || []
   } catch (err) {
-    console.error('[Redis] getContacts failed:', err)
+    console.error('[ContactEngine] getContacts failed:', err)
     return []
   }
 }
@@ -30,12 +29,11 @@ export async function addContact(userId: string, contact: Omit<Contact, 'id' | '
     createdAt: new Date().toISOString(),
   }
   try {
-    const redis = await connectRedis()
     contacts.push(newContact)
-    await redis.set(contactKey(userId), JSON.stringify(contacts))
+    await kv.set(contactKey(userId), contacts)
     return contacts
   } catch (err) {
-    console.error('[Redis] addContact failed:', err)
+    console.error('[ContactEngine] addContact failed:', err)
     return contacts
   }
 }
@@ -44,11 +42,10 @@ export async function deleteContact(userId: string, contactId: string): Promise<
   let contacts = await getContacts(userId)
   contacts = contacts.filter(c => c.id !== contactId)
   try {
-    const redis = await connectRedis()
-    await redis.set(contactKey(userId), JSON.stringify(contacts))
+    await kv.set(contactKey(userId), contacts)
     return contacts
   } catch (err) {
-    console.error('[Redis] deleteContact failed:', err)
+    console.error('[ContactEngine] deleteContact failed:', err)
     return contacts
   }
 }

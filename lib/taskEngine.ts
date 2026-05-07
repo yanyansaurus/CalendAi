@@ -1,4 +1,4 @@
-import { connectRedis } from './redis'
+import { kv } from './kv'
 
 export interface Task {
   id: string
@@ -16,22 +16,20 @@ function taskKey(userId: string) {
 
 export async function getTasks(userId: string): Promise<Task[]> {
   try {
-    const redis = await connectRedis()
-    const raw = await redis.get(taskKey(userId))
-    return raw ? JSON.parse(raw) : []
+    const raw = await kv.get<Task[]>(taskKey(userId))
+    return raw || []
   } catch (err) {
-    console.error('[Redis] getTasks failed:', err)
+    console.error('[TaskEngine] getTasks failed:', err)
     return []
   }
 }
 
 export async function saveTasks(userId: string, tasks: Task[]): Promise<Task[]> {
   try {
-    const redis = await connectRedis()
-    await redis.set(taskKey(userId), JSON.stringify(tasks))
+    await kv.set(taskKey(userId), tasks)
     return tasks
   } catch (err) {
-    console.error('[Redis] saveTasks failed:', err)
+    console.error('[TaskEngine] saveTasks failed:', err)
     return tasks
   }
 }
@@ -45,12 +43,11 @@ export async function addTask(userId: string, task: Omit<Task, 'id' | 'createdAt
     createdAt: new Date().toISOString(),
   }
   try {
-    const redis = await connectRedis()
     tasks.push(newTask)
-    await redis.set(taskKey(userId), JSON.stringify(tasks))
+    await kv.set(taskKey(userId), tasks)
     return tasks
   } catch (err) {
-    console.error('[Redis] addTask failed:', err)
+    console.error('[TaskEngine] addTask failed:', err)
     return tasks
   }
 }
@@ -61,11 +58,10 @@ export async function updateTask(userId: string, taskId: string, updates: Partia
   if (idx === -1) return tasks
   tasks[idx] = { ...tasks[idx], ...updates }
   try {
-    const redis = await connectRedis()
-    await redis.set(taskKey(userId), JSON.stringify(tasks))
+    await kv.set(taskKey(userId), tasks)
     return tasks
   } catch (err) {
-    console.error('[Redis] updateTask failed:', err)
+    console.error('[TaskEngine] updateTask failed:', err)
     return tasks
   }
 }
@@ -74,11 +70,10 @@ export async function deleteTask(userId: string, taskId: string): Promise<Task[]
   let tasks = await getTasks(userId)
   tasks = tasks.filter(t => t.id !== taskId)
   try {
-    const redis = await connectRedis()
-    await redis.set(taskKey(userId), JSON.stringify(tasks))
+    await kv.set(taskKey(userId), tasks)
     return tasks
   } catch (err) {
-    console.error('[Redis] deleteTask failed:', err)
+    console.error('[TaskEngine] deleteTask failed:', err)
     return tasks
   }
 }

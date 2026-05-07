@@ -1,71 +1,23 @@
 import { randomUUID } from 'crypto'
 import type { Reminder, ScheduleTask } from '@/types'
-import { localKV } from '@/lib/localKV'
-
-import { connectRedis } from './redis'
-
-async function getKV() {
-  try {
-    const redis = await connectRedis()
-    if (redis && redis.isOpen) {
-      return {
-        async get<T = string>(key: string): Promise<T | null> {
-          try {
-            const val = await redis.get(key)
-            if (!val) return null
-            try { return JSON.parse(val) as T } catch { return val as unknown as T }
-          } catch (e) {
-            console.error('[Redis] GET error:', e)
-            return null
-          }
-        },
-        async set(key: string, value: unknown, opts?: { ex?: number }) {
-          try {
-            const val = typeof value === 'string' ? value : JSON.stringify(value)
-            if (opts?.ex) {
-              await redis.set(key, val, { EX: opts.ex })
-            } else {
-              await redis.set(key, val)
-            }
-          } catch (e) {
-            console.error('[Redis] SET error:', e)
-          }
-        },
-        async keys(pattern: string): Promise<string[]> {
-          try {
-            return await redis.keys(pattern)
-          } catch {
-            return []
-          }
-        }
-      }
-    }
-  } catch (err) {
-    console.warn('[Reminders] Redis failed, falling back to localKV')
-  }
-  return localKV
-}
+import { kv } from './kv'
 
 // ─── Store the day's task schedule ───────────────────────────────────────────
-export async function saveSchedule(userId: string, tasks: ScheduleTask[]) {
-  const kv = await getKV()
-  await kv.set(`schedule:${userId}:today`, JSON.stringify(tasks), { ex: 86400 })
+export async function saveSchedule(userId: string, tasks: ScheduleTask[], date: string = 'today') {
+  await kv.set(`schedule:${userId}:${date}`, tasks, { ex: 86400 })
 }
 
-export async function getSchedule(userId: string): Promise<ScheduleTask[]> {
-  const kv  = await getKV()
-  const raw = await kv.get<ScheduleTask[]>(`schedule:${userId}:today`)
+export async function getSchedule(userId: string, date: string = 'today'): Promise<ScheduleTask[]> {
+  const raw = await kv.get<ScheduleTask[]>(`schedule:${userId}:${date}`)
   return raw ?? []
 }
 
 // ─── Routine Preferences (Wake/Sleep) ────────────────────────────────────────
 export async function savePreferences(userId: string, prefs: { wakeTime: string; sleepTime: string }) {
-  const kv = await getKV()
-  await kv.set(`prefs:${userId}`, JSON.stringify(prefs))
+  await kv.set(`prefs:${userId}`, prefs)
 }
 
 export async function getPreferences(userId: string): Promise<{ wakeTime: string; sleepTime: string } | null> {
-  const kv = await getKV()
   return await kv.get<{ wakeTime: string; sleepTime: string }>(`prefs:${userId}`)
 }
 
@@ -73,21 +25,18 @@ export async function getPreferences(userId: string): Promise<{ wakeTime: string
 const CHAT_HISTORY_TTL = 7 * 86400  // 7 days
 
 export async function saveChatHistory(userId: string, messages: any[]) {
-  const kv = await getKV()
   // Keep only the last 50 messages to avoid bloating
   const trimmed = messages.slice(-50)
-  await kv.set(`chat:${userId}:history`, JSON.stringify(trimmed), { ex: CHAT_HISTORY_TTL })
+  await kv.set(`chat:${userId}:history`, trimmed, { ex: CHAT_HISTORY_TTL })
 }
 
 export async function getChatHistory(userId: string): Promise<any[]> {
-  const kv  = await getKV()
   const raw = await kv.get<any[]>(`chat:${userId}:history`)
   return raw ?? []
 }
 
 export async function clearChatHistory(userId: string) {
-  const kv = await getKV()
-  await kv.set(`chat:${userId}:history`, JSON.stringify([]), { ex: CHAT_HISTORY_TTL })
+  await kv.set(`chat:${userId}:history`, [], { ex: CHAT_HISTORY_TTL })
 }
 
 // ─── Reminder engine ──────────────────────────────────────────────────────────
@@ -97,7 +46,6 @@ export async function scheduleReminder(
   message: string,
   fireAt: Date,
 ) {
-  const kv = await getKV()
   const reminder: Reminder = {
     id:       randomUUID(),
     message,
@@ -106,19 +54,18 @@ export async function scheduleReminder(
     fired:    false,
   }
   const ttl = Math.max(3600, Math.ceil((fireAt.getTime() - Date.now()) / 1000) + 3600)
-  await kv.set(`reminders:${userId}:${reminder.id}`, JSON.stringify(reminder), { ex: ttl })
+  await kv.set(`reminders:${userId}:${reminder.id}`, reminder, { ex: ttl })
 }
 
 export async function getDueReminders(userId: string): Promise<Reminder[]> {
-  const kv   = await getKV()
   const keys = await kv.keys(`reminders:${userId}:*`)
   const due: Reminder[] = []
 
   for (const key of keys) {
-    const raw = await kv.get<string>(key)
+    const raw = await kv.get<any>(key)
     if (!raw) continue
     try {
-      const reminder: Reminder = JSON.parse(raw as string)
+      const reminder: Reminder = typeof raw === 'string' ? JSON.parse(raw) : raw
       if (!reminder.fired && new Date(reminder.fireAt) <= new Date()) {
         reminder.fired = true
         await kv.set(key, JSON.stringify(reminder), { ex: 3600 })

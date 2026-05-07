@@ -121,8 +121,12 @@ export default function OnboardingModal() {
       if (res.ok) {
         const data = await res.json()
         if (data.events && data.events.length > 0) {
-          const updated = routines.map((r, idx) => {
-            if (idx === 0) return { ...r, activities: data.events.sort((a: any, b: any) => timeToMin(a.startTime) - timeToMin(b.startTime)) }
+          const updated = routines.map((r) => {
+            // Filter events that actually belong to this specific date (YYYY-MM-DD)
+            const dayEvents = data.events.filter((e: any) => e.date === r.date)
+            if (dayEvents.length > 0) {
+              return { ...r, activities: dayEvents.sort((a: any, b: any) => timeToMin(a.startTime) - timeToMin(b.startTime)) }
+            }
             return r
           })
           setDailyRoutines(updated)
@@ -194,7 +198,18 @@ export default function OnboardingModal() {
     ].sort((a, b) => a.start - b.start)
 
     const mapped = items.map((item, i) => {
-      const conflicts = items.filter(other => other.id !== item.id && (item.start < other.end && item.end > other.start))
+      // Back-to-back events (End of A == Start of B) are NOT conflicts.
+      // A conflict only exists if (StartA < EndB) AND (EndA > StartB).
+      const conflicts = items.filter(other => {
+        if (other.id === item.id) return false
+        // Markers (wake/sleep) don't trigger conflict errors if they overlap with tasks
+        if (item.id === 'wake' || item.id === 'sleep' || other.id === 'wake' || other.id === 'sleep') return false
+        
+        // Check for actual time intersection
+        const hasIntersection = item.start < other.end && item.end > other.start
+        return hasIntersection
+      })
+      
       const overlapping = conflicts.length > 0 || (item.end <= item.start && item.id !== 'sleep')
       return { ...item, overlapping }
     })

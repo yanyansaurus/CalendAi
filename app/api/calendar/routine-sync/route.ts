@@ -60,12 +60,14 @@ export async function GET(req: Request) {
     const events = (response.data.items || []).map(item => {
       const start = item.start?.dateTime || item.start?.date || ''
       const end = item.end?.dateTime || item.end?.date || ''
+      const date = start.includes('T') ? start.split('T')[0] : start
       const startTime = start.includes('T') ? start.split('T')[1].substring(0, 5) : '09:00'
       const endTime = end.includes('T') ? end.split('T')[1].substring(0, 5) : '10:00'
-
+      
       return {
         id: item.id,
         name: item.summary || 'Untitled Event',
+        date,
         startTime,
         endTime,
         type: 'Existing',

@@ -124,17 +124,30 @@ export default function TaskBoard() {
           <h2 style={{ fontSize: 18, fontWeight: 700, letterSpacing: '-0.02em' }}>Today's Focus</h2>
           <p style={{ fontSize: 12, color: 'var(--text-muted)' }}>{tasks.filter(t => t.status !== 'done').length} tasks pending</p>
         </div>
-        <button
-          onClick={() => setShowAdd(!showAdd)}
-          style={{
-            width: 32, height: 32, borderRadius: '50%', background: 'var(--brand)',
-            color: '#fff', border: 'none', cursor: 'pointer', display: 'flex',
-            alignItems: 'center', justifyContent: 'center', fontSize: 20,
-            boxShadow: '0 4px 12px rgba(99,102,241,0.3)'
-          }}
-        >
-          {showAdd ? '×' : '+'}
-        </button>
+        <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+          <button
+            onClick={() => window.dispatchEvent(new CustomEvent('open-routine-setup'))}
+            className="btn-ghost"
+            style={{
+              fontSize: 11, fontWeight: 800, color: 'var(--brand)',
+              background: 'var(--surface-3)', padding: '6px 12px', borderRadius: 10,
+              display: 'flex', alignItems: 'center', gap: 6, border: '1px solid var(--border)'
+            }}
+          >
+            ✨ Edit Schedule
+          </button>
+          <button
+            onClick={() => setShowAdd(!showAdd)}
+            style={{
+              width: 32, height: 32, borderRadius: '50%', background: 'var(--brand)',
+              color: '#fff', border: 'none', cursor: 'pointer', display: 'flex',
+              alignItems: 'center', justifyContent: 'center', fontSize: 20,
+              boxShadow: '0 4px 12px rgba(99,102,241,0.3)'
+            }}
+          >
+            {showAdd ? '×' : '+'}
+          </button>
+        </div>
       </div>
 
       {/* Filter Chips */}
