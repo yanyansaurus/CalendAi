@@ -4,7 +4,7 @@ const REDIS_URL = process.env.REDIS_URL || process.env.calend_ai_kv_REDIS_URL
 
 let redisClient: ReturnType<typeof createClient> | null = null
 let lastConnectErrorAt = 0
-const CIRCUIT_BREAKER_MS = 30000 // 30 seconds
+const CIRCUIT_BREAKER_MS = 5000 // Reduced from 30s to 5s
 
 export function getRedisClient() {
   if (!redisClient) {
@@ -38,7 +38,11 @@ export async function connectRedis() {
   const client = getRedisClient()
   if (!client.isOpen) {
     try {
-      await client.connect()
+      // Very short timeout for the actual connection attempt
+      await Promise.race([
+        client.connect(),
+        new Promise((_, reject) => setTimeout(() => reject(new Error('Connection timeout')), 500))
+      ])
     } catch (err) {
       console.error('[Redis] Connection failed:', (err as Error).message)
       lastConnectErrorAt = Date.now()

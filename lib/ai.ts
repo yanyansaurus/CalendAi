@@ -7,12 +7,43 @@ const genAI = process.env.GEMINI_API_KEY ? new GoogleGenerativeAI(process.env.GE
 
 // Vertex AI Client (Google Cloud Enterprise)
 // Supports local ADC or Vercel Service Account Key via GCP_SERVICE_ACCOUNT_KEY env
+if (process.env.GCP_SERVICE_ACCOUNT_KEY) {
+  console.log("[Vertex AI] Using Service Account Key from environment.");
+} else if (process.env.GOOGLE_CLOUD_PROJECT) {
+  console.log("[Vertex AI] Using Application Default Credentials (ADC).");
+}
+
+import { GoogleAuth } from 'google-auth-library';
+
+function getServiceAccountCredentials() {
+  const rawKey = process.env.GCP_SERVICE_ACCOUNT_KEY;
+  if (!rawKey) return undefined;
+  try {
+    const cleanedKey = rawKey.trim().replace(/^['"]|['"]$/g, '');
+    const creds = JSON.parse(cleanedKey);
+    if (creds.client_email) {
+      console.log(`[Vertex AI] Credentials loaded for: ${creds.client_email}`);
+    }
+    return creds;
+  } catch (err) {
+    console.error("[Vertex AI] Failed to parse GCP_SERVICE_ACCOUNT_KEY.");
+    return undefined;
+  }
+}
+
+const credentials = getServiceAccountCredentials();
+
+// Explicitly create an auth client to avoid library-level state issues
+const auth = credentials ? new GoogleAuth({
+  credentials,
+  projectId: process.env.GOOGLE_CLOUD_PROJECT,
+  scopes: 'https://www.googleapis.com/auth/cloud-platform'
+}) : undefined;
+
 const vertexAI = process.env.GOOGLE_CLOUD_PROJECT ? new VertexAI({
   project: process.env.GOOGLE_CLOUD_PROJECT,
   location: process.env.GOOGLE_CLOUD_LOCATION || 'us-central1',
-  googleAuthOptions: process.env.GCP_SERVICE_ACCOUNT_KEY ? {
-    credentials: JSON.parse(process.env.GCP_SERVICE_ACCOUNT_KEY)
-  } : undefined
+  googleAuthOptions: auth as any // Use the explicit auth object
 }) : null;
 
 // Helper to get Groq client dynamically
@@ -52,8 +83,9 @@ export interface AIOptions {
  */
 export async function getAIResponse(messages: AIMessage[], options: AIOptions = {}) {
   const provider = options.provider || (vertexAI ? "vertex" : (process.env.GROQ_API_KEY ? "groq" : "gemini"));
+  console.log(`[AI Adapter] Routing request to: ${provider} (model: ${options.model || 'default'})`);
   let text = "";
-  
+
   try {
     if (provider === "vertex") {
       text = await callVertex(messages, options);
@@ -87,15 +119,20 @@ const GROQ_MODELS = [
 ];
 
 const GEMINI_MODELS = [
-  "gemini-1.5-flash-latest",
-  "gemini-1.5-flash",
-  "gemini-1.5-pro-latest"
+  "gemini-3-flash",
+  "gemini-2.5-flash",
+  "gemini-3.1-pro-preview",
+  "gemini-1.5-flash" // Last resort legacy
 ];
 
 async function callVertex(messages: AIMessage[], options: AIOptions) {
-  if (!vertexAI) return callGroq(messages, options);
+  console.log("[Vertex AI] INFO: callVertex triggered.");
+  if (!vertexAI) {
+    console.log("[Vertex AI] WARN: vertexAI client is null, falling back.");
+    return callGroq(messages, options);
+  }
 
-  const modelName = options.model || "gemini-1.5-flash-002";
+  const modelName = options.model || "gemini-2.5-flash-001";
   try {
     const generativeModel = vertexAI.getGenerativeModel({
       model: modelName,
@@ -122,6 +159,7 @@ async function callVertex(messages: AIMessage[], options: AIOptions) {
       } : undefined,
     });
 
+    console.log("[Vertex AI] Success: Response generated.");
     return result.response.candidates?.[0]?.content?.parts?.[0]?.text || "";
   } catch (error: any) {
     console.warn(`[Vertex AI] Failed: ${error.message}. Falling back to Groq.`);
@@ -152,7 +190,7 @@ async function callGroq(messages: AIMessage[], options: AIOptions) {
       const errorMsg = error.message || "";
       console.warn(`[Groq] Model ${modelName} failover triggered: ${errorMsg.substring(0, 50)}...`);
       const isRetryable = errorMsg.includes("429") || errorMsg.includes("rate_limit") || errorMsg.includes("quota") || errorMsg.includes("404") || errorMsg.includes("not found") || errorMsg.includes("400");
-      
+
       if (isRetryable) continue;
       break;
     }
@@ -199,7 +237,7 @@ async function callGemini(messages: AIMessage[], options: AIOptions) {
 
       while (history.length > 0 && history[0].role !== 'user') history.shift();
       if (history.length === 0) history.push({ role: "user", parts: [{ text: "Context summary requested." }] });
-      
+
       const userContent = history.pop()?.parts || [];
 
       const chat = model.startChat({

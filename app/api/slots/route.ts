@@ -18,11 +18,9 @@ export async function GET(req: Request) {
   }
 
   try {
-    const timeMin = new Date(`${dateStr}T00:00:00`).toLocaleString('en-US', { timeZone: timezone })
-    const timeMax = new Date(`${dateStr}T23:59:59`).toLocaleString('en-US', { timeZone: timezone })
-    
-    const isoMin = new Date(timeMin).toISOString()
-    const isoMax = new Date(timeMax).toISOString()
+    // Fix: Use ISO strings for Google Calendar API to avoid 400 Bad Request
+    const timeMin = new Date(`${dateStr}T00:00:00Z`).toISOString()
+    const timeMax = new Date(`${dateStr}T23:59:59Z`).toISOString()
 
     // Fetch busy slots for primary AND all attendees
     const busySlotsPromises = [

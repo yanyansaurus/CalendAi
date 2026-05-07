@@ -1,9 +1,7 @@
-import { Redis } from '@upstash/redis'
+import { connectRedis } from './redis'
 
-const redis = new Redis({
-  url: process.env.UPSTASH_REDIS_REST_URL || '',
-  token: process.env.UPSTASH_REDIS_REST_TOKEN || '',
-})
+// Audit log now uses the primary Redis client to avoid configuration errors.
+const getRedis = connectRedis;
 
 export type AuditAction = 
   | 'meeting_created' 
@@ -35,9 +33,11 @@ export async function logAudit(entry: Omit<AuditEntry, 'timestamp'>) {
   }
 
   try {
-    // Store in a time-series list in Redis: audit:{userId}
-    const key = `audit:${entry.userId}`
-    await redis.lpush(key, JSON.stringify(fullEntry))
+    const redis = await connectRedis()
+    if (redis) {
+      const key = `audit:${entry.userId}`
+      await redis.lPush(key, JSON.stringify(fullEntry))
+    }
     
     // Also log to console for server logs
     console.log(`[AUDIT] ${fullEntry.timestamp} | ${entry.userId} | ${entry.action} | ${entry.status}`)
@@ -51,8 +51,10 @@ export async function logAudit(entry: Omit<AuditEntry, 'timestamp'>) {
  */
 export async function getAuditTrail(userId: string, limit = 50): Promise<AuditEntry[]> {
   try {
+    const redis = await connectRedis()
+    if (!redis) return []
     const key = `audit:${userId}`
-    const entries = await redis.lrange(key, 0, limit - 1)
+    const entries = await redis.lRange(key, 0, limit - 1)
     return (entries as string[]).map(e => JSON.parse(e))
   } catch (e) {
     console.error('Failed to fetch audit trail:', e)
