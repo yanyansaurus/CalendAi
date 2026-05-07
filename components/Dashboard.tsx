@@ -253,6 +253,30 @@ export default function Dashboard({ session }: DashboardProps) {
           {activeTab === 'settings' && <SettingsPanel />}
         </div>
       </main>
+
+      {/* Mobile Bottom Navigation */}
+      <nav className="mobile-nav glass" style={{
+        position: 'fixed', bottom: 0, left: 0, right: 0, height: 70,
+        justifyContent: 'space-around', alignItems: 'center',
+        padding: '0 10px', zIndex: 100, borderTop: '1px solid var(--border)',
+        background: 'rgba(5, 5, 8, 0.8)', backdropFilter: 'blur(20px)'
+      }}>
+        {mobileNavItems.map((item) => (
+          <button
+            key={item.id}
+            onClick={() => setActiveTab(item.id as TabId)}
+            style={{
+              display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4,
+              background: 'none', border: 'none', color: activeTab === item.id ? 'var(--brand-light)' : 'var(--text-muted)',
+              padding: '8px 12px', borderRadius: 12, transition: 'all 0.2s',
+              transform: activeTab === item.id ? 'scale(1.1)' : 'scale(1)'
+            }}
+          >
+            <span style={{ fontSize: 20 }}>{item.icon}</span>
+            <span style={{ fontSize: 10, fontWeight: 700 }}>{item.label}</span>
+          </button>
+        ))}
+      </nav>
     </div>
   )
 }

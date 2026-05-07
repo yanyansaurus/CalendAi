@@ -546,7 +546,10 @@ export default function ChatPanel({ reminders, setReminders, suggestions, setSug
                   const type = msg.action?.intent === 'draft_meeting' ? 'meeting' : 'event'
                   sendMessage(`Confirm: Create this ${type} titled "${title}" with description "${desc}" and attendees: ${attendees.join(', ')}`)
                 }}
-                onCancel={() => sendMessage("Nevermind, cancel this draft")}
+                onCancel={() => {
+                  sendMessage("Nevermind, cancel this draft")
+                  setMessages(prev => prev.map(m => m.id === msg.id ? { ...m, type: undefined } : m))
+                }}
                 onShuffle={() => sendMessage("Find another time for this meeting")}
               />
             )}
@@ -706,10 +709,20 @@ export default function ChatPanel({ reminders, setReminders, suggestions, setSug
 
         {/* Typing indicator */}
         {isTyping && (
-          <div className="bubble-ai animate-fade-up" style={{ alignSelf: 'flex-start', display: 'flex', gap: 5, alignItems: 'center', padding: '14px 18px' }}>
-            <div className="typing-dot" />
-            <div className="typing-dot" />
-            <div className="typing-dot" />
+          <div className="bubble-ai animate-fade-up" style={{ 
+            alignSelf: 'flex-start', 
+            display: 'flex', 
+            gap: 6, 
+            alignItems: 'center', 
+            padding: '14px 20px',
+            background: 'rgba(255, 255, 255, 0.05)',
+            border: '1px solid rgba(255, 255, 255, 0.1)',
+            boxShadow: '0 4px 20px rgba(0,0,0,0.2)'
+          }}>
+            <div className="typing-dot" style={{ width: 6, height: 6, borderRadius: '50%', background: 'linear-gradient(to bottom, var(--brand), #818cf8)', animation: 'pulse-typing 1.4s infinite ease-in-out' }} />
+            <div className="typing-dot" style={{ width: 6, height: 6, borderRadius: '50%', background: 'linear-gradient(to bottom, var(--brand), #818cf8)', animation: 'pulse-typing 1.4s infinite ease-in-out 0.2s' }} />
+            <div className="typing-dot" style={{ width: 6, height: 6, borderRadius: '50%', background: 'linear-gradient(to bottom, var(--brand), #818cf8)', animation: 'pulse-typing 1.4s infinite ease-in-out 0.4s' }} />
+            <span style={{ fontSize: 10, fontWeight: 800, color: 'var(--brand-light)', marginLeft: 8, letterSpacing: '0.1em' }}>AURA THINKING</span>
           </div>
         )}
 
